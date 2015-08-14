@@ -1,0 +1,21 @@
+﻿Der Buildvorgang wurde am 17.07.2015 00:33:54 gestartet.
+     1>Projekt "D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\SUtil\SUtil.vcxproj" auf Knoten "3", Rebuild Ziel(e).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Exceptions.cpp IniReader.cpp MemWrp.cpp Object.cpp
+         Object.cpp
+         MemWrp.cpp
+         IniReader.cpp
+     1>d:\documentaire\spiele\lego universe\luniserverproject-master\source\luni latest dev\source\sutil\inireader.cpp(24): warning C4244: '=': Konvertierung von 'double' in 'float', möglicher Datenverlust
+         Exceptions.cpp
+         Code wird generiert...
+       Lib:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\Lib.exe /OUT:"D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\Debug\SUtil.lib" /NOLOGO Debug\Exceptions.obj
+         Debug\IniReader.obj
+         Debug\MemWrp.obj
+         Debug\Object.obj
+         SUtil.vcxproj -> D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\Debug\SUtil.lib
+     1>Die Erstellung des Projekts "D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\SUtil\SUtil.vcxproj" ist abgeschlossen, Rebuild Ziel(e).
+
+Build erfolgreich.
+
+Verstrichene Zeit 00:00:01.89
