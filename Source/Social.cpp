@@ -182,8 +182,8 @@ void Friends::sendFriendsList(long long charid){
 			id = friends.at(k - bfs);
 		}
 		SessionInfo info = SessionsTable::getClientSession(SessionsTable::findCharacter(id));
-		CharacterOwner o = CharactersTable::getAccountFromObjid(id);
-		ListCharacterInfo l = CharactersTable::getCharacterInfo(o);
+		//unsigned int accountid = CharactersTable::getAccountFromObjid(id);
+		ListCharacterInfo l = CharactersTable::getCharacterInfo(id);
 		if (info.phase > SessionPhase::PHASE_AUTHENTIFIED){ //Is player online
 			bs->Write((unsigned char)1);
 		}

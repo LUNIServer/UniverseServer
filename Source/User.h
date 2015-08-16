@@ -40,14 +40,12 @@ class User {
 		SystemAddress ip; // This is the SystemAddress from RakNet
 		
 		// This is the User initialization. It takes a User ID, a Username, and an SystemAddress
-		User(uint id, const std::string& username, const SystemAddress& systemAddress, UserSuccess loginStatus, uchar numChars, uchar frontChar);
+		User(uint id, const std::string& username, const SystemAddress& systemAddress, UserSuccess loginStatus);
 	public:
 		uint numredir = 1; // Number of redirects
 		ulong nextcid = 0; // Only for development - this is the next character ID (CID = Character ID)
 
 		UserSuccess successState; // This is the success state of the user login (stores locally)
-		uchar userChars; // This is the number of characters the user has (stores locally)
-		uchar userFrontChar; // This is the front character of the user (stores locally)
 		uchar nameInUse = 0; // Whether or not the selected username / predefined name is in use (stores locally)
 
 		// Initializer

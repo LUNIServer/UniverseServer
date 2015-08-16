@@ -12,6 +12,8 @@
 #include "RakNet\RakNetworkFactory.h"
 #include "RakNet\PacketFileLogger.h"
 
+#include "Logger.h"
+
 using namespace RakNet;
 
 Ref< User > HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers) {
@@ -42,7 +44,7 @@ Ref< User > HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT
 
 		// Send the character success packet (while making sure user is not null)
 		if (usr == NULL) {
-			cout << "[AUTH] USER IS NULL!!!!";
+			Logger::log("AUTH", "", "USER IS NULL!!!!");
 
 			UserSuccess successChar = UserSuccess::INVALID_USER;
 			SendStatusPacket(rakServer, packet->systemAddress, successChar, cfg->redirectIp, cfg->redirectPort, 320);
@@ -99,9 +101,11 @@ void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQ
 	// Initialize the Packet class
 	Packet* packet;
 
+	//LUNI_AUTH = true;
+
 	// LUNIterminate is the bool used to terminate threads.
 	// While it is false, the thread runs, but if it is true, the thread exits
-	while (!LUNIterminate) {
+	while (!getTerminate()) {
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Get the packets from the client
 		if (packet == NULL) continue; // If the packet is null, just continue without processing anything
@@ -127,17 +131,15 @@ void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQ
 							// If username is not null, print the username that logged in.
 							// Otherwise, print the error message
 							if (usr != NULL) {
-								OutputQueue->Insert("\n[AUTH] " + usr->GetUsername() + " Logged-in\n");
+								Logger::log("AUTH", "", usr->GetUsername() + " Logged-in");
 							}
-							else OutputQueue->Insert("\n[AUTH] Login failed!\n");
+							else Logger::log("AUTH", "", "Login failed");
 						}
 						break;
 
 					// The default if the packet the server is recieving has an unidentified ID
 					default:
-						std::stringstream s;
-						s << "\n[AUTH] received unknown packet: " << RawDataToString(packet->data, packet->length) << std::endl;
-						OutputQueue->Insert(s.str());
+						Logger::log("AUTH", "", "received unknown packet: " + RawDataToString(packet->data, packet->length));
 				}
 
 				break;
@@ -145,22 +147,20 @@ void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQ
 			// If the server is recieving a new connection, print it.
 			case ID_NEW_INCOMING_CONNECTION:
 #			ifdef DEBUG
-				OutputQueue->Insert("\n[AUTH] is receiving a new connection...\n");
+				Logger::log("AUTH", "" , "is receiving a new connection...");
 			#endif
 				break;
 
 			// If someone is disconnecting from the auth server, print it
 			case ID_DISCONNECTION_NOTIFICATION:
-				OutputQueue->Insert("\n[AUTH] User disconnected from Auth server... \n");
+				Logger::log("AUTH", "", "User disconnected from Auth server...");
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_CONNECTED);
 				break;
 				
 			// If the packet has an unidentified RakNet ID (one not listed here), print the
 			// packet info
 			default:
-				std::stringstream s;
-				s << "\n[AUTH] received unknown packet: " << RawDataToString(packet->data, packet->length) << std::endl;
-				OutputQueue->Insert(s.str());
+				Logger::log("AUTH", "", "received unknown packet: " + RawDataToString(packet->data, packet->length));
 		}
 
 		// Deallocate the packet to conserve memory
@@ -168,11 +168,11 @@ void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQ
 	}
 
 	// If LUNIServer Auth has been terminated, print it
-	std::stringstream s;
-	s << "[AUTH] Quitting\n";
-	OutputQueue->Insert(s.str());
+	Logger::log("AUTH", "", "quitting");
 
 	// Shut down Auth server
 	rakServer->Shutdown(0);
 	RakNetworkFactory::DestroyRakPeerInterface(rakServer);
+
+	//LUNI_AUTH = false;
 }

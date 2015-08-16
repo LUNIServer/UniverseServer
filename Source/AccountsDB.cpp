@@ -2,6 +2,8 @@
 #include "CharactersDB.h"
 #include "Database.h"
 #include "Encryption.h"
+#include "Logger.h"
+#include "World.h"
 
 #include <sstream>
 #include <iostream>
@@ -52,7 +54,7 @@ AccountAccessInfo AccountsTable::getAccessInfo(unsigned int accountid){
 
 void AccountsTable::setAccessInfo(unsigned int accountid, AccountAccessInfo info){
 	std::stringstream str;
-	str << "UPDATE `luni`.`accounts` SET `locked` = '";
+	str << "UPDATE `accounts` SET `locked` = '";
 	if (info.locked) str << "1"; else str << "0";
 	str << "', `banned` = '";
 	if (info.banned) str << "1"; else str << "0";
@@ -63,7 +65,7 @@ void AccountsTable::setAccessInfo(unsigned int accountid, AccountAccessInfo info
 	str << ";";
 }
 
-CharacterCount AccountsTable::getCharCountInfo(unsigned int accountid){
+/*CharacterCount AccountsTable::getCharCountInfo(unsigned int accountid){
 	CharacterCount c;
 	auto qr = Database::Query("SELECT `numChars`, `frontChar` FROM `accounts` WHERE `id` = '" + std::to_string(accountid) + "' LIMIT 1;");
 	if (mysql_num_rows(qr) == 0) {
@@ -71,25 +73,45 @@ CharacterCount AccountsTable::getCharCountInfo(unsigned int accountid){
 	}
 	auto r = mysql_fetch_row(qr);
 	c.count = std::stoi(r[0]);
-	c.front = std::stoi(r[1]);
+	c.front = std::stoll(r[1]);
 	if (c.count > 4) c.count = 0;
 	if (c.front > 3) c.front = 0;
 	return c;
+}*/
+
+bool AccountsTable::setFrontChar(long long charid){
+	unsigned int accountid = CharactersTable::getAccountFromObjid(charid);
+	if (accountid > 0){
+		Logger::log("ACDB", "CHARS", "Setting char " + std::to_string(charid) + " as front char");
+		Database::Query("UPDATE `accounts` SET `frontChar` = " + std::to_string(charid) + " WHERE `id` = '" + std::to_string(accountid) + "'");
+		return true;
+	}
+	else{
+		return false;
+	}
 }
 
-int AccountsTable::setFrontChar(long long charid){
-	CharacterOwner o = CharactersTable::getAccountFromObjid(charid);
-	AccountsTable::setFrontChar(o);
-	return o.charIndex;
+long long AccountsTable::getFrontChar(unsigned int accountid){
+	std::stringstream str;
+	str << "SELECT `frontChar` FROM `accounts` WHERE `id` = '" << accountid << "';";
+	auto qr = Database::Query(str.str());
+	if (qr == NULL){
+		Logger::logError("ACDB", "MYSQL", "searching account " + std::to_string(accountid), mysql_error(Database::getConnection()));
+		return 0;
+	}
+	if (mysql_num_rows(qr) == 0){
+		Logger::logError("ACDB", "MYSQL", "searching account " + std::to_string(accountid), "Account not found");
+		return 0;
+	}
+	else{
+		auto row = mysql_fetch_row(qr);
+		return std::stoll(row[0]);
+	}
 }
 
-void AccountsTable::setFrontChar(CharacterOwner o){
-	Database::Query("UPDATE `accounts` SET `frontChar` = " + std::to_string(o.charIndex) + " WHERE `id` = '" + std::to_string(o.accountid) + "'");
-}
-
-void AccountsTable::setNumChars(CharacterOwner o){
+/*void AccountsTable::setNumChars(CharacterOwner o){
 	Database::Query("UPDATE `accounts` SET `numChars` = " + std::to_string(o.charIndex) + " WHERE `id` = '" + std::to_string(o.accountid) + "'");
-}
+}*/
 
 //std::unordered_map<SystemAddress, SessionInfo, SystemAddressHasher> SessionsTable::sessions = std::unordered_map<SystemAddress, SessionInfo, SystemAddressHasher>();
 
@@ -120,7 +142,7 @@ SessionInfo SessionsTable::getClientSession(SystemAddress address){
 	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `ipaddress` = '" << address.ToString() << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("ACDB", "MYSQL", "getting session", mysql_error(Database::getConnection()));
 		return sinfo;
 	}
 	if (mysql_num_rows(qr) == 0 || mysql_num_rows(qr) == NULL)
@@ -156,7 +178,7 @@ SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid){
 		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "' WHERE `ipaddress` = '" << address.ToString() << "'";
 		auto qr = Database::Query(str.str());
 		if (qr == NULL){
-			std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+			Logger::logError("ACDB", "MYSQL", "logging in", mysql_error(Database::getConnection()));
 		}
 	}
 	return s;
@@ -183,7 +205,7 @@ SessionInfo SessionsTable::logout(unsigned int accountid){
 			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
-				std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+				Logger::logError("ACDB", "MYSQL", "logging out", mysql_error(Database::getConnection()));
 			}
 		}
 
@@ -206,14 +228,20 @@ SystemAddress SessionsTable::findAccount(unsigned int accountid){
 	str << "SELECT `ipaddress` FROM `sessions` WHERE `accountid` = '" << std::to_string(accountid) << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("ACDB", "MYSQL", "finding session for accountid " + std::to_string(accountid), mysql_error(Database::getConnection()));
 		return UNASSIGNED_SYSTEM_ADDRESS;
 	}
 	else{
-		SystemAddress addr;
-		auto row = mysql_fetch_row(qr);
-		addr.SetBinaryAddress(row[0]);
-		return addr;
+		if (mysql_num_rows(qr) > 0){
+			SystemAddress addr;
+			auto row = mysql_fetch_row(qr);
+			addr.SetBinaryAddress(row[0]);
+			return addr;
+		}
+		else{
+			return UNASSIGNED_SYSTEM_ADDRESS;
+		}
+		
 	}
 	/*std::unordered_map<SystemAddress, SessionInfo, SystemAddressHasher>::iterator it = std::find_if(sessions.begin(), sessions.end(), [&](const std::pair<SystemAddress, SessionInfo> & o){
 		return o.second.accountid == accountid;
@@ -238,7 +266,7 @@ SessionInfo SessionsTable::play(unsigned int accountid, long long charid){
 			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
-				std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+				Logger::logError("ACDB", "MYSQL", "playing character", mysql_error(Database::getConnection()));
 			}
 		}
 		return s;
@@ -269,7 +297,7 @@ SessionInfo SessionsTable::quit(long long charid){
 			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
-				std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+				Logger::logError("ACDB", "MYSQL", "quitting character", mysql_error(Database::getConnection()));
 			}
 		}
 		return s;
@@ -293,7 +321,7 @@ SystemAddress SessionsTable::findCharacter(long long charid){
 	str << "SELECT `ipaddress` FROM `sessions` WHERE `charid` = '" << std::to_string(charid) << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("ACDB", "MYSQL", "finding character " + std::to_string(charid), mysql_error(Database::getConnection()));
 		return UNASSIGNED_SYSTEM_ADDRESS;
 	}
 	else{
@@ -325,7 +353,7 @@ std::vector<SessionInfo> SessionsTable::getClientsInWorld(unsigned short zoneid)
 	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `zoneid` = '" << std::to_string(zoneid) << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("ACDB", "MYSQL", "getting clients in " + (ZoneId)zoneid, mysql_error(Database::getConnection()));
 		return query;
 	}
 	auto num = mysql_num_rows(qr);
@@ -378,7 +406,7 @@ SessionInfo SessionsTable::enter(long long charid, unsigned short zoneId){
 			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
-				std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+				Logger::logError("ACDB", "MYSQL", "entering world", mysql_error(Database::getConnection()));
 			}
 		}
 		return s;
@@ -409,7 +437,7 @@ SessionInfo SessionsTable::leave(long long charid){
 			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
-				std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+				Logger::logError("ACDB", "MYSQL", "leaving world", mysql_error(Database::getConnection()));
 			}
 		}
 		return s;
@@ -433,7 +461,7 @@ unsigned int SessionsTable::count(){
 	str << "SELECT `ipaddress` FROM `sessions`";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("ACDB", "MYSQL", "counting sessions", mysql_error(Database::getConnection()));
 		return 0;
 	}
 	auto num = mysql_num_rows(qr);

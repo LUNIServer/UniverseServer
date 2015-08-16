@@ -19,6 +19,7 @@
 #include "ReplicaComponents.h"
 #include "InventoryDB.h"
 #include "CharactersDB.h"
+#include "ServerDB.h"
 
 #include "Account.h"
 #include "Social.h"
@@ -97,12 +98,21 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Initialize the SocketDescriptor
 	SocketDescriptor socketDescriptor(cfg->listenPort, 0);
 
+	std::stringstream straddr;
+	straddr << cfg->redirectIp << ":" << cfg->listenPort;
+	SystemAddress ServerAddress;
+	ServerAddress.SetBinaryAddress(straddr.str().data());
+	
 	// If the startup of the server is successful, print it to the console
 	// Otherwise, quit the server (as the char server is REQUIRED for the
 	// server to function properly)
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
 		stringstream s;
 		s << "[WRLD] started! Listening on: " << cfg->listenPort << "\n";
+
+		//int serverinstanceid = InstancesTable::registerInstance(ServerAddress);
+		//s << "WORLD SERVER STARTED ON " << ServerAddress.ToString() << " AS INSTANCE " << std::to_string(serverinstanceid) << std::endl;
+
 		OutputQueue->Insert(s.str());
 	} else exit(2);
 
@@ -142,48 +152,19 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Set the optional callbacks to send and receive download complete notifications
 	//replicaManager.SetDownloadCompleteCB(&sendDownloadCompleteCB, &receiveDownloadCompleteCB);
 
-	//XIPHOSEER EDIT	
-
-	//RakNet::BitStream v1a;
-	//replicaCreationPacket(&v1a);
-	// WAS JUST FOR TESTING
-	//SavePacketOverwrite(".\\world\\test\\world_2_1_dynamic.bin", (char*)v1a.GetData(), v1a.GetNumberOfBytesUsed());
-
-	//vector<uchar> pc = CreateCharacterPacket(500);
-	//cout << RawDataToString(&pc[0], pc.size());
-	//SavePacketOverwrite(".\\world\\world_2a_create.bin", pc);
-
-	/*auto v = OpenPacket(".\\world\\world_2a.bin");
-	// v[0x04] == 0x04
-	uint32 size = v[0x08] + v[0x09] * 0x100 + v[0x0a] * 0x10000 + v[0x0b] * 0x1000000;
-	cout << "Packet Size: " << size << endl;
-	boolean compressed = v[0x0c];
-	cout << "Compressed: " << (int) compressed << endl;
-	uint32 sizeUC = v[0x0d] + v[0x0e] * 0x100 + v[0x0f] * 0x10000 + v[0x10] * 0x1000000;
-	uint32 sizeC = v[0x11] + v[0x12] * 0x100 + v[0x13] * 0x10000 + v[0x14] * 0x1000000;
-	cout << "Packet size uncompressed: " << sizeUC << endl;
-	cout << "Packet size compressed: " << sizeC << endl;
-
-	uint32 num = v[0x15] + v[0x16] * 0x100 + v[0x17] * 0x10000 + v[0x18] * 0x1000000;
-	cout << "Number of Keys: " << num << endl;
-	int len = v[0x15] / 0x10;
-	cout << "Keylength: " << (int) len << endl;
-	for (int k = 0; k < len; k = k + 2){
-		wchar_t chr = v[0x16 + k] + 0x100 * v[0x17 + k];
-		cout << chr << endl;
-		vector<uchar> c = {v[0x16 + k], v[0x17 + k]};
-		cout << RawDataToString(&c[0], c.size(), true) << endl;
-	}
-	wchar_t key(v[0x16]);*/
-
 	ReplicaComponent *cp = new Component1();
 	cp->writeToPacket(new RakNet::BitStream(), REPLICA_PACKET_TYPE::REPLICA_CONSTRUCTION_PACKET);
 
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
 	WorldServer::publishWorldServer(rakServer);
 
+	//LUNI_WRLD = true;
+
 	// This will be used in the saving of packets below...
-	while (!LUNIterminate) {
+	while (!getTerminate()) {
+		if (getTerminate()){
+			std::cout << "W";
+		}
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Recieve the packets from the server
 		if (packet == NULL) continue; // If packet is NULL, just continue without processing anything
@@ -411,12 +392,16 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 		rakServer->DeallocatePacket(packet);
 	}
 
+	//InstancesTable::unregisterInstance(ServerAddress);
+
 	stringstream s;
 	s << "[WRLD] Quitting\n";
 	OutputQueue->Insert(s.str());
 
 	rakServer->Shutdown(0);
 	RakNetworkFactory::DestroyRakPeerInterface(rakServer);
+
+	//LUNI_WRLD = false;
 }
 
 //TODO: temporary

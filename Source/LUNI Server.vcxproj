@@ -75,6 +75,7 @@
     <ClInclude Include="Account.h" />
     <ClInclude Include="AccountsDB.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="Characters.h" />
     <ClInclude Include="CharactersDB.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Common.h" />
@@ -86,6 +87,7 @@
     <ClInclude Include="GameMessages.h" />
     <ClInclude Include="InventoryDB.h" />
     <ClInclude Include="LDF.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="legoPackets.h" />
@@ -95,6 +97,7 @@
     <ClInclude Include="ReplicaData.h" />
     <ClInclude Include="ReplicaDefinitions.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="ServerDB.h" />
     <ClInclude Include="serverLoop.h" />
     <ClInclude Include="Social.h" />
     <ClInclude Include="TimeUtil.h" />
@@ -109,6 +112,7 @@
     <ClCompile Include="AccountsDB.cpp" />
     <ClCompile Include="AuthLoop.cpp" />
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="CharactersLoop.cpp" />
     <ClCompile Include="Common.cpp" />
@@ -116,12 +120,14 @@
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="GameMessages.cpp" />
     <ClCompile Include="InventoryDB.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="md5.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="Replica.cpp" />
     <ClCompile Include="ReplicaComponents.cpp" />
     <ClCompile Include="ReplicaData.cpp" />
+    <ClCompile Include="ServerDB.cpp" />
     <ClCompile Include="serverLoop.cpp" />
     <ClCompile Include="AuthPackets.cpp" />
     <ClCompile Include="Packet.cpp" />

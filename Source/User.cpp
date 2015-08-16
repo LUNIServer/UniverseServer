@@ -12,6 +12,7 @@
 #include "serverLoop.h"
 #include "Packet.h"
 #include "Encryption.h"
+#include "Logger.h"
 
 #include <sstream>
 #include <map>
@@ -21,7 +22,7 @@ using namespace std;
 extern std::map<SystemAddress, ZoneId> Player;
 
 // This is the user initalization
-User::User(uint id, const string& username, const SystemAddress& systemAddress, UserSuccess loginStatus, uchar numChars, uchar frontChar) {
+User::User(uint id, const string& username, const SystemAddress& systemAddress, UserSuccess loginStatus) {
 	this->id = id; // Store User ID
 	this->username = username; // Store Username
 	this->ip = systemAddress; // Store systemAddress
@@ -30,18 +31,16 @@ User::User(uint id, const string& username, const SystemAddress& systemAddress, 
 	current = NULL; // Initialize current character
 	player = NULL;
 	successState = loginStatus; // Set the success state
-	userChars = numChars; // Set the number of user characters
-	userFrontChar = frontChar; // Set the user front char
 
 	// Print the success state to the console
-	cout << successState << endl;
+	Logger::log("USER", "INIT", "Login state is " + std::to_string(successState));
 
 	ostringstream osid;
 	osid << id;
 
-	std::vector<long long> chars = CharactersTable::getCharcters(id);
-	for (uchar k = 0; k < chars.size(); k++){
-		characters[k] = chars.at(k);
+	std::vector<long long> chars = CharactersTable::getCharacters(id);
+	for (uchar k = 0; k < 4; k++){
+		if (k < chars.size()) characters[k] = chars.at(k); else characters[k] = 0;
 	}
 }
 
@@ -60,7 +59,7 @@ std::vector< Ref<Character> > User::LoadCharacters() {
 
 void User::SetCharacter(long long cid){
 	std::cout << "[USER] SET CHAR ID: " << cid << std::endl;
-	this->userFrontChar = AccountsTable::setFrontChar(cid);
+	AccountsTable::setFrontChar(cid);
 	for (int i = 0; i < 4; i++){
 		if (characters[i] == cid){
 			if (this->charctersData[i] == NULL){
@@ -247,18 +246,17 @@ Ref<User> User::Login(const string& nikname, const string& password, const Syste
 		currentLoginStatus = UserSuccess::LOCKED;
 	}
 
-	CharacterCount ccount = AccountsTable::getCharCountInfo(accountid);
+	/*CharacterCount ccount = AccountsTable::getCharCountInfo(accountid);
 	
 	int currentNumChars = ccount.count;
 	int currentFrontChar = ccount.front;
 
 	std::cout << "Current Front Char is: " << currentFrontChar << std::endl;
-	std::cout << "Current Number of Chars is: " << currentNumChars << std::endl;
+	std::cout << "Current Number of Chars is: " << currentNumChars << std::endl;*/
 
 	// Print current status to console (just to check, to delete later)
-	std::cout << "Current login status is: " << currentLoginStatus << std::endl;
-
-	return Ref<User>( new User(accountid, nikname, systemAddress, currentLoginStatus, currentNumChars, currentFrontChar) );
+	Logger::log("USER", "LOGIN", "Current login status is " + std::to_string(currentLoginStatus));
+	return Ref<User>( new User(accountid, nikname, systemAddress, currentLoginStatus) );
 }
 
 uint User::GetID() { return id; }

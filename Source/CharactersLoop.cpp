@@ -4,6 +4,7 @@
 #include "User.h"
 #include "CharPackets.h"
 #include "Account.h"
+#include "Characters.h"
 
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
@@ -49,6 +50,8 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 
 	// This will be used in the saving of packets below...
 	int i = 0;
+
+	//LUNI_CHAR = true;
 
 	while (!LUNIterminate) {
 		RakSleep(30);	// This sleep keeps RakNet responsive
@@ -111,18 +114,34 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 								// Find online user by systemAddress
 								auto usr = OnlineUsers->Find(packet->systemAddress);
 
+								bool success = false;
+								
 								// Make SURE user is not null!!!!!!
 								if (usr != NULL) {
-									AddCharToDatabase(rakServer, packet->systemAddress, packet->data, packet->length, usr);
-								}
-								else {
+									//AddCharToDatabase(rakServer, packet->systemAddress, packet->data, packet->length, usr);
+
+									//TEMP
+									RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
+									unsigned char packetid;
+									data->Read(packetid);
+									unsigned short remconn;
+									data->Read(remconn);
+									unsigned long lpacketid;
+									data->Read(lpacketid);
+									unsigned char padding;
+									data->Read(padding);
+									success = Characters::CreateCharacter(data, packet->systemAddress, usr->GetID());
+									//END TEMP
+
+
+								}else {
 									std::cout << "[CHAR] ERROR SAVING USER: User is null." << std::endl;
 								}
 								
 								// If the username is in use, do NOT send the char packet. Otherwise, send it
-								if (usr->nameInUse == 0) {
+								if (success) {
 									SendCharPacket(rakServer, packet->systemAddress, usr);
-								}	
+								}
 							}
 								break;
 
@@ -223,4 +242,5 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 				OutputQueue->Insert(s.str());
 		}
 	}
+	//LUNI_CHAR = false;
 }

@@ -21,6 +21,7 @@ enum ZoneId : ushort {
 
 // Prints World/Zone name
 std::ostream& operator<<(std::ostream& out, const ZoneId value);
+std::string& operator+(std::string& str, const ZoneId value);
 
 // This is the World struct which stores a ZoneId
 struct World {

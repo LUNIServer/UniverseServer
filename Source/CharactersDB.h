@@ -5,15 +5,6 @@
 #include <string>
 #include <vector>
 
-struct CharacterOwner{
-	unsigned int accountid = 0;
-	char charIndex = 0;
-	CharacterOwner(unsigned int account, char index){
-		this->accountid = account;
-		this->charIndex = index;
-	}
-};
-
 struct WorldPlace{
 	unsigned short zoneID = 0; //default to NO_ZONE 
 	unsigned short mapInstance = 0;
@@ -55,15 +46,15 @@ private:
 	static ListCharacterInfo getCharacterInfo(MYSQL_RES *res);
 public:
 	static long long getObjidFromCharacter(std::string name);
-	static CharacterOwner getAccountFromObjid(long long objid);
-	static std::vector<long long> getCharcters(unsigned int accountid);
-	static ListCharacterInfo getCharacterInfo(CharacterOwner owner);
+	static unsigned int getAccountFromObjid(long long objid);
+	static std::vector<long long> getCharacters(unsigned int accountid);
+	//static ListCharacterInfo getCharacterInfo(CharacterOwner owner);
 	static ListCharacterInfo getCharacterInfo(long long objid);
 	static ListCharacterInfo getCharacterInfo(std::string name);
 	static bool setCharactersPlace(long long objid, WorldPlace place);
 	static void deleteCharacter(long long objid);
 	static std::vector<unsigned char> getCharacterIndices(unsigned int accountid);
-	static long long add(CharacterStyle style, CharacterOwner owner, CharacterInfo names);
+	static long long add(CharacterStyle style, unsigned int accountid, CharacterInfo names);
 	static bool unapprovedNameExists(std::string unapprovedname);
 };
 

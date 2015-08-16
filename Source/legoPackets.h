@@ -170,6 +170,7 @@ enum WorldPacketID : uchar {
 };
 
 enum ClientPacketID : unsigned short{
+	CHARACTER_CREATION_RESPONSE = 7,
 	SERVER_GAME_MSG = 12,
 	SERVER_REDIRECT = 14,
 	FRIEND_REQUEST = 27,
