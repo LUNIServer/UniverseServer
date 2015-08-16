@@ -8,6 +8,7 @@
 #include "User.h"
 
 #include "UtfConverter.h"
+#include "Logger.h"
 
 #include "SUtil\Ref.h"
 
@@ -17,17 +18,12 @@
 
 using namespace std;
 
-void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, Ref<User> usr) {
+void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountID) {
 	RakNet::BitStream bitStream;
 
 	CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 6, &bitStream);
 	
-	if (usr == NULL) {
-		cout << "ERROR: User is null!" << endl;
-	}
-
-	unsigned int accountID = usr->GetID();
-	std::cout << "[CHAR] Account id: " << std::to_string(accountID) << std::endl;
+	Logger::log("CHAR", "PACKETS", "Account ID " + std::to_string(accountID));
 	long long frontCharId = AccountsTable::getFrontChar(accountID);
 
 	std::vector<long long> chars = CharactersTable::getCharacters(accountID);
@@ -44,8 +40,8 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, R
 	bitStream.Write(charactersLength);
 	bitStream.Write(frontChar);
 
-	std::cout << "[GAME] [CHAR] #characters: " << std::to_string(charactersLength) << std::endl;
-	std::cout << "[GAME] [CHAR] 1characters: " << std::to_string(frontChar) << std::endl;
+	Logger::log("CHAR", "PACKETS", "#characters: " + std::to_string(charactersLength));
+	Logger::log("CHAR", "PACKETS", "1characters: " + std::to_string(frontChar));
 
 	// This loop used to go through 4 chars but doesn't anymore
 	for (uint i = 0; i < charactersLength; i++) {
@@ -56,6 +52,10 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, R
 			//Should never happen, old message, means nothing basically
 			std::cout << "[CHAR] Char " << std::to_string(i) << " doesn't exist yet." << std::endl;
 		}else{
+			Logger::log("CHAR", "PACKETS", "Fetching character...");
+			Logger::log("CHAR", "PACKETS", "Name is: " + ci.info.name);
+			Logger::log("CHAR", "PACKETS", "Unapproved Name is: " + ci.info.unapprovedName);
+
 			charData.objectID = ci.info.objid;
 			charData.unknown1 = 0;
 			charData.charName = StringToWString(ci.info.name, 66);
@@ -390,169 +390,9 @@ void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 		long lot = ObjectsTable::getTemplateOfItem(items.at(k));
 		if (lot == -1) lot = 0;
 		bitStream->Write(lot);
-		std::cout << "[CHAR] equipped item: " << items.at(k) << std::endl;
+		Logger::log("CHAR", "PACKETS", "equipped item: " + std::to_string(items.at(k)));
 	}
-	std::cout << "[CHAR] User has " << numrows << " items equipped" << std::endl;
-}
-
-void AddCharToDatabase(RakPeerInterface *rakServer, SystemAddress& systemAddress, uchar *packetData, uint length, Ref<User> usr) {
-	if (length < 8) return;
-
-	// Get the ID out the user logged in (from User.h)
-	stringstream usrId;
-	usrId << usr->GetID();
-
-	// Convert it to a string to use with the queries.
-	string usrIDString = usrId.str();
-
-	// Create the variables to hold the char items
-	ulong shirtColor;
-	ulong shirtStyle;
-	ulong pantsColor;
-	ulong hairStyle;
-	ulong hairColor;
-	ulong lh;
-	ulong rh;
-	ulong eyebrows;
-	ulong eyes;
-	ulong mouth;
-
-	// Copy the char items from the creation packet
-	// to their variables
-	memcpy(&shirtColor, packetData + 0x5F, 4);
-	memcpy(&shirtStyle, packetData + 0x63, 4);
-	memcpy(&pantsColor, packetData + 0x67, 4);
-	memcpy(&hairStyle, packetData + 0x6B, 4);
-	memcpy(&hairColor, packetData + 0x6F, 4);
-	memcpy(&lh, packetData + 0x73, 4);
-	memcpy(&rh, packetData + 0x77, 4);
-	memcpy(&eyebrows, packetData + 0x7B, 4);
-	memcpy(&eyes, packetData + 0x7F, 4);
-	memcpy(&mouth, packetData + 0x83, 4);
-
-	// Print to the console the char items... (these
-	// will also be in the database to view later)
-	cout << "Shirt color is: " << shirtColor << endl;
-	cout << "Shirt style is: " << shirtStyle << endl;
-	cout << "Pants color is: " << pantsColor << endl;
-	cout << "Hair style is: " << hairStyle << endl;
-	cout << "Hair color is: " << hairColor << endl;
-	cout << "LH is: " << lh << endl;
-	cout << "RH is: " << rh << endl;
-	cout << "Eyebrows are: " << eyebrows << endl;
-	cout << "Eyes are: " << eyes << endl;
-	cout << "Mouth is: " << mouth << endl;
-
-	// Figure out the pants and shirt IDs that the
-	// char starts with...
-	ulong shirtID = FindCharShirtID(shirtColor, shirtStyle);
-	ulong pantsID = FindCharPantsID(pantsColor);
-	
-	// Initialize username string...
-	string username;
-
-	// Read the string from the packet
-	int i = 8;
-	while (true) {
-		username.push_back(packetData[i++]);
-		if (packetData[++i] == 0) break;
-	}
-	username.push_back(0);
-	i++;
-
-	// Print the username to the console
-	cout << "Username is: " << username << endl;
-
-	// Get the line numbers from the packet for the character
-	// premade name (in minifigname_first.txt, _middle.txt, and
-	// _last.txt)
-	ulong firstLineNum;
-	ulong middleLineNum;
-	ulong lastLineNum;
-
-	// Copy the data into the variables
-	memcpy(&firstLineNum, packetData + 0x4A, 4);
-	memcpy(&middleLineNum, packetData + 0x4E, 4);
-	memcpy(&lastLineNum, packetData + 0x52, 4);
-
-	// Now, figure out the unapproved name and store it as
-	// as string
-	string unapprovedName = GetUnapprovedUsername(firstLineNum, middleLineNum, lastLineNum);
-	
-
-	// Save character into the database
-	uchar creationStatus = 0;
-
-	// Get the strings of the username
-	string usernameStr = string(username.c_str());
-	string unapprovedUserStr = string(unapprovedName.c_str());
-
-	if (usernameStr.size() == 0) usernameStr = unapprovedUserStr;
-
-	// Prepare the first query to check to see if username
-	// already exists
-	long long extobjid = CharactersTable::getObjidFromCharacter(usernameStr);
-	// Query the database...
-	if (extobjid < 0) {
-		// Query the database again to see if the unapproved
-		// name already exists...
-
-		if (!CharactersTable::unapprovedNameExists(unapprovedName)) {
-			std::cout << "Username and predefined username not in use! Storing in database..." << endl;
-			
-			CharacterInfo info;
-			info.name = usernameStr;
-			info.unapprovedName = unapprovedUserStr;
-
-			CharacterStyle style;
-			style.shirtColor = shirtColor;
-			style.shirtStyle = shirtStyle;
-			style.pantsColor = pantsColor;
-			style.hairStyle = hairStyle;
-			style.hairColor = hairColor;
-			style.lh = lh;
-			style.rh = rh;
-			style.eyebrows = eyebrows;
-			style.eyes = eyes;
-			style.mouth = mouth;
-					
-			long long charObjid = CharactersTable::add(style, usr->GetID(), info);
-			AccountsTable::setFrontChar(charObjid);
-
-			//To prepare the starter kit, create a shirtID and a pantsID object
-			//Add them to the inventory and equip them
-			long long shirtObjid = ObjectsTable::createObject(shirtID);
-			InventoryTable::insertItem(charObjid, shirtObjid, 1, 0, true);
-			EquipmentTable::equipItem(charObjid, shirtObjid);
-
-			long long pantsObjid = ObjectsTable::createObject(pantsID);
-			InventoryTable::insertItem(charObjid, pantsObjid, 1, 1, true);
-			EquipmentTable::equipItem(charObjid, pantsObjid);
-
-			usr->nameInUse = 0;
-		}
-		else {
-			cout << "Pre-defined username already in use!" << endl;
-			usr->nameInUse = 1;
-			creationStatus = 3;
-		}
-	}
-	else {
-		cout << "Username already in use!" << endl;
-		usr->nameInUse = 1;
-		creationStatus = 4;
-		if (usernameStr == unapprovedUserStr) creationStatus = 3; //Temp Name used as name
-	}
-
-	// Create the bitstream to send to the client with the
-	// char create status
-	RakNet::BitStream bitStream;
-	CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 7, &bitStream);
-
-	bitStream.Write(creationStatus);
-
-	// Send the packet
-	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+	Logger::log("CHAR", "PACKETS", "User has " + std::to_string(numrows) + " items equipped");
 }
 
 string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine) {

@@ -6,6 +6,8 @@
 #include "Account.h"
 #include "Characters.h"
 
+#include "Logger.h"
+
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
 #include "RakNet\RakNetworkFactory.h"
@@ -83,7 +85,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 				switch (packet->data[1]) {
 					case GENERAL:
 						if (packet->data[3] == VERSION_CONFIRM) {	// thats just a formality so far since no other numbers occured for this case
-							std::cout << "[CHAR] Handshake" << std::endl;
+							Logger::log("CHAR", "", "Handshake");
 							SendInitPacket(rakServer, packet->systemAddress, false);
 						}
 						break;
@@ -93,20 +95,21 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 						switch (packet->data[3]) {
 							case CLIENT_VALIDATION:
 							{
-								cout << "[CHAR] Recieved client validation..." << endl;
+								Logger::log("CHAR", "", "Recieved client validation...");
 								break;
 							}
 
 							case CLIENT_CHARACTER_LIST_REQUEST:
 							{
-									  auto usr = OnlineUsers->Find(packet->systemAddress);
-									  SystemAddress addr = packet->systemAddress;
-									  std::cout << "[CHAR] " << addr.ToString() << std::endl;
-									  if (usr->nameInUse == 0) {
-										  std::cout << "[CHAR] Sending char packet..." << std::endl;
-										  SendCharPacket(rakServer, packet->systemAddress, usr);
-									  }
-									  break;
+								auto usr = OnlineUsers->Find(packet->systemAddress);
+								SystemAddress addr = packet->systemAddress;
+
+								Logger::log("CHAR", "", std::string(addr.ToString()));
+								if (usr->nameInUse == 0) {
+									Logger::log("CHAR", "", "Sending char packet...");
+									SendCharPacket(rakServer, packet->systemAddress, usr->GetID());
+								}
+								break;
 							}
 
 							case CLIENT_CHARACTER_CREATE_REQUEST:
@@ -118,9 +121,6 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 								
 								// Make SURE user is not null!!!!!!
 								if (usr != NULL) {
-									//AddCharToDatabase(rakServer, packet->systemAddress, packet->data, packet->length, usr);
-
-									//TEMP
 									RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
 									unsigned char packetid;
 									data->Read(packetid);
@@ -131,16 +131,13 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 									unsigned char padding;
 									data->Read(padding);
 									success = Characters::CreateCharacter(data, packet->systemAddress, usr->GetID());
-									//END TEMP
-
-
 								}else {
-									std::cout << "[CHAR] ERROR SAVING USER: User is null." << std::endl;
+									Logger::logError("CHAR", "", "saving user", "user is NULL");
 								}
 								
 								// If the username is in use, do NOT send the char packet. Otherwise, send it
 								if (success) {
-									SendCharPacket(rakServer, packet->systemAddress, usr);
+									SendCharPacket(rakServer, packet->systemAddress, usr->GetID());
 								}
 							}
 								break;
@@ -209,11 +206,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 
 					// If packet ID (3rd byte) is unidentified, print the packet data
 					default:
-						stringstream s;
-
-						// If packet is unidentified, print data to console
-						s << "\n[CHAR] Characters received unknown packet: " << RawDataToString(packet->data, packet->length) << endl;
-						OutputQueue->Insert(s.str());
+						Logger::log("CHAR", "", "received unknown packet: " + RawDataToString(packet->data, packet->length));
 				}
 
 				break;
@@ -221,7 +214,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 			// Recieving a new connection to the char server
 			case ID_NEW_INCOMING_CONNECTION:
 			#ifdef DEBUG
-				OutputQueue->Insert("\n[CHAR] Characters is receiving a new connection...\n");
+				Logger::log("CHAR", "", "is receiving a new connection...");
 			#endif
 				break;
 
@@ -230,16 +223,14 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 			{
 				auto usr = OnlineUsers->Find(packet->systemAddress);
 				if (OnlineUsers->Remove(packet->systemAddress))
-					OutputQueue->Insert("[CHAR] Disconnected " + usr->GetUsername() + "\n");
+					Logger::log("CHAR", "", "disconnected " + usr->GetUsername());
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_AUTHENTIFIED);
 			}
 				break;
 
 			// Default msg (if packet is unidentified)
 			default:
-				stringstream s;
-				s << "\n[CHAR] Characters received unknown packet: " << RawDataToString(packet->data, packet->length) << endl;
-				OutputQueue->Insert(s.str());
+				Logger::log("CHAR", "", "received unknown packet: " + RawDataToString(packet->data, packet->length));
 		}
 	}
 	//LUNI_CHAR = false;

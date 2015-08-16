@@ -90,26 +90,6 @@ struct CharactersPacket {
 
 	// Function to write the data to bitstream.
 	void WriteDataToBitstream(RakNet::BitStream *bitStream, uint charId) {
-		//cout << sizeof(unsigned long long int) << endl;
-
-		std::cout << "[CHAR] Fetching character..." << endl;
-		std::cout << "[CHAR] Character name is: ";
-		std::wcout << charName;
-		std::cout << std::endl;
-		std::cout << "[CHAR] Unapproved name is: ";
-		std::wcout << unapprovedName;
-		std::cout << std::endl;
-		/*std::cout << "[CHAR] Name Rejected?: " << nameRejected << endl;
-		std::cout << "[CHAR] Free to play?: " << freeToPlay << endl;
-		std::cout << "[CHAR] Shirt color: " << shirtColor << endl;
-		std::cout << "[CHAR] Shirt style: " << shirtStyle << endl;
-		std::cout << "[CHAR] Pants color is: " << pantsColor << endl;
-		std::cout << "[CHAR] Hair style is: " << hairStyle << endl;
-		std::cout << "[CHAR] Hair color is: " << hairColor << endl;
-		std::cout << "[CHAR] Eyebrows is: " << eyebrows << endl;
-		std::cout << "[CHAR] Eyes are: " << eyes << endl;
-		std::cout << "[CHAR] Mouth is: " << mouth << endl;*/
-
 		ushort z = 0;
 
 		bitStream->Write(objectID);
@@ -152,7 +132,7 @@ struct CharactersPacket {
 };
 
 // This sends the packet known as char_aw2.bin to the client
-void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, Ref<User> user);
+void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid);
 
 // Sends the deletion packet to the client
 void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, Ref<User> user, uchar *packetData, uint length);
@@ -162,12 +142,6 @@ string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine);
 
 // Go to and read the line in a txt file
 fstream& GoToLine(fstream& file, ulong num);
-
-// This will add the created character to the SQL database
-void AddCharToDatabase(RakPeerInterface *rakServer, SystemAddress& systemAddress, uchar *packetData, uint length, Ref<User> usr);
-
-// Store the character in database based on charId and userId
-void StoreCharInDatabase(uint usrId, uchar charId);
 
 // Figure out the items the character is wearing / was created with
 ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle);

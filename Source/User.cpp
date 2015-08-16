@@ -58,7 +58,7 @@ std::vector< Ref<Character> > User::LoadCharacters() {
 }
 
 void User::SetCharacter(long long cid){
-	std::cout << "[USER] SET CHAR ID: " << cid << std::endl;
+	Logger::log("USER", "", "Set char id " + std::to_string(cid));
 	AccountsTable::setFrontChar(cid);
 	for (int i = 0; i < 4; i++){
 		if (characters[i] == cid){
@@ -69,7 +69,7 @@ void User::SetCharacter(long long cid){
 			return;
 		}
 	}
-	std::cout << "[USER] LOADING CHAR: " << cid << std::endl;
+	Logger::log("USER", "", "Loading char " + std::to_string(cid));
 	current = Ref<Character>(new Character(cid));
 }
 
@@ -169,7 +169,7 @@ bool User::LoadWorld(ZoneId zone, RakNet::BitStream *stream){
 	stream->Write((uchar)0);
 
 	if (zone == ZoneId::NO_ZONE){
-		std::cout << "[WRLD] WARNING: No zone selected, default to 1200 NIMBUS_STATION" << std::endl;
+		Logger::log("USER", "WARNING", "No zone selected, default to 1200 NIMBUS_STATION");
 		zone = ZoneId::NIMBUS_STATION;
 	}
 
@@ -232,7 +232,7 @@ Ref<User> User::Login(const string& nikname, const string& password, const Syste
 		
 		// Simple check to see if account is banned. If it is, return BANNED (for client to show)
 		if (info.banned) {
-			cout << "Banned!";
+			Logger::log("USER", "LOGIN", "User is BANNED");
 			currentLoginStatus = UserSuccess::BANNED;
 		}
 	}
@@ -240,19 +240,11 @@ Ref<User> User::Login(const string& nikname, const string& password, const Syste
 	// If account is locked, whether user entered in correct password or not,
 	// Show this (because each username is unique)
 	if (info.locked) {
-		cout << "Account Locked";
+		Logger::log("USER", "LOGIN", "User is LOCKED");
 
 		// Change currentStatus to LOCKED
 		currentLoginStatus = UserSuccess::LOCKED;
 	}
-
-	/*CharacterCount ccount = AccountsTable::getCharCountInfo(accountid);
-	
-	int currentNumChars = ccount.count;
-	int currentFrontChar = ccount.front;
-
-	std::cout << "Current Front Char is: " << currentFrontChar << std::endl;
-	std::cout << "Current Number of Chars is: " << currentNumChars << std::endl;*/
 
 	// Print current status to console (just to check, to delete later)
 	Logger::log("USER", "LOGIN", "Current login status is " + std::to_string(currentLoginStatus));
@@ -362,7 +354,7 @@ void User::getChardata(long long objid, RakNet::BitStream *packet){
 	for (uint k = 0; k < items.size(); k++){
 		//long lot = ObjectsTable::getTemplateOfItem(items.at(k).objid);
 		ObjectInfo oinfo = ObjectsTable::getItemInfo(items.at(k).objid);
-		std::cout << "[USER] [CHARDATA] Adding item " << std::to_string(oinfo.lot) << "[" << std::to_string(oinfo.objid) << "] " << std::to_string(oinfo.spawnerid) << std::endl;
+		Logger::log("USER", "CHARDATA", "Adding item " + std::to_string(oinfo.lot) + "[" + std::to_string(oinfo.objid) + "] " + std::to_string(oinfo.spawnerid));
 
 		if (oinfo.lot > -1){
 			stringstream adddata;
@@ -387,7 +379,7 @@ void User::getChardata(long long objid, RakNet::BitStream *packet){
 						RocketInfo rinfo = ObjectsTable::getRocketInfo(sinfo.objid);
 						if (rinfo.cockpit_template > 0 && rinfo.engine_template > 0 && rinfo.nose_cone_template > 0){
 							//adddata << "<x ma=\"0:1:" << rinfo.nose_cone_template << "+1:" << rinfo.cockpit_template << "+1:" << rinfo.engine_template << "\"/>";
-							std::cout << "[USER] [CHARDATA] Adding Rocket" << std::endl;
+							Logger::log("USER", "CHARDATA", "Adding Rocket");
 						}
 					}
 				}
