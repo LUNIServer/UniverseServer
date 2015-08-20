@@ -5,7 +5,7 @@
 
 void InventoryTable::updateSlotOfItem(long long objid, long long charid, unsigned long newslot){
 	std::stringstream oi;
-	oi << "UPDATE `luni`.`inventory` SET `slot` = '" << newslot << "' WHERE `object` = " << objid << ";";
+	oi << "UPDATE `inventory` SET `slot` = '" << newslot << "' WHERE `object` = " << objid << ";";
 	Database::Query(oi.str());
 }
 

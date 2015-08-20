@@ -1,6 +1,7 @@
 #include "Account.h"
 #include "World.h"
 #include "Social.h"
+#include "Logger.h"
 
 void Session::connect(SystemAddress address){
 	//Logic for connection
@@ -75,29 +76,29 @@ void Session::disconnect(SystemAddress address, SessionPhase source){
 }
 
 void Session::login(SystemAddress address, unsigned int accountid){
-	std::cout << "[GAME] [SESSION] " << address.ToString() << " logging in with account id " << std::to_string(accountid) << std::endl;
+	Logger::log("GAME", "SESSION", std::string(address.ToString()) + " logging in with account id " + std::to_string(accountid));
 	SessionsTable::connect(address);
 	SessionsTable::login(address, accountid);
 }
 
 void Session::play(unsigned int accountid, long long charid){
-	std::cout << "[GAME] [SESSION] account id " << std::to_string(accountid) << " playing with char " << std::to_string(charid) << std::endl;
+	Logger::log("GAME", "SESSION", "account id " + std::to_string(accountid) + " playing with char " + std::to_string(charid));
 	SessionsTable::play(accountid, charid);
 }
 
 void Session::quit(long long charid){
-	std::cout << "[GAME] [SESSION] char " << std::to_string(charid) << " quitting play" << std::endl;
+	Logger::log("GAME", "SESSION", "char " + std::to_string(charid) + " quitting play");
 	SessionsTable::quit(charid);
 }
 
 void Session::enter(long long charid, unsigned short Zone){
-	std::cout << "[GAME] [SESSION] char " << std::to_string(charid) << " joined " << (ZoneId) Zone << std::endl;
+	Logger::log("GAME", "SESSION", "char " + std::to_string(charid) + " joined " + (ZoneId)Zone);
 	SessionsTable::enter(charid, Zone);
 	Friends::checkFriendRequests(charid);
 	Friends::checkFriendResponses(charid);
 }
 
 void Session::leave(long long charid){
-	std::cout << "[GAME] [SESSION] char " << std::to_string(charid) << " left world" << std::endl;
+	Logger::log("GAME", "SESSION", "char " + std::to_string(charid) + " left world");
 	SessionsTable::leave(charid);
 }

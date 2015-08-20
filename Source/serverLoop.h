@@ -11,7 +11,15 @@
 #include "RakNet\StringCompressor.h"
 #include "RakNet\BitStream.h"
 
-static bool LUNIterminate = false; // Use for terminating threads
+static bool LUNIterminate; // Use for terminating threads
+static bool getTerminate(){
+	return LUNIterminate;
+}
+
+//Threads running?
+//static bool LUNI_AUTH;
+//static bool LUNI_CHAR;
+//static bool LUNI_WRLD;
 
 // Initialize RakNet security
 void InitSecurity(RakPeerInterface* rakServer, bool useEncryption);

@@ -147,6 +147,15 @@
     <ClInclude Include="TimeUtil.h">
       <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="ServerDB.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Characters.h">
+      <Filter>Header Files\Mechanics</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -229,6 +238,15 @@
     </ClCompile>
     <ClCompile Include="Account.cpp">
       <Filter>Source Files\Mechanics</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerDB.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Characters.cpp">
+      <Filter>Source Files\Mechanics</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

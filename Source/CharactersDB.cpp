@@ -19,30 +19,31 @@ long long CharactersTable::getObjidFromCharacter(std::string name){
 	}
 }
 
-CharacterOwner CharactersTable::getAccountFromObjid(long long objid){
-	auto qr = Database::Query("SELECT `id`, `accountID` FROM `characters` WHERE `objectID` = '" + std::to_string(objid) + "' LIMIT 1;");
+unsigned int CharactersTable::getAccountFromObjid(long long objid){
+	auto qr = Database::Query("SELECT `accountID` FROM `characters` WHERE `objectID` = '" + std::to_string(objid) + "' LIMIT 1;");
 	if (mysql_num_rows(qr) == 0) {
-		return CharacterOwner(0, 0);
+		return 0;
 	}
 	auto r = mysql_fetch_row(qr);
-	return CharacterOwner(std::stoi(r[1]), std::stoi(r[0]));
+	return std::stoi(r[0]);
 }
 
-std::vector<long long> CharactersTable::getCharcters(unsigned int accountid){
-	std::vector<long long> chars(4, 0ULL);
+std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
+	std::vector<long long> chars;
 	auto qr = Database::Query("SELECT `id`, `objectID` FROM `characters` WHERE `accountID` = " + std::to_string(accountid) + " LIMIT 4"); // Load chars from MySQL DB
 	MYSQL_ROW row;
+	chars.reserve(4);
 	while (row = mysql_fetch_row(qr)) {
 		std::stringstream s(row[1]);
 		long long cid;
 		s >> cid;
 		ushort id = std::stoi(row[0]);
-		chars[id] = cid;
+		chars.push_back(cid);
 	}
 	return chars;
 }
 
-ListCharacterInfo CharactersTable::getCharacterInfo(CharacterOwner owner){
+/*ListCharacterInfo CharactersTable::getCharacterInfo(CharacterOwner owner){
 	std::stringstream qrs;
 	qrs << "SELECT ";
 	qrs << "`objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
@@ -52,7 +53,7 @@ ListCharacterInfo CharactersTable::getCharacterInfo(CharacterOwner owner){
 	std::string qrss = qrs.str();
 	auto qr = Database::Query(qrss);
 	return CharactersTable::getCharacterInfo(qr);
-}
+}*/
 
 ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	std::stringstream qrs;
@@ -149,11 +150,11 @@ std::vector<unsigned char> CharactersTable::getCharacterIndices(unsigned int acc
 	return chars;
 }
 
-long long CharactersTable::add(CharacterStyle style, CharacterOwner owner, CharacterInfo names){
+long long CharactersTable::add(CharacterStyle style, unsigned int accountid, CharacterInfo names){
 	std::stringstream query2;
-	query2 << "INSERT INTO `characters` (`id`, `accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
+	query2 << "INSERT INTO `characters` (`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
 	query2 << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, `lastZoneId`) ";
-	query2 << "VALUES('" << std::to_string(owner.charIndex) << "', '" << std::to_string(owner.accountid) << "', NULL, '" << names.name << "', '" << names.unapprovedName << "', '0', '0', '";
+	query2 << "VALUES('" << std::to_string(accountid) << "', NULL, '" << names.name << "', '" << names.unapprovedName << "', '0', '0', '";
 	query2 << std::to_string(style.shirtColor) << "', '" << std::to_string(style.shirtStyle) << "', '";
 	query2 << std::to_string(style.pantsColor) << "', '" << std::to_string(style.hairStyle) << "', '" << std::to_string(style.hairColor) << "', '";
 	query2 << std::to_string(style.lh) << "', '" << std::to_string(style.rh) << "', '" << std::to_string(style.eyebrows) << "', '";

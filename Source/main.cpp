@@ -145,6 +145,10 @@ int main() {
 	// Create a new CrossThreadQueue for writing output to the console from a thread
 	Ref< CrossThreadQueue< std::string > > OutputQueue = new CrossThreadQueue< std::string >();
 
+	//LUNI_AUTH = false;
+	//LUNI_CHAR = false;
+	//LUNI_WRLD = false;
+
 	// Start the three new threads (Auth, Char, and World servers)
 	std::thread thauth(AuthLoop, &auth, OnlineUsers, OutputQueue);
 	std::thread thchar(CharactersLoop, &character, OnlineUsers, OutputQueue);
@@ -198,10 +202,25 @@ int main() {
 	}
 
 	// No longer in use...
-	/*thauth.join();
+	thauth.join();
+	std::cout << "[MAIN] AUTH ended" << std::endl;
 	thchar.join();
-	thworld.join();*/
+	std::cout << "[MAIN] CHAR ended" << std::endl;
+	thworld.join();
+	std::cout << "[MAIN] WRLD ended" << std::endl;
 
 	// If the loop was terminated, quit the server
+
+	/*LUNIterminate = true;
+	std::cout << "[MAIN] Waiting on Threads to exit" << std::endl;
+	int i = 0;
+	while (LUNI_AUTH || LUNI_CHAR || LUNI_WRLD){
+		i++;
+		//DO Nothing
+		if (_kbhit()) {
+			exit(0);
+		}
+	}*/
+
 	exit(0);
 }

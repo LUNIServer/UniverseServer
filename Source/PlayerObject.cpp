@@ -5,6 +5,9 @@
 #include "RakNet\ReplicaManager.h"
 #include "UsersPool.h"
 
+#include "Logger.h"
+#include "UtfConverter.h"
+
 #include <map>
 
 extern ReplicaManager replicaManager;
@@ -150,9 +153,7 @@ void PlayerObject::destruct(){
 ReplicaReturnResult PlayerObject::SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp){
 	//This is the construction Packet
 
-	std::cout << "Send construction of '";
-	std::wcout << this->name;
-	std::cout << "' to " << systemAddress.ToString() << std::endl;
+	Logger::log("REPL", "PLAYER", "Send construction of" + UtfConverter::ToUtf8(this->name) + " to " + std::string(systemAddress.ToString()));
 	replicaPacketGeneral(outBitStream, REPLICA_CONSTRUCTION_PACKET, this->objid, this->name);
 
 	this->component1->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);

@@ -5,6 +5,7 @@
 #include "WorldServer.h"
 #include "Packet.h"
 #include "UtfConverter.h"
+#include "Logger.h"
 
 #include <iostream>
 
@@ -161,7 +162,7 @@ void Friends::informRequester(ListCharacterInfo tell, ListCharacterInfo about, s
 }
 
 void Friends::sendFriendsList(long long charid){
-	std::cout << "[GAME] [SOCIAL] Getting friends list for charid: " << std::to_string(charid) << std::endl;
+	Logger::log("GAME", "SOCIAL", "Getting friends list for charid: " + std::to_string(charid));
 	std::vector<long long> bestFriends = FriendsTable::getBestFriends(charid);
 	std::vector<long long> friends = FriendsTable::getFriends(charid);
 	RakNet::BitStream *bs = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::FRIENDS_LIST);
@@ -182,8 +183,8 @@ void Friends::sendFriendsList(long long charid){
 			id = friends.at(k - bfs);
 		}
 		SessionInfo info = SessionsTable::getClientSession(SessionsTable::findCharacter(id));
-		CharacterOwner o = CharactersTable::getAccountFromObjid(id);
-		ListCharacterInfo l = CharactersTable::getCharacterInfo(o);
+		//unsigned int accountid = CharactersTable::getAccountFromObjid(id);
+		ListCharacterInfo l = CharactersTable::getCharacterInfo(id);
 		if (info.phase > SessionPhase::PHASE_AUTHENTIFIED){ //Is player online
 			bs->Write((unsigned char)1);
 		}
@@ -270,7 +271,7 @@ void Friends::handleWorldJoin(long long charid){
 		Friends::broadcastFriendLogin(charid);
 	}
 	else{
-		std::cout << "[GAME] [SOCIAL] Following world join" << std::endl;
+		Logger::log("GAME", "SOCIAL", "Following world join");
 		Friends::sendFriendsList(charid);
 		Friends::broadcastFriendWorldChange(charid);
 	}
@@ -293,7 +294,7 @@ void Friends::checkFriendRequests(long long charid){
 			Friends::getFriendRequest(info.info.name, charid, true);
 		}
 	}
-	std::cout << "[GAME] [SOCIAL] Queried Friend Requests" << std::endl;
+	Logger::log("GAME", "SOCIAL", "Queried Friend Requests");
 }
 
 void Friends::checkFriendResponses(long long charid){

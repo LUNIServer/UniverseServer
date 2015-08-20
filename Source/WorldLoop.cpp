@@ -19,6 +19,7 @@
 #include "ReplicaComponents.h"
 #include "InventoryDB.h"
 #include "CharactersDB.h"
+#include "ServerDB.h"
 
 #include "Account.h"
 #include "Social.h"
@@ -27,6 +28,7 @@
 #include "zlib.h"
 
 #include "UtfConverter.h"
+#include "Logger.h"
 
 #include <cstdlib>
 #include <map>
@@ -74,12 +76,6 @@ NetworkIDManager networkIdManager;
 std::map<SystemAddress, ZoneId> Player;
 Ref< UsersPool > WorldOnlineUsers;
 
-void CheckMail(RakPeerInterface* rakServer, SystemAddress &systemAddress){
-	auto v = OpenPacket(".\\mail\\notify.bin");
-	cout << "[WRLD] Checking Mail" << endl;
-	ServerSendPacket(rakServer, v, systemAddress);
-}
-
 void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< string > > OutputQueue) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
@@ -97,12 +93,21 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Initialize the SocketDescriptor
 	SocketDescriptor socketDescriptor(cfg->listenPort, 0);
 
+	std::stringstream straddr;
+	straddr << cfg->redirectIp << ":" << cfg->listenPort;
+	SystemAddress ServerAddress;
+	ServerAddress.SetBinaryAddress(straddr.str().data());
+	
 	// If the startup of the server is successful, print it to the console
 	// Otherwise, quit the server (as the char server is REQUIRED for the
 	// server to function properly)
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
 		stringstream s;
 		s << "[WRLD] started! Listening on: " << cfg->listenPort << "\n";
+
+		//int serverinstanceid = InstancesTable::registerInstance(ServerAddress);
+		//s << "WORLD SERVER STARTED ON " << ServerAddress.ToString() << " AS INSTANCE " << std::to_string(serverinstanceid) << std::endl;
+
 		OutputQueue->Insert(s.str());
 	} else exit(2);
 
@@ -142,48 +147,19 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Set the optional callbacks to send and receive download complete notifications
 	//replicaManager.SetDownloadCompleteCB(&sendDownloadCompleteCB, &receiveDownloadCompleteCB);
 
-	//XIPHOSEER EDIT	
-
-	//RakNet::BitStream v1a;
-	//replicaCreationPacket(&v1a);
-	// WAS JUST FOR TESTING
-	//SavePacketOverwrite(".\\world\\test\\world_2_1_dynamic.bin", (char*)v1a.GetData(), v1a.GetNumberOfBytesUsed());
-
-	//vector<uchar> pc = CreateCharacterPacket(500);
-	//cout << RawDataToString(&pc[0], pc.size());
-	//SavePacketOverwrite(".\\world\\world_2a_create.bin", pc);
-
-	/*auto v = OpenPacket(".\\world\\world_2a.bin");
-	// v[0x04] == 0x04
-	uint32 size = v[0x08] + v[0x09] * 0x100 + v[0x0a] * 0x10000 + v[0x0b] * 0x1000000;
-	cout << "Packet Size: " << size << endl;
-	boolean compressed = v[0x0c];
-	cout << "Compressed: " << (int) compressed << endl;
-	uint32 sizeUC = v[0x0d] + v[0x0e] * 0x100 + v[0x0f] * 0x10000 + v[0x10] * 0x1000000;
-	uint32 sizeC = v[0x11] + v[0x12] * 0x100 + v[0x13] * 0x10000 + v[0x14] * 0x1000000;
-	cout << "Packet size uncompressed: " << sizeUC << endl;
-	cout << "Packet size compressed: " << sizeC << endl;
-
-	uint32 num = v[0x15] + v[0x16] * 0x100 + v[0x17] * 0x10000 + v[0x18] * 0x1000000;
-	cout << "Number of Keys: " << num << endl;
-	int len = v[0x15] / 0x10;
-	cout << "Keylength: " << (int) len << endl;
-	for (int k = 0; k < len; k = k + 2){
-		wchar_t chr = v[0x16 + k] + 0x100 * v[0x17 + k];
-		cout << chr << endl;
-		vector<uchar> c = {v[0x16 + k], v[0x17 + k]};
-		cout << RawDataToString(&c[0], c.size(), true) << endl;
-	}
-	wchar_t key(v[0x16]);*/
-
 	ReplicaComponent *cp = new Component1();
 	cp->writeToPacket(new RakNet::BitStream(), REPLICA_PACKET_TYPE::REPLICA_CONSTRUCTION_PACKET);
 
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
 	WorldServer::publishWorldServer(rakServer);
 
+	//LUNI_WRLD = true;
+
 	// This will be used in the saving of packets below...
-	while (!LUNIterminate) {
+	while (!getTerminate()) {
+		if (getTerminate()){
+			std::cout << "W";
+		}
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Recieve the packets from the server
 		if (packet == NULL) continue; // If packet is NULL, just continue without processing anything
@@ -214,7 +190,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 						switch (packet->data[3]) {
 							case CLIENT_VALIDATION:
 							{
-								std::cout << "[WRLD] Client Validation" << std::endl;
+								Logger::log("WRLD", "CLIENT", "Validation");
 								auto usr = OnlineUsers->Find(packet->systemAddress);
 								if (usr != NULL){
 									RakNet::BitStream worldLoad;
@@ -222,7 +198,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									rakServer->Send(&worldLoad, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 								}
 								else{
-									std::cout << "[WRLD] [CLIENT] Unknown client tried to login from " << packet->systemAddress.ToString() << std::endl;
+									Logger::log("WRLD", "CLIENT", "Unknown client tried to login from " + std::string(packet->systemAddress.ToString()));
 								}
 							}
 								break;
@@ -237,8 +213,8 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									Player.at(packet->systemAddress) = usr->getWorld();
 								}
 
-								std::cout << std::endl << "[WRLD] client level load complete" << std::endl;
-								std::cout << "[WRLD] Replying to Character" << std::endl;
+								Logger::log("WRLD", "CLIENT", "Level load complete");
+								Logger::log("WRLD", "", "Replying to Character");
 
 								long long objid = usr->GetCurrentCharacter()->charobjid;
 									
@@ -377,7 +353,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 							parsePacket(rakServer, packet->systemAddress, data, (ulong)(packet->length - 1), usr);
 						}
 						else{
-							std::cout << "[WRLD] [CLIENT] Recieved packet from unconnected user " << packet->systemAddress.ToString() << std::endl;
+							Logger::log("WRLD", "CLIENT", "Recieved packet from unconnected user " + std::string(packet->systemAddress.ToString()));
 						}
 					}
 				}
@@ -385,7 +361,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
 			#ifdef DEBUG
-				OutputQueue->Insert("\n[WRLD] is receiving a new connection...\n");
+				Logger::log("WRLD", "CLIENT", "Receiving a new connection...");
 			#endif
 				break;
 
@@ -393,7 +369,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 			{
 				auto usr = OnlineUsers->Find(packet->systemAddress);
 				if (OnlineUsers->Remove(packet->systemAddress))
-					OutputQueue->Insert("[WRLD] Disconnected " + usr->GetUsername() + "\n");
+					Logger::log("WRLD", "CLIENT", "Disconnected " + usr->GetUsername());
 				Friends::broadcastFriendLogout(usr->GetCurrentCharacter()->charobjid);
 				usr->DestructPlayer();
 				Player.erase(packet->systemAddress);
@@ -411,12 +387,14 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 		rakServer->DeallocatePacket(packet);
 	}
 
-	stringstream s;
-	s << "[WRLD] Quitting\n";
-	OutputQueue->Insert(s.str());
+	//InstancesTable::unregisterInstance(ServerAddress);
+
+	Logger::log("WRLD", "", "Quitting");
 
 	rakServer->Shutdown(0);
 	RakNetworkFactory::DestroyRakPeerInterface(rakServer);
+
+	//LUNI_WRLD = false;
 }
 
 //TODO: temporary
@@ -461,12 +439,12 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				if (flag) addv.push_back(chr);
 			}
 			std::string address(addv.begin(), addv.end()); //Unused, no data
-			std::cout << "[WRLD] Client: " << systemAddress.ToString() << std::endl;
-			std::cout << "[WRLD] -- Client Handshake --" << std::endl;
-			std::cout << "       ver " << version << std::endl;
-			std::cout << "       pid " << processid << std::endl;
-			std::cout << "       con " << remoteConnectionType << std::endl;
-			std::cout << "       prt " << port << std::endl;
+			Logger::log("WRLD", "PARSER", "Client: " + std::string(systemAddress.ToString()));
+			Logger::log("WRLD", "PARSER", "Client Handshake Request");
+			Logger::log("WRLD", "PARSER", "Version:        " + std::to_string(version));
+			Logger::log("WRLD", "PARSER", "ProcessID:      " + std::to_string(processid));
+			Logger::log("WRLD", "PARSER", "ConnectionType: " + std::to_string(remoteConnectionType));
+			Logger::log("WRLD", "PARSER", "Port:           " + std::to_string(port));
 
 			//Preparing answer:
 			RakNet::BitStream *aw = new RakNet::BitStream(59);
@@ -477,11 +455,11 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			ulong s_processid = GetCurrentProcessId();
 			short s_unknown2 = -1; //port = 0xFFFF = -1 -> no port?
 			std::string s_ip = rakServer->GetLocalIP(0);
-			std::cout << "[WRLD] -- Server Handshake Response --" << std::endl;
-			std::cout << "       ver " << s_version << std::endl;
-			std::cout << "       pid " << s_processid << std::endl;
-			std::cout << "       con " << s_remoteConnectionType << std::endl;
-			std::cout << "       adr " << s_ip << std::endl;
+			Logger::log("WRLD", "PARSER", "Server Handshake Response");
+			Logger::log("WRLD", "PARSER", "Version:        " + std::to_string(s_version));
+			Logger::log("WRLD", "PARSER", "ProcessID:      " + std::to_string(s_processid));
+			Logger::log("WRLD", "PARSER", "ConnectionType: " + std::to_string(s_remoteConnectionType));
+			Logger::log("WRLD", "PARSER", "Address:        " + s_ip);
 			aw->Write(s_version);
 			aw->Write(s_unknown);
 			aw->Write(s_remoteConnectionType);
@@ -590,14 +568,14 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		}
 			break;
 		case ChatPacketID::GET_FRIENDS_LIST:
-			cout << "[WRLD] Requesting Friends-List" << endl;
+			Logger::log("WRLD", "PARSER", "Requesting Friends-List");
 			//TODO: Please implement using 53-05-00-1e
 			Friends::handleWorldJoin(usr->GetCurrentCharacter()->charobjid);
 			//Friends::sendFriendsList(usr->GetCurrentCharacter()->charobjid);
 			//Friends::broadcastFriendLogin(usr->GetCurrentCharacter()->charobjid);
 			break;
 		case ChatPacketID::GET_IGNORE_LIST:
-			cout << "[WRLD] Requesting Ignore-List" << endl;
+			Logger::log("WRLD", "PARSER", "Requesting Ignore-List");
 			//TODO: probably similar to implementing friends using 53-05-00-1e
 			break;
 		case ChatPacketID::TEAM_INVITE:
@@ -605,7 +583,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 			break;
 		case ChatPacketID::TEAM_GET_STATUS:
-			cout << "[WRLD] Requesting Team status" << endl;
+			Logger::log("WRLD", "PARSER", "Requesting Team status");
 			//TODO
 			break;
 		case ChatPacketID::REQUEST_MINIMUM_CHAT_MODE_PRIVATE:
@@ -641,7 +619,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			//Only happens when getting charlist ingame
 			std::cout << "[CHAR] CLIENT_CHARACTER_LIST_REQUEST" << std::endl;
 			std::cout << "[CHAR] Sending char packet..." << std::endl;
-			SendCharPacket(rakServer, systemAddress, usr);
+			SendCharPacket(rakServer, systemAddress, usr->GetID());
 			break;
 		}
 		case WorldPacketID::CLIENT_LOGIN_REQUEST:
@@ -659,7 +637,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		case WorldPacketID::CLIENT_ROUTE_PACKET:
 			ulong subPacketLength;
 			data->Read(subPacketLength);
-			cout << "[WRLD] Recieved routing packet; Length: " << subPacketLength << endl;
+			Logger::log("WRLD", "PARSER", "Recieved routing packet; Length: " + std::to_string(subPacketLength));
 			parsePacket(rakServer, systemAddress, data, subPacketLength, usr);
 			break;
 		case WorldPacketID::CLIENT_GAME_MSG:
@@ -684,8 +662,8 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			//We ignore what was here, because bitstream seems way better to use in this case.
 			//The code gave a hint that the "objid" could be the character using the object
 			//Actually it is mostly the charcter, but in some cases it is not
-			cout << "[WRLD] Game Message, ID: " << msgid << endl;
-			cout << "OBJECT-ID: " << objid << flags << endl;
+			Logger::log("WRLD", "PARSER", "Game Message, ID: " + std::to_string(msgid));
+			Logger::log("WRLD", "PARSER", "OBJECT-ID: " + std::to_string(objid));
 #endif
 			switch (msgid){
 			case 41:
@@ -963,14 +941,16 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				for (uchar i = 0; i < 7; i++){
 					data->Read(dat);
 				}
-				if (isStart) cout << "Camerapath started" << endl; else cout << "Camerapath finished" << endl;
+				if (isStart) Logger::log("WRLD", "PARSER", "Camerapath started"); else Logger::log("WRLD", "PARSER", "Camerapath finished");
 				break;
 			case 768:
 			{
 				//Camera moving
 				REPLICA_OBJECT_POSITION pos;
 				data->Read(pos);
-				cout << "Camera-Position: (X:" << pos.posX << "|Y:" << pos.posY << "|Z:" << pos.posZ << ")" << endl;
+				std::stringstream str;
+				str << "Camera-Position: (X:" << pos.posX << "|Y:" << pos.posY << "|Z:" << pos.posZ << ")";
+				Logger::log("WRLD", "PARSER", str.str());
 			}
 				break;
 			case 850: //Chat messages and commands, starting with '/'
@@ -1718,7 +1698,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			ZoneId z;
 			data->Read(z);
 			Session::enter(usr->GetCurrentCharacter()->charobjid, z);
-			std::cout << "[WRLD] Client: Level " << z << " loading complete" << std::endl;
+			Logger::log("WRLD", "PARSER", "Client: Level loading complete " + z);
 			break;
 		case WorldPacketID::UGC_DOWNLOAD_FAILED:
 		{

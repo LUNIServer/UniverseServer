@@ -62,10 +62,9 @@ public:
 	//Sets the AccountAccessInfo
 	static void setAccessInfo(unsigned int accountid, AccountAccessInfo info);
 
-	static CharacterCount getCharCountInfo(unsigned int accountid);
-	static int setFrontChar(long long charid);
-	static void setFrontChar(CharacterOwner o);
-	static void setNumChars(CharacterOwner o);
+	//static CharacterCount getCharCountInfo(unsigned int accountid);
+	static bool setFrontChar(long long charid);
+	static long long getFrontChar(unsigned int accountid);
 };
 
 /*
