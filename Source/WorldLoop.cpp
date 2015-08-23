@@ -1470,23 +1470,41 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 						if (params.size() > 1){
 							long long charid;
 							std::wstring rec = params.at(0);
-							if (rec == L"*"){
+							bool flagOne = false;
+							if (rec == L"#"){
 								charid = usr->GetCurrentCharacter()->charobjid;
+								flagOne = true;
 							}
-							else{
-								charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
-							}
-							if (charid > 0){
+							else if (rec == L"*"){
 								std::string msg = UtfConverter::ToUtf8(params.at(1));
 								std::string title = "Information";
 								if (params.size() > 2){
 									title = UtfConverter::ToUtf8(params.at(2));
 								}
-								Chat::sendMythranInfo(charid, msg, title);
+								SessionInfo s = SessionsTable::getClientSession(systemAddress);
+								std::vector<SessionInfo> wsessions = SessionsTable::getClientsInWorld(s.zone);
+								for (unsigned int i = 0; i < wsessions.size(); i++){
+									Chat::sendMythranInfo(wsessions.at(i).activeCharId, msg, title);
+								}
 							}
 							else{
-								std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
-								Chat::sendChatMessage(usr->GetCurrentCharacter()->charobjid, response);
+								charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
+								flagOne = true;
+							}
+
+							if (flagOne){
+								if (charid > 0){
+									std::string msg = UtfConverter::ToUtf8(params.at(1));
+									std::string title = "Information";
+									if (params.size() > 2){
+										title = UtfConverter::ToUtf8(params.at(2));
+									}
+									Chat::sendMythranInfo(charid, msg, title);
+								}
+								else{
+									std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
+									Chat::sendChatMessage(usr->GetCurrentCharacter()->charobjid, response);
+								}
 							}
 						}
 						else{

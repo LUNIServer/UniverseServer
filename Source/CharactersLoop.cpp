@@ -7,6 +7,7 @@
 #include "Characters.h"
 
 #include "Logger.h"
+#include "WorldServer.h"
 
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
@@ -183,7 +184,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 								#endif
 								}
 
-								// Open the packet to redirect the character to the world server
+								/*// Open the packet to redirect the character to the world server
 								auto v = OpenPacket(".\\char\\char_aw_redirect.bin");
 								if (v.size() > 0) {
 									// IP Address starts at byte 0x08, Port number starts at byte 0x29
@@ -194,10 +195,31 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 									if (cfg->redirectPort > 0)
 										memcpy(v.data() + 0x29, &cfg->redirectPort, sizeof(cfg->redirectPort));
 									ServerSendPacket(rakServer, v, packet->systemAddress);
+								}*/
+
+								std::vector<char> str;
+								for (int k = 0; k < 16; k++){
+									std::cout << "[" << std::to_string(k) << "] " << std::to_string(cfg->redirectIp[k]) << std::endl;
+									if (cfg->redirectIp[k] > 0){
+										str.push_back(cfg->redirectIp[k]);
+										
+									}
+									else{
+										break;
+									}
 								}
+								std::string ip(str.begin(), str.end());
+								short port = cfg->redirectPort;
+								Logger::log("CHAR", "REDR", ip);
+								RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
+								PacketTools::WriteToPacket(redirect, ip, 33);
+								redirect->Write(port);
+								redirect->Write((unsigned char)0);
+								//WorldServer::sendPacket(redirect, packet->systemAddress);
+								rakServer->Send(redirect, PacketPriority::SYSTEM_PRIORITY, PacketReliability::RELIABLE_ORDERED, 0, packet->systemAddress, false);
 
 								// Close connections to the char server for now
-								rakServer->CloseConnection(packet->systemAddress, true);
+								//rakServer->CloseConnection(packet->systemAddress, true);
 							}
 								break;
 						}
