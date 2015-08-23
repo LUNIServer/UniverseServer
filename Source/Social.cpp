@@ -560,10 +560,22 @@ void Mail::deleteMail(long long mailid, long long charid){
 	SystemAddress addr = SessionsTable::findCharacter(charid);
 	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
 		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MAIL_STUFF);
-		aw->Write((unsigned long)8); //Mail id
+		aw->Write((unsigned long)8); //Mail ID
 		aw->Write((unsigned long)0); //return code
 		aw->Write(mailid);
 		std::cout << "[GAME] [MAIL] Send Mail " << std::to_string(mailid) << " delete confirm" << std::endl;
+		WorldServer::sendPacket(aw, addr);
+	}
+}
+
+void Mail::removeAttachment(long long mailid, long long charid){
+	SystemAddress addr = SessionsTable::findCharacter(charid);
+	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
+		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MAIL_STUFF);
+		aw->Write((unsigned long)6);
+		aw->Write((unsigned long)0);
+		aw->Write(mailid);
+		std::cout << "[GAME] [MAIL] Send Mail " << std::to_string(mailid) << " attachment remove confirm confirm" << std::endl;
 		WorldServer::sendPacket(aw, addr);
 	}
 }

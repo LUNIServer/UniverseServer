@@ -50,4 +50,5 @@ public:
 	//For client initiated mail please use #requestMailSending()
 	static void postMail(std::string sender, std::string subject, std::string text, long long recipient, long long attachment, int attcount);
 	static void deleteMail(long long mailid, long long charid);
+	static void removeAttachment(long long mailid, long long charid);
 };

@@ -1684,6 +1684,20 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			case 3:
 				Mail::loadMailboxData(usr->GetCurrentCharacter()->charobjid);
 				break;
+			case 5:
+			{
+				ulong ua;
+				data->Read(ua);
+				
+				long long mid;
+				data->Read(mid);
+				long long objid;
+				data->Read(objid);
+				Logger::log("WRLD", "MAIL", "Requesting remove attachment for mail id " + std::to_string(mid));
+				Logger::log("WRLD", "MAIL", std::to_string(ua));
+				Mail::removeAttachment(mid, objid);
+			}
+				break;
 			case 7:
 			{
 				long d4;
