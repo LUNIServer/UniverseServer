@@ -91,6 +91,10 @@ bool AccountsTable::setFrontChar(long long charid){
 	}
 }
 
+void AccountsTable::unsetFrontChar(unsigned int accountid){
+	Database::Query("UPDATE `accounts` SET `frontChar` = '0' WHERE `id` = '" + std::to_string(accountid) + "'");
+}
+
 long long AccountsTable::getFrontChar(unsigned int accountid){
 	std::stringstream str;
 	str << "SELECT `frontChar` FROM `accounts` WHERE `id` = '" << accountid << "';";
@@ -118,7 +122,11 @@ long long AccountsTable::getFrontChar(unsigned int accountid){
 //Connection
 SessionInfo SessionsTable::connect(SystemAddress address){
 	//sessions.insert(std::make_pair(address, SessionInfo(address)));
-	//TODO: Check for existing session, return that if it exists
+	SessionInfo session = SessionsTable::getClientSession(address);
+	if (session.phase != SessionPhase::PHASE_NONE){
+		Database::Query("DELETE FROM `sessions` WHERE `ipaddress` = '" + std::string(address.ToString()) + "';");
+	}
+
 	std::stringstream str;
 	str << "INSERT INTO `sessions` (`ipaddress`) VALUES ('" << address.ToString() << "')";
 	Database::Query(str.str());
@@ -150,6 +158,9 @@ SessionInfo SessionsTable::getClientSession(SystemAddress address){
 	else{
 		MYSQL_ROW row = mysql_fetch_row(qr);
 		sinfo.addr.SetBinaryAddress(row[0]);
+		if (row[1] != NULL){
+			sinfo.sessionkey = row[1];
+		}
 		sinfo.phase = static_cast<SessionPhase>(std::stoi(row[2]));
 		if (row[3] != NULL){
 			sinfo.accountid = std::stoi(row[3]);
@@ -169,13 +180,13 @@ SessionInfo SessionsTable::getClientSession(SystemAddress address){
 }
 
 //Authentification
-SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid){
+SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid, std::string key){
 	SessionInfo s = SessionsTable::getClientSession(address);
 	if (s.phase != SessionPhase::PHASE_NONE){
 		s.phase = SessionPhase::PHASE_AUTHENTIFIED;
 		s.accountid = accountid;
 		std::stringstream str;
-		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "' WHERE `ipaddress` = '" << address.ToString() << "'";
+		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "', `sessionkey` = '" << key << "' WHERE `ipaddress` = '" << address.ToString() << "'";
 		auto qr = Database::Query(str.str());
 		if (qr == NULL){
 			Logger::logError("ACDB", "MYSQL", "logging in", mysql_error(Database::getConnection()));

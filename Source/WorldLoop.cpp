@@ -36,40 +36,6 @@
 #include <algorithm>
 using namespace std;
 
-/*
-Venture Explorer            e8 03 7c 08 b8 20
-Return to Venture Explorer  e9 03 3c 0a 68 26
-Avant Gardens               4c 04 11 55 52 49
-Avant Gardens Survival      4d 04 e2 14 82 53
-Spider Queen Battle         4e 04 da 03 d4 0f
-Block Yard                  7e 04 da 03 d4 0f
-Avant Grove                 7f 04 03 03 89 0a
-Nimbus Station              b0 04 30 6b 1e da
-Pet Cove                    b1 04 30 13 6e 47
-Vertigo Loop Racetrack      b3 04 02 05 fc 10
-Battle of Nimbus Station    b4 04 58 02 d4 07
-Nimbus Rock                 e2 04 91 01 8d 05
-Nimbus Isle                 e3 04 5d 04 4f 09
-Gnarled Forest              14 05 90 c2 ea 12
-Canyon Cove                 16 05 ef 02 77 0b
-Keelhaul Canyon             17 05  (unknown)
-Chantey Shantey             46 05 5c 01 b6 04
-Forbidden Valley            78 05 0d 76 19 85
-Forbidden Valley Dragon     7a 05 87 01 f5 02
-Dragonmaw Chasm             7b 05 4e 0f 85 81
-Raven Bluff                 aa 05 26 01 f0 03
-Starbase 3001               40 06 ee 02 c2 07
-Deep Freeze                 41 06 06 01 32 02
-Robot City                  42 06 7f 03 93 07
-Moon Base                   43 06 ad 01 3b 04
-Portabello                  44 06 dd 07 15 18
-LEGO Club                   a4 06 38 01 04 02
-Crux Prime                  08 07 99 a3 17 4b
-Nexus Tower                 6c 07 3c f4 4a 9e
-Ninjago                     d0 07 74 2c 69 4d
-Frakjaw Battle              d1 07 ef 00 eb 09
-*/
-
 ReplicaManager replicaManager;
 NetworkIDManager networkIdManager;
 
@@ -102,13 +68,10 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Otherwise, quit the server (as the char server is REQUIRED for the
 	// server to function properly)
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
-		stringstream s;
-		s << "[WRLD] started! Listening on: " << cfg->listenPort << "\n";
+		Logger::log("WRLD", "", "started! Listening on port " + std::to_string(cfg->listenPort));
 
 		//int serverinstanceid = InstancesTable::registerInstance(ServerAddress);
 		//s << "WORLD SERVER STARTED ON " << ServerAddress.ToString() << " AS INSTANCE " << std::to_string(serverinstanceid) << std::endl;
-
-		OutputQueue->Insert(s.str());
 	} else exit(2);
 
 	// Set max incoming connections to 8
@@ -1147,6 +1110,33 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 						RakNet::BitStream gmmsg2;
 						sendGameMessage(objid, &gmmsg2, 509); //Enable Movement
 						rakServer->Send(&gmmsg2, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+						flag = true;
+					}
+
+					if (command == L"ot"){
+						RakNet::BitStream *bs = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
+						bs->Write(usr->GetCurrentCharacter()->charobjid);
+						bs->Write((unsigned short)19);
+						bs->Write(false);
+						bs->Write(false);
+						bs->Write(false);
+						float x = 0.0F;
+						float y = 0.0F;
+						float z = 0.0F;
+						if (params.size() > 2){
+							x = std::stof(params.at(0));
+							y = std::stof(params.at(1));
+							z = std::stof(params.at(2));
+						}
+						bs->Write(x);
+						bs->Write(y);
+						bs->Write(z);
+						SessionInfo s = SessionsTable::getClientSession(systemAddress);
+						std::vector<SessionInfo> sessionsz = SessionsTable::getClientsInWorld(s.zone);
+						for (unsigned int k = 0; k < sessionsz.size(); k++){
+							WorldServer::sendPacket(bs, sessionsz.at(k).addr);
+						}
+						
 						flag = true;
 					}
 

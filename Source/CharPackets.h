@@ -135,7 +135,7 @@ struct CharactersPacket {
 void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid);
 
 // Sends the deletion packet to the client
-void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, Ref<User> user, uchar *packetData, uint length);
+//void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid, uchar *packetData, uint length);
 
 // This will get the unapproved name and return it as a std::string
 string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine);

@@ -8,7 +8,7 @@
 	Added code and additional documentation done by Jon002 20.02.2015 (Character Creation, Custom Logins and success states, Dynamic Packets
 	for Auth and Char servers)
 
-	This source code requires RakNet version 3.25 as an external dependency to work with the LUNI Client.
+	This source code requires RakNet version 3.25 as an external dependency to work with the LU Client.
 
 	The source is open and free under the GPL License, Version 3 for use on a non-commercial basis
 */
@@ -28,6 +28,7 @@
 #include "SUtil\IniReader.h"
 #include "SUtil\Kbhit.h"
 #include <thread>
+#include "Logger.h"
 
 #ifdef _WIN32
 	// For mkdir command
@@ -40,12 +41,11 @@
 void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& character, CONNECT_INFO& world) {
 	CIniReader iniReader(".\\config.ini"); // Load config.ini
 	
-	// Default IP resorts to the auth.redirectIp BTW
 	strcpy(auth.redirectIp, iniReader.ReadString("Settings", "redirect_ip", "127.0.0.1")); // Copy the auth redirect IP from the file
 	strcpy(character.redirectIp, auth.redirectIp); // Copy the char redirect IP from the file
 	strcpy(world.redirectIp, auth.redirectIp); // Copy the world redirect IP
 
-	std::cout << "Server on IP " << auth.redirectIp << std::endl;
+	Logger::log("MAIN", "CONFIG", "Server on IP " + std::string(auth.redirectIp));
 
 	// Get whether to use encryption
 	auth.useEncryption = character.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
@@ -74,30 +74,39 @@ void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& character, CONNECT_INFO& world
 	}
 
 	// Print that the server loaded the config file!
-	std::cout << "Loaded config! \nConnected to mysql database!\n\n";
+	Logger::log("MAIN", "CONFIG", "Loaded config!");
+	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
 }
 
 // This is the entry point into the server (the main() function)
 int main() {
 	// Print starting info to the console
 	std::cout << std::endl;
-	std::cout << "  LL       EE    EE   GG     GG   OO\n";
-	std::cout << "  LL       EE    EE   GGG    GG   OO\n";
-	std::cout << "  LL       EE    EE   GGGG   GG   OO\n";
-	std::cout << "  LL       EE    EE   GG GG  GG   OO\n";
-	std::cout << "  LL       EE    EE   GG  GG GG   OO\n";
-	std::cout << "  LL       EE    EE   GG   GGGG   OO\n";
-	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO\n";
+	std::cout << "  LL       EE    EE   GG     GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GGG    GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GGGG   GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG GG  GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG  GG GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG   GGGG   OO" << std::endl;
+	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO" << std::endl;
 	std::cout << std::endl;
-	std::cout << "  Custom  LEGO (c)  Universe  Server\n";
+	std::cout << "  Custom  LEGO (c)  Universe  Server" << std::endl;
 	std::cout << std::endl;
-	std::cout << "--------------------------------------\n";
-	std::cout << "Original project: luniserver.sf.net\n\n";
-
-	std::cout << "This version is based on Jon002s code.\n";
-	std::cout << "This version is still very unstable!\nDon't be surprised if the server crashes!\n";
-	std::cout << "--------------------------------------\n";
-	std::cout << "Initializing LUNI test server...\n\nPress enter type \"help\" and enter again for commands\n\n";
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Original project: luniserver.sf.net" << std::endl;
+	std::cout << "Github (main LUNI repo):" << std::endl << "github.com/jaller200/LUNIServerProject" << std::endl;
+	std::cout << "Github (this version only):" << std::endl << "github.com/dsuser97/LUNI-Latest-Dev" << std::endl;
+	std::cout << std::endl;
+	std::cout << "This version is based on Jon002s code." << std::endl;
+	std::cout << "This version is still very unstable!" << std::endl;
+	std::cout << "Don't be surprised if the server crashes!" << std::endl;
+	std::cout << "Please report any unreported issues on Github" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Press enter type \"help\" and enter again for commands" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Server Log" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	Logger::log("MAIN", "", "Initializing LUNI test server...");
 
 	// Initialize the auth, character, and world CONNECT_INFO structs
 	CONNECT_INFO auth, character, world;
@@ -111,31 +120,9 @@ int main() {
 	// If debug is on, print additional data to the console
 	#ifdef DEBUG
 	{
-		std::cout << "\nDEBUG is ON!\n";
-		//getTime();
-		//cout << "\n Minifigure size: " << sizeof(MinifigureData) << endl;
-
-		//auto testbin = OpenPacket(".\\char\\char_aw2.bin");
-		//PacketCharacter * pk = (PacketCharacter*) testbin;
-
-		/*vector< Ref<Character> > characters(4);
-		auto aux = (uchar*)testbin.data() +22;
-		characters[0] = Ref<Character>(new Character(aux));
-		cout << "\nTest (reading characters form char\\char_aw2.bin) character1 : " << characters[0]->GetName() << endl;
-		//cout << characters[0]->Data.travelling << endl;
-		
-		aux += characters[0]->GetGeneratedPacketSize();
-		characters[1] = Ref<Character>(new Character(aux));
-		cout << "\nTest character2 : " << characters[1]->GetName() << endl;*/
-
-		//string s = "ciao";
-		//RakNet::BitStream bs;
-		//bs.WriteCompressed(s);
-
-		//cout << endl << RawDataToString(bs.GetData(), bs.GetNumberOfBytesUsed()) << endl;
-		//SavePacket("the Test.bin", (char*)bs.GetData(), bs.GetNumberOfBytesUsed());
-
-		//cout << endl;
+		// Setting this to LOG_NORMAL is done on purpose to avoid confusion
+		// when activeLogLevel is below DEBUG but DEBUG is actually on
+		Logger::log("MAIN", "", "DEBUG is ON!", LOG_NORMAL);
 	}
 	#endif
 
@@ -167,17 +154,27 @@ int main() {
 			std::string command; // Initialize command string...
 			std::cout << "> "; // Print "> " to show user where to type
 			std::cin >> command; // Get the command
-			std::cout << std::endl; // End the line
+
 
 			// Match command to a pre-specified command here...
-			if (command == "help") std::cout << "\nAvailable commands: \nquit = Quit the Server \nregister = Register New User \nuser_online = Show Number of Online Users\n";
+			if (command == "help") {
+				std::stringstream str;
+				str << "Available commands:" << std::endl <<
+					"quit        = Quit the Server" << std::endl <<
+					"register    = Register New User" << std::endl <<
+					"user_online = Show Number of Online Users" << std::endl <<
+					"sessions    = Show Number of sessions" << std::endl;
+				std::cout << str.str();
+			}
 			else if (command == "quit") quit = LUNIterminate = true;
 			else if (command == "character_log_enable") character.logFile = true;
 			else if (command == "character_log_disable") character.logFile = false;
 			else if (command == "world_log_enable") world.logFile = true;
 			else if (command == "world_log_disable") world.logFile = false;
 			else if (command == "user_online") {
-				std::cout << "\n Online user: " << OnlineUsers->Count() << std::endl;
+				std::stringstream str;
+				str << "\n Online user: " << OnlineUsers->Count() << std::endl;
+				std::cout << str.str();
 			}
 			else if (command == "register") {
 				std::string username, password;
@@ -189,7 +186,9 @@ int main() {
 					// Create the new user into the database
 					ulonglong acid = AccountsTable::addAccount(username, password);
 					if (acid > 0){
-						std::cout << "[SERV] Account for '" << username << "' has been created with id " << acid << std::endl;
+						std::stringstream str;
+						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
+						std::cout << str.str();
 					}
 				}
 				else std::cout << "Username already exist!\n";

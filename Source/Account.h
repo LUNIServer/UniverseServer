@@ -8,7 +8,7 @@ namespace Session{
 	void connect(SystemAddress address);
 	void disconnect(SystemAddress address, SessionPhase source);
 
-	void login(SystemAddress address, unsigned int accountid);
+	void login(SystemAddress address, unsigned int accountid, std::string key);
 	
 	void play(unsigned int accountid, long long charid);
 	void quit(long long charid);

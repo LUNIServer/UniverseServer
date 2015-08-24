@@ -6,6 +6,8 @@
 #include <string>
 #include <iomanip>
 
+#include "Logger.h"
+
 using namespace RakNet;
 using namespace std;
 
@@ -20,6 +22,7 @@ void CreatePacketHeader(MessageID messageId, ushort connectionType, ulong intern
 }
 
 void SendInitPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, bool isAuth) {
+
 	// Initialize the BitStream
 	RakNet::BitStream bitStream;
 
@@ -34,6 +37,56 @@ void SendInitPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddr
 
 	// Send the BitStream to the client
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+}
+
+void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress, RakNet::BitStream * data, std::string SERVER){
+	ulong s_remoteConnectionType = 4;
+	if (SERVER == "AUTH") s_remoteConnectionType = 1;
+	ulong version;
+	data->Read(version);
+	ulong unknown;
+	data->Read(unknown);
+	ulong remoteConnectionType;
+	data->Read(remoteConnectionType);
+	ulong processid;
+	data->Read(processid);
+	ushort port;
+	data->Read(port);
+	std::vector<uchar> addv;
+	addv.reserve(33);
+	bool flag = true;
+	std::string address = PacketTools::ReadStrFromPacket(data, 33); //Unused, no data
+	Logger::log(SERVER, "", "Client: " + std::string(systemAddress.ToString()), LOG_ALL);
+	Logger::log(SERVER, "", "Client Handshake Request", LOG_DEBUG);
+	Logger::log(SERVER, "", "Version:        " + std::to_string(version), LOG_ALL);
+	Logger::log(SERVER, "", "ProcessID:      " + std::to_string(processid), LOG_ALL);
+	Logger::log(SERVER, "", "ConnectionType: " + std::to_string(remoteConnectionType), LOG_ALL);
+	Logger::log(SERVER, "", "Port:           " + std::to_string(port), LOG_ALL);
+
+	//Preparing answer:
+	RakNet::BitStream *aw = new RakNet::BitStream(59);
+	CreatePacketHeader(ID_USER_PACKET_ENUM, 0, 0, aw);
+	ulong s_version = 171022UL;
+	ulong s_unknown = 0x93;
+	ulong s_processid = GetCurrentProcessId();
+	short s_unknown2 = -1; //port = 0xFFFF = -1 -> no port?
+	std::string s_ip = rakServer->GetLocalIP(0);
+	Logger::log(SERVER, "", "Server Handshake Response", LOG_DEBUG);
+	Logger::log(SERVER, "", "Version:        " + std::to_string(s_version), LOG_ALL);
+	Logger::log(SERVER, "", "ProcessID:      " + std::to_string(s_processid), LOG_ALL);
+	Logger::log(SERVER, "", "ConnectionType: " + std::to_string(s_remoteConnectionType), LOG_ALL);
+	Logger::log(SERVER, "", "Address:        " + s_ip, LOG_ALL);
+	aw->Write(s_version);
+	aw->Write(s_unknown);
+	aw->Write(s_remoteConnectionType);
+	aw->Write(s_processid);
+	aw->Write(s_unknown2);
+
+	for (uchar k = 0; k < 33; k++){
+		if (k < s_ip.size()) aw->Write((uchar)s_ip.at(k));
+		else aw->Write((uchar)0);
+	}
+	rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 }
 
 void WriteStringToBitStream(const char *myString, int stringSize, int maxChars, RakNet::BitStream *output) {
@@ -92,6 +145,24 @@ std::wstring PacketTools::ReadFromPacket(RakNet::BitStream *bs, unsigned int siz
 		}
 	}
 	std::wstring str(strv.begin(), strv.end());
+	return str;
+}
+
+std::string PacketTools::ReadStrFromPacket(RakNet::BitStream *bs, unsigned int size){
+	std::vector<char> strv;
+	strv.reserve(size);
+	bool flag = true;
+	for (uint k = 0; k < size; k++){
+		char c;
+		bs->Read(c);
+		if (c == 0){
+			flag = false;
+		}
+		if (flag) {
+			strv.push_back(c);
+		}
+	}
+	std::string str(strv.begin(), strv.end());
 	return str;
 }
 

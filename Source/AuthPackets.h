@@ -37,17 +37,17 @@ struct LoginStatusPacket {
 	string errorMsg; // This is the error message displayed if connection ID is 0x05. Can be X bytes long (I believe) - Should be wstring
 	
 	// Extra bytes
-	ulong extraBytesLength; // This is the number of bytes left (number of each chunk of extra data = 16 bytes * x chunks + these 4 bytes
+	//ulong extraBytesLength; // This is the number of bytes left (number of each chunk of extra data = 16 bytes * x chunks + these 4 bytes
 
 	// Initializer
 	LoginStatusPacket() { }
 };
 
 // Sends a packet with the login status to the client (good, bad, etc..)
-void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, UserSuccess loginStatus, string redirectIpAddress, ushort redirectPort, ushort extraDataLength);
+void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, LoginStatusPacket loginStatusPacket);
 
 // This extra packet data occurs in auth packets.
 void CreateExtraPacketData(ulong stampId, signed long bracketNum, ulong afterNum, RakNet::BitStream *bitStream);
 
 // Create the Extra Packet data based on success packet (login_ok.bin)
-void CreateExtraPacketDataSuccess(RakNet::BitStream *bitStream);
+void CreateAllExtraPacketData(RakNet::BitStream *bitStream);

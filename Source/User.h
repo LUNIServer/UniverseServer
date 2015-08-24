@@ -39,13 +39,12 @@ class User {
 		Ref<Character> current; // Current Character
 		SystemAddress ip; // This is the SystemAddress from RakNet
 		
-		// This is the User initialization. It takes a User ID, a Username, and an SystemAddress
-		User(uint id, const std::string& username, const SystemAddress& systemAddress, UserSuccess loginStatus);
 	public:
+		// This is the User initialization. It takes a User ID, a Username, and an SystemAddress
+		User(uint id, const std::string& username, const SystemAddress& systemAddress);
 		uint numredir = 1; // Number of redirects
 		ulong nextcid = 0; // Only for development - this is the next character ID (CID = Character ID)
 
-		UserSuccess successState; // This is the success state of the user login (stores locally)
 		uchar nameInUse = 0; // Whether or not the selected username / predefined name is in use (stores locally)
 
 		// Initializer
@@ -67,7 +66,7 @@ class User {
 		void DestructPlayer();
 
 		// Login, return users. NULL if fails to login
-		static Ref<User> Login(const std::string& nikname, const std::string& password, const SystemAddress& systemAddress);
+		//static Ref<User> Login(const std::string& nikname, const std::string& password, const SystemAddress& systemAddress);
 
 		uint GetID(); // Get the ID of the user
 		Ref<Character> GetCurrentCharacter(); // Get the current character

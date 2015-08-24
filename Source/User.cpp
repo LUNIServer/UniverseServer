@@ -22,7 +22,7 @@ using namespace std;
 extern std::map<SystemAddress, ZoneId> Player;
 
 // This is the user initalization
-User::User(uint id, const string& username, const SystemAddress& systemAddress, UserSuccess loginStatus) {
+User::User(uint id, const string& username, const SystemAddress& systemAddress) {
 	this->id = id; // Store User ID
 	this->username = username; // Store Username
 	this->ip = systemAddress; // Store systemAddress
@@ -30,10 +30,6 @@ User::User(uint id, const string& username, const SystemAddress& systemAddress, 
 	for (int i = 0; i < 4; i++) characters[i] = NULL; // Initialize characters
 	current = NULL; // Initialize current character
 	player = NULL;
-	successState = loginStatus; // Set the success state
-
-	// Print the success state to the console
-	Logger::log("USER", "INIT", "Login state is " + std::to_string(successState));
 
 	ostringstream osid;
 	osid << id;
@@ -205,7 +201,7 @@ ZoneId User::getWorld(){
 }
 
 // Login a user
-Ref<User> User::Login(const string& nikname, const string& password, const SystemAddress& systemAddress) {
+/*Ref<User> User::Login(const string& nikname, const string& password, const SystemAddress& systemAddress) {
 	UserSuccess currentLoginStatus = UserSuccess::SUCCESS;
 
 	unsigned int accountid = AccountsTable::getAccountID(nikname);
@@ -249,7 +245,7 @@ Ref<User> User::Login(const string& nikname, const string& password, const Syste
 	// Print current status to console (just to check, to delete later)
 	Logger::log("USER", "LOGIN", "Current login status is " + std::to_string(currentLoginStatus));
 	return Ref<User>( new User(accountid, nikname, systemAddress, currentLoginStatus) );
-}
+}*/
 
 uint User::GetID() { return id; }
 Ref<Character> User::GetCurrentCharacter() { return current; }

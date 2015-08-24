@@ -120,3 +120,10 @@ bool Characters::CreateCharacter(RakNet::BitStream *packet, SystemAddress addres
 	
 	return (creationStatus == 0);
 }
+
+void Characters::DeleteCharacter(unsigned int accountid, long long charid){
+	CharactersTable::deleteCharacter(charid);
+	AccountsTable::unsetFrontChar(accountid);
+	EquipmentTable::deleteEquipment(charid); //Delete Equipment entries
+	InventoryTable::deleteInventory(charid); //Delete inventory entries
+}

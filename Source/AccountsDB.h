@@ -27,6 +27,7 @@ struct SessionInfo{
 	SessionPhase phase = SessionPhase::PHASE_NONE;
 
 	SystemAddress addr;
+	std::string sessionkey = "";
 	unsigned int accountid = 0;
 	long long activeCharId = -1;
 	unsigned int worldJoin = 0;
@@ -40,6 +41,7 @@ struct SessionInfo{
 		this->activeCharId = -1;
 		this->worldJoin = 0;
 		this->zone = 0;
+		this->sessionkey = "";
 	}
 };
 
@@ -64,6 +66,7 @@ public:
 
 	//static CharacterCount getCharCountInfo(unsigned int accountid);
 	static bool setFrontChar(long long charid);
+	static void unsetFrontChar(unsigned int accountid);
 	static long long getFrontChar(unsigned int accountid);
 };
 
@@ -84,7 +87,7 @@ public:
 	static SessionInfo getClientSession(SystemAddress address);
 
 	//Authentification
-	static SessionInfo login(SystemAddress address, unsigned int accountid);
+	static SessionInfo login(SystemAddress address, unsigned int accountid, std::string key);
 	static SessionInfo logout(unsigned int accountid);
 
 	static SystemAddress findAccount(unsigned int accountid);

@@ -41,6 +41,7 @@ std::wstring StringToWString(std::string& s, wchar_t size);
 //Some more tools
 namespace PacketTools {
 	std::wstring ReadFromPacket(RakNet::BitStream *bs, unsigned int size);
+	std::string ReadStrFromPacket(RakNet::BitStream *bs, unsigned int size);
 	void WriteToPacket(RakNet::BitStream *bs, std::wstring str, unsigned int size);
 	void WriteToPacket(RakNet::BitStream *bs, std::wstring str);
 
@@ -55,6 +56,7 @@ void CreatePacketHeader(MessageID messageId, ushort connectionType, ulong intern
 
 // Create the init packet known as init_aw2.bin
 void SendInitPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, bool isAuth);
+void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress, RakNet::BitStream * data, std::string SERVER);
 
 // This will convert ushort, ulong, and ulonglong to little endian (or back to big endian... does byte swap)
 ushort SwapUShort(ushort number);

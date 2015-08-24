@@ -26,29 +26,29 @@ void Session::disconnect(SystemAddress address, SessionPhase source){
 	if (info.phase == SessionPhase::PHASE_INWORLD){
 		// The player has quit the game from within the game, in a world
 		// this can be caused by clicking "Logout" in the main menu or by closing the window
-		std::cout << "[GAME] [SESSION] LEAVING WORLD" << std::endl;
+		Logger::log("GAME", "SESSION", "LEAVING WORLD", LOG_DEBUG);
 
 		SessionInfo w = SessionsTable::leave(info.activeCharId);
 		if (w.phase != SessionPhase::PHASE_NONE){
-			std::cout << "[GAME] [SESSION] SUCCESS LEAVING WORLD" << std::endl;
+			Logger::log("GAME", "SESSION", "SUCCESS LEAVING WORLD", LOG_DEBUG);
 			info = w;
 		}
 		else{
-			std::cout << "[GAME] [SESSION] ERROR LEAVING WORLD" << std::endl;
+			Logger::log("GAME", "SESSION", "ERROR LEAVING WORLD", LOG_DEBUG);
 		}
 	}
 
 	if (info.phase == SessionPhase::PHASE_PLAYING){
 		//This can either be the next step from above or it may be caused by a disconnect while changing worlds
-		std::cout << "[GAME] [SESSION] QUITTING PLAY" << std::endl;
+		Logger::log("GAME", "SESSION", "QUITTING PLAY", LOG_DEBUG);
 
 		SessionInfo p = SessionsTable::quit(info.activeCharId);
 		if (p.phase != SessionPhase::PHASE_NONE){
-			std::cout << "[GAME] [SESSION] SUCCESS QUITTING PLAY" << std::endl;
+			Logger::log("GAME", "SESSION", "SUCCESS QUITTING PLAY", LOG_DEBUG);
 			info = p;
 		}
 		else{
-			std::cout << "[GAME] [SESSION] ERROR QUITTING PLAY" << std::endl;
+			Logger::log("GAME", "SESSION", "ERROR QUITTING PLAY", LOG_DEBUG);
 		}
 	}
 
@@ -56,29 +56,29 @@ void Session::disconnect(SystemAddress address, SessionPhase source){
 		//This can be either the next step from above or it may be caused by pressing the back button
 		//or closing the window on the character selection screen
 
-		std::cout << "[GAME] [SESSION] LOGGING OUT" << std::endl;
+		Logger::log("GAME", "SESSION", "LOGGING OUT", LOG_DEBUG);
 		SessionInfo a = SessionsTable::logout(info.accountid);
 		if (a.phase != SessionPhase::PHASE_NONE){
-			std::cout << "[GAME] [SESSION] SUCCESS LOGGING OUT" << std::endl;
+			Logger::log("GAME", "SESSION", "SUCCESS LOGGING OUT", LOG_DEBUG);
 			info = a;
 		}
 		else{
-			std::cout << "[GAME] [SESSION] ERROR LOGGING OUT" << std::endl;
+			Logger::log("GAME", "SESSION", "ERROR LOGGING OUT", LOG_DEBUG);
 		}
 	}
 
 	if (info.phase == SessionPhase::PHASE_CONNECTED){
 		//This should only happen as a result of the last few
 
-		std::cout << "[GAME] [SESSION] DISCONNECTING" << std::endl;
+		Logger::log("GAME", "SESSION", "DISCONNECTING", LOG_DEBUG);
 		SessionsTable::disconnect(info.addr);
 	}
 }
 
-void Session::login(SystemAddress address, unsigned int accountid){
+void Session::login(SystemAddress address, unsigned int accountid, std::string key){
 	Logger::log("GAME", "SESSION", std::string(address.ToString()) + " logging in with account id " + std::to_string(accountid));
 	SessionsTable::connect(address);
-	SessionsTable::login(address, accountid);
+	SessionsTable::login(address, accountid, key);
 }
 
 void Session::play(unsigned int accountid, long long charid){

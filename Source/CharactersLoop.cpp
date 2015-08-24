@@ -7,6 +7,7 @@
 #include "Characters.h"
 
 #include "Logger.h"
+#include "UtfConverter.h"
 #include "WorldServer.h"
 
 #include "RakNet\RakSleep.h"
@@ -37,9 +38,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 	// Otherwise, quit the server (as the char server is REQUIRED for the
 	// server to function properly)
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
-		stringstream s;
-		s << "[CHAR] started! Listening on: " << cfg->listenPort << "\n";
-		OutputQueue->Insert(s.str());
+		Logger::log("CHAR", "", "started! Listening on port " + std::to_string(cfg->listenPort));
 	} else exit(2);
 
 	// Set max incoming connections to 8
@@ -75,7 +74,7 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 		uchar packetID;
 		data->Read(packetID);
 
-		switch (packet->data[0]) {
+		switch (packetID) {
 			case ID_LEGO_PACKET:
 				ushort networkType;
 				data->Read(networkType);
@@ -83,20 +82,36 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 				data->Read(packetType);
 				uchar pad;
 				data->Read(pad);
-				switch (packet->data[1]) {
+				switch (networkType) {
 					case GENERAL:
-						if (packet->data[3] == VERSION_CONFIRM) {	// thats just a formality so far since no other numbers occured for this case
-							Logger::log("CHAR", "", "Handshake");
-							SendInitPacket(rakServer, packet->systemAddress, false);
+						if (packetType == VERSION_CONFIRM) {
+							DoHandshake(rakServer, packet->systemAddress, data, "CHAR");
+							//SendInitPacket(rakServer, packet->systemAddress, false);
 						}
 						break;
-
 					case SERVER:
-
-						switch (packet->data[3]) {
+						switch (packetType) {
 							case CLIENT_VALIDATION:
 							{
-								Logger::log("CHAR", "", "Recieved client validation...");
+								std::wstring name = PacketTools::ReadFromPacket(data, 33);
+								std::wstring key = PacketTools::ReadFromPacket(data, 33);
+								std::string u_hash = PacketTools::ReadStrFromPacket(data, 32);
+								unsigned char flag;
+								data->Read(flag);
+								Logger::log("CHAR", "VALID", "Client Validation Request", LOG_DEBUG);
+								Logger::log("CHAR", "VALID", "Name : " + UtfConverter::ToUtf8(name), LOG_DEBUG);
+								Logger::log("CHAR", "VALID", "Key  : " + UtfConverter::ToUtf8(key), LOG_ALL);
+								Logger::log("CHAR", "VALID", "Hash?: " + u_hash, LOG_ALL);
+								if (flag == 0) Logger::log("CHAR", "VALID", "Flag false", LOG_ALL);
+								else Logger::log("CHAR", "VALID", "Flag true", LOG_ALL);
+
+								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
+								if (s.sessionkey == UtfConverter::ToUtf8(key)){
+									Logger::log("CHAR", "VALID", "Validation successful", LOG_DEBUG); //Session keys match
+								}
+								else{
+									Logger::log("CHAR", "VALID", "Validation unsuccessful", LOG_DEBUG); //Session keys do not match
+								}
 								break;
 							}
 
@@ -117,39 +132,38 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 							{
 								// Find online user by systemAddress
 								auto usr = OnlineUsers->Find(packet->systemAddress);
+								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
 
 								bool success = false;
 								
 								// Make SURE user is not null!!!!!!
 								if (usr != NULL) {
-									RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
-									unsigned char packetid;
-									data->Read(packetid);
-									unsigned short remconn;
-									data->Read(remconn);
-									unsigned long lpacketid;
-									data->Read(lpacketid);
-									unsigned char padding;
-									data->Read(padding);
-									success = Characters::CreateCharacter(data, packet->systemAddress, usr->GetID());
+									success = Characters::CreateCharacter(data, packet->systemAddress, s.accountid);
 								}else {
 									Logger::logError("CHAR", "", "saving user", "user is NULL");
 								}
 								
 								// If the username is in use, do NOT send the char packet. Otherwise, send it
 								if (success) {
-									SendCharPacket(rakServer, packet->systemAddress, usr->GetID());
+									SendCharPacket(rakServer, packet->systemAddress, s.accountid);
 								}
 							}
 								break;
 
 							case CLIENT_CHARACTER_DELETE_REQUEST:
 							{
-								// Find online user
-								auto usr = OnlineUsers->Find(packet->systemAddress);
+								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
 
-								// Send the delete packet
-								SendDeletePacket(rakServer, packet->systemAddress, usr, packet->data, packet->length);
+								long long charid;
+								data->Read(charid);
+
+								Characters::DeleteCharacter(s.accountid, charid);
+
+								RakNet::BitStream bitStream;
+								CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 12, &bitStream);
+								bitStream.Write((uchar)1); // Success?
+								rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+
 								break;
 							}
 
@@ -183,19 +197,6 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 									OutputQueue->Insert(s.str()); */
 								#endif
 								}
-
-								/*// Open the packet to redirect the character to the world server
-								auto v = OpenPacket(".\\char\\char_aw_redirect.bin");
-								if (v.size() > 0) {
-									// IP Address starts at byte 0x08, Port number starts at byte 0x29
-									// Copy the redirectId to the packet
-									if (cfg->redirectIp[0] != 0)
-										memcpy(v.data() + 0x8, cfg->redirectIp, sizeof(cfg->redirectIp) - 3);	// NOTE: the IP can currently only be 13 characters long here since there are some non-zero bytes directly after the IP and I don't want to delete them (is it safe to overwrite them?)
-									// Copy the redirectPort to the packet
-									if (cfg->redirectPort > 0)
-										memcpy(v.data() + 0x29, &cfg->redirectPort, sizeof(cfg->redirectPort));
-									ServerSendPacket(rakServer, v, packet->systemAddress);
-								}*/
 
 								std::vector<char> str;
 								for (int k = 0; k < 16; k++){

@@ -7,69 +7,11 @@
 
 using namespace std;
 
-void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, UserSuccess loginStatus, string redirectIpAddress, ushort redirectPort, ushort extraDataLength) {
+void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, LoginStatusPacket loginStatusPacket) {
 	RakNet::BitStream bitStream; // Create the bitStream
 
 	// Always create the packet header
 	CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 0, &bitStream);
-
-	LoginStatusPacket loginStatusPacket;
-
-	// Set the loginStatus
-	loginStatusPacket.loginStatus = loginStatus;
-
-	// Set Talk_Like_A_Pirate_String
-	loginStatusPacket.talkLikeAPirate = "Talk_Like_A_Pirate";
-	loginStatusPacket.unknownString = "";
-
-	// Set client version
-	loginStatusPacket.clientVersion1 = 1;
-	loginStatusPacket.clientVersion2 = 10;
-	loginStatusPacket.clientVersion3 = 64;
-
-	// This is unknown data...
-	loginStatusPacket.unknown = "_";
-
-	time_t t = time(NULL);
-	unsigned int addr = systemAddress.binaryAddress;
-	long long a = (long long)t * (long long)addr;
-	std::string hash = md5(std::to_string(a));
-	std::wstring key = StringToWString(hash, 33);
-
-	// Get the user key
-	loginStatusPacket.userKey = key;
-	//loginStatusPacket.userKey = "0 9 4 e 7 0 1 a c 3 b 5 5 2 0 b 4 7 8 9 5 b 3 1 8 5 7 b f 1 c 3   ";
-
-	// Set chat IPs/Port and the other IP
-	loginStatusPacket.chatIp = "192.168.0.20"; //TODO: make dynamic
-	loginStatusPacket.chatPort = 2003;
-	loginStatusPacket.anotherIp = "192.168.0.20";
-
-	loginStatusPacket.possibleGuid = "00000000-0000-0000-0000-000000000000";
-
-	loginStatusPacket.zeroLong = 0;
-
-	// Set localization
-	loginStatusPacket.localizationChar[0] = 0x55;
-	loginStatusPacket.localizationChar[1] = 0x53;
-	loginStatusPacket.localizationChar[2] = 0x00;
-
-	// Subscribed?
-	loginStatusPacket.firstLoginSubscription = 1;
-	loginStatusPacket.subscribed = 0;
-
-	loginStatusPacket.zeroLongLong = 0;
-
-	loginStatusPacket.redirectIp = redirectIpAddress;
-	loginStatusPacket.redirectPort = redirectPort;
-
-	// Sett the error msg and the error msg length
-	// This message only shows
-	loginStatusPacket.errorMsg = "";
-	loginStatusPacket.errorMsgLength = loginStatusPacket.errorMsg.length();
-
-	// Set the extraBytesLength to the one the user defined
-	loginStatusPacket.extraBytesLength = extraDataLength;
 
 	// ---- CREATE BITSTREAM ---- //
 	// Write the connectionId to bitStream
@@ -117,12 +59,8 @@ void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAd
 	// Write the error msg string to the bitStream
 	WriteStringToBitStream(loginStatusPacket.errorMsg.c_str(), loginStatusPacket.errorMsgLength, 0, &bitStream);
 	
-	// Add extra bytes length
-	bitStream.Write(loginStatusPacket.extraBytesLength);
-
-	// Create extra packet data (even if not success, doesn't appear to
-	// Do anything at the moment...)
-	CreateExtraPacketDataSuccess(&bitStream);
+	// Create extra packet data (even if not success, creates stamps in the client)
+	CreateAllExtraPacketData(&bitStream);
 
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 	SavePacketOverwrite("test_login.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
@@ -139,7 +77,8 @@ void CreateExtraPacketData(ulong stampId, signed long bracketNum, ulong afterNum
 }
 
 // Add extra packet data to the server
-void CreateExtraPacketDataSuccess(RakNet::BitStream *bitStream) {
+void CreateAllExtraPacketData(RakNet::BitStream *bitStream) {
+	bitStream->Write((unsigned long)320);
 	CreateExtraPacketData(0, 0, 2803442767, bitStream);
 	CreateExtraPacketData(7, 37381, 2803442767, bitStream);
 	CreateExtraPacketData(8, 6, 2803442767, bitStream);

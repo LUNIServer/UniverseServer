@@ -91,62 +91,6 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
-void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, Ref<User> user, uchar *packetData, uint length) {
-	if (length < 8) return; // If packet data is less than 8 bytes long (counting byte 0), then return as it only contains the packet header
-
-	// User ID stringstream
-	stringstream usrId;
-	usrId << user->GetID();
-
-	// Get the User ID into a string
-	string usrIDString = usrId.str();
-
-	// Get the objectID from the packets
-	unsigned long long objectID;
-	memcpy(&objectID, packetData + 0x08, 8);
-
-	cout << "Deleting character with ID: " << objectID << " from account: " << usrIDString << endl;
-
-	// Query to delete char from database
-	//stringstream query;
-	//query << "DELETE FROM `characters` WHERE `objectID` = '" << objectID << "';";
-	CharactersTable::deleteCharacter(objectID);
-
-	uchar index = 0; //New Char
-	std::vector<uchar> chars = CharactersTable::getCharacterIndices(user->GetID());
-	if (chars.size() > 0){
-		index = chars.at(0);
-	}
-
-	// Query to subtract one character from user
-	//stringstream query2;
-	//query2 << "UPDATE `accounts` SET `numChars` = '" << usrNumChars - 1 << "' WHERE `id` = '" << usrIDString << "';";
-	//AccountsTable::setNumChars(CharacterOwner(user->GetID(), chars.size()));
-
-	// Change front character to 0
-	//stringstream query3;
-	//query3 << "UPDATE `accounts` SET `frontChar` = '0' WHERE `id` = '" << usrIDString << "';";
-	//CharacterOwner o(user->GetID(),index);
-	AccountsTable::setFrontChar(0);
-
-	// Query the database with the above 3 queries...
-	//Database::Query(query.str()); // Delete char...
-	//Database::Query(query2.str()); // ... Update account numChars...
-	//Database::Query(query3.str()); // ... and finish by setting front char to 0
-
-	EquipmentTable::deleteEquipment(objectID); //Delete Equipment entries
-	InventoryTable::deleteInventory(objectID); //Delete inventory entries
-
-	// Create the packet that will be used to send that char deletion
-	// packet to the client
-	RakNet::BitStream bitStream;
-
-	CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 12, &bitStream);
-	bitStream.Write((uchar)1); // Success?
-
-	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-}
-
 ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {
 	ulong shirtID = 0;
 
