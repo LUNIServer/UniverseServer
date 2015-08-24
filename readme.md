@@ -29,6 +29,7 @@ When you do that, please provide
 
 ### Please note
 There are different kinds of "crashes" that can happen, so please pay attention to what happens.
+
 #### client
 - The client get's stuck and doesn't respond anymore
 - The client get's stuck while logging in, showing a message, should abort login after a while with an error
@@ -36,6 +37,7 @@ There are different kinds of "crashes" that can happen, so please pay attention 
 - The client returns to the login screen with an error message in a blue box
 - The client just shows a white window (had that once, don't remember when)
 - The client crashes/exits, with an error file created in the Log Files directory
+
 #### server
 - The server crashes (in debugging, the crash appears in VS)
 - The server displays an error in the log
