@@ -1,5 +1,6 @@
 #include "InventoryDB.h"
 #include "Database.h"
+#include "Logger.h"
 
 #include <sstream>
 
@@ -85,6 +86,10 @@ long ObjectsTable::getTemplateOfItem(long long objid){
 	std::stringstream str;
 	str << "SELECT `template` FROM `objects` WHERE `objectid` = '" << objid << "';";
 	auto qr = Database::Query(str.str());
+	if (qr == NULL){
+		return -1;
+		Logger::logError("IVDB", "MYSQL", "getting LOT", mysql_error(Database::getConnection()));
+	}
 	if (mysql_num_rows(qr) > 0){
 		auto row = mysql_fetch_row(qr);
 		long lot = std::stol(row[0]);
@@ -137,6 +142,7 @@ RocketInfo ObjectsTable::getRocketInfo(long long objid){
 
 std::vector<long long> EquipmentTable::getItems(long long charid){
 	auto qr = Database::Query("SELECT `object` FROM `equipment` WHERE `owner` = '" + std::to_string(charid) + "';");
+	
 	uint numrows = (uint)mysql_num_rows(qr);
 	std::vector<long long> items;
 	items.reserve(numrows);

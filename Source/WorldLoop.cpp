@@ -874,6 +874,14 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				cout << endl;
 			}
 				break;
+			case 603:
+			{
+				//Open Bag
+				long long aobjid;
+				data->Read(aobjid);
+				Logger::log("WRLD", "GMSG", "Open object " + std::to_string(aobjid));
+			}
+				break;
 			case 717:
 				//This happens independant of the Zone you are in, and these are NOT the object IDs of the characters equipment.
 				//It is still probably some sort of registering of Objects

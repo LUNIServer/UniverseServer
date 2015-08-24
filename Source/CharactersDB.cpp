@@ -1,5 +1,6 @@
 #include "CharactersDB.h"
 #include "Database.h"
+#include "Logger.h"
 
 #include <sstream>
 #include <iostream>
@@ -33,6 +34,10 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 	auto qr = Database::Query("SELECT `id`, `objectID` FROM `characters` WHERE `accountID` = " + std::to_string(accountid) + " LIMIT 4"); // Load chars from MySQL DB
 	MYSQL_ROW row;
 	chars.reserve(4);
+	if (qr == NULL){
+		return chars;
+		Logger::logError("CHDB", "MYSQL", "getting characters", mysql_error(Database::getConnection()));
+	}
 	while (row = mysql_fetch_row(qr)) {
 		std::stringstream s(row[1]);
 		long long cid;
