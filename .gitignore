@@ -44,4 +44,5 @@ Temporary Items
 
 logs/
 Saves/
-*.obj
+Release/
+.obj
