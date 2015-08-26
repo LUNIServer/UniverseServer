@@ -61,6 +61,7 @@ class User {
 		ZoneId getWorld();
 
 		//PlayerObject
+		void SetPlayer(PlayerObject * p);
 		void CreatePlayer();
 		PlayerObject *GetPlayer();
 		void DestructPlayer();

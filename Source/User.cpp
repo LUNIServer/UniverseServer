@@ -69,7 +69,15 @@ void User::SetCharacter(long long cid){
 	current = Ref<Character>(new Character(cid));
 }
 
-void User::CreatePlayer(){
+void User::SetPlayer(PlayerObject * p){
+	if (this->player != NULL){
+		delete this->player;
+		cout << "[WARN] WARNING: Player Object was not destroyed";
+	}
+	this->player = p;
+}
+
+/*void User::CreatePlayer(){
 	if (this->player != NULL){
 		delete this->player;
 		this->player = NULL;
@@ -114,7 +122,7 @@ void User::CreatePlayer(){
 		style.shirtColor = cd.minifig.shirtcolor;
 		this->player->getComponent4()->setStyle(style);
 	}
-}
+}*/
 
 PlayerObject *User::GetPlayer(){
 	return this->player;
@@ -200,53 +208,6 @@ ZoneId User::getWorld(){
 	}
 }
 
-// Login a user
-/*Ref<User> User::Login(const string& nikname, const string& password, const SystemAddress& systemAddress) {
-	UserSuccess currentLoginStatus = UserSuccess::SUCCESS;
-
-	unsigned int accountid = AccountsTable::getAccountID(nikname);
-	if (accountid == 0){
-		currentLoginStatus = UserSuccess::INVALID_USER;
-		return NULL;
-	}
-	bool passwordCorrect = AccountsTable::checkPassword(password, accountid);
-	AccountAccessInfo info = AccountsTable::getAccessInfo(accountid);
-
-	if (!passwordCorrect && info.loginTries < 2){
-		currentLoginStatus = UserSuccess::INVALID_PASS;	// Set the loginStatus to INVALID_PASS
-		info.loginTries++; // Increase the loginTries
-		if (info.loginTries == 3) {
-			currentLoginStatus = UserSuccess::LOCKED; // Change account status to 'locked'
-			info.locked = true;
-		}
-		AccountsTable::setAccessInfo(accountid, info);
-	} else {
-		if (info.loginTries > 0){
-			info.loginTries = 0;
-			AccountsTable::setAccessInfo(accountid, info);
-		}
-		
-		// Simple check to see if account is banned. If it is, return BANNED (for client to show)
-		if (info.banned) {
-			Logger::log("USER", "LOGIN", "User is BANNED");
-			currentLoginStatus = UserSuccess::BANNED;
-		}
-	}
-
-	// If account is locked, whether user entered in correct password or not,
-	// Show this (because each username is unique)
-	if (info.locked) {
-		Logger::log("USER", "LOGIN", "User is LOCKED");
-
-		// Change currentStatus to LOCKED
-		currentLoginStatus = UserSuccess::LOCKED;
-	}
-
-	// Print current status to console (just to check, to delete later)
-	Logger::log("USER", "LOGIN", "Current login status is " + std::to_string(currentLoginStatus));
-	return Ref<User>( new User(accountid, nikname, systemAddress, currentLoginStatus) );
-}*/
-
 uint User::GetID() { return id; }
 Ref<Character> User::GetCurrentCharacter() { return current; }
 SystemAddress User::GetIp() { return ip; }
@@ -290,7 +251,7 @@ RakNet::BitStream *User::sendMessage(std::wstring message, std::wstring sender, 
 	return aw;
 }
 
-void writeXML(RakNet::BitStream *xml, std::string str){
+/*void writeXML(RakNet::BitStream *xml, std::string str){
 	for (ulong i = 0; i < str.size(); i++){
 		xml->Write(str.at(i));
 	}
@@ -430,7 +391,7 @@ void User::getChardata(long long objid, RakNet::BitStream *packet){
 	packet->Write((ulong)(ldf->getSize() + 1));
 	packet->Write((uchar)0);
 	ldf->writeToPacket(packet);
-}
+}*/
 
 User::destructor User() { current = NULL; }
 

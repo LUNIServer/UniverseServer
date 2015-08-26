@@ -105,6 +105,8 @@
     <ClInclude Include="UsersPool.h" />
     <ClInclude Include="UtfConverter.h" />
     <ClInclude Include="World.h" />
+    <ClInclude Include="WorldConnection.h" />
+    <ClInclude Include="Worlds.h" />
     <ClInclude Include="WorldServer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -136,7 +138,9 @@
     <ClCompile Include="User.cpp" />
     <ClCompile Include="UtfConverter.cpp" />
     <ClCompile Include="World.cpp" />
+    <ClCompile Include="WorldConnection.cpp" />
     <ClCompile Include="WorldLoop.cpp" />
+    <ClCompile Include="Worlds.cpp" />
     <ClCompile Include="WorldServer.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -52,6 +52,12 @@
     <Filter Include="Source Files\Network">
       <UniqueIdentifier>{9e8d19c5-5002-4ad6-974f-9a6c568da8e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Network\Connections">
+      <UniqueIdentifier>{1c4f5de9-54d5-4de2-a992-ce61395527fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Network\Connections">
+      <UniqueIdentifier>{954f0790-a696-44f0-9685-c462ee48e43a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="serverLoop.h">
@@ -156,6 +162,12 @@
     <ClInclude Include="Logger.h">
       <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Worlds.h">
+      <Filter>Header Files\Mechanics</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldConnection.h">
+      <Filter>Header Files\Network\Connections</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -247,6 +259,12 @@
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files\Common\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Worlds.cpp">
+      <Filter>Source Files\Mechanics</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldConnection.cpp">
+      <Filter>Source Files\Network\Connections</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

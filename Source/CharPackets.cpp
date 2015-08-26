@@ -23,7 +23,7 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 
 	CreatePacketHeader(ID_USER_PACKET_ENUM, 5, 6, &bitStream);
 	
-	Logger::log("CHAR", "PACKETS", "Account ID " + std::to_string(accountID));
+	Logger::log("CHAR", "PACKETS", "Account ID " + std::to_string(accountID), LOG_ALL);
 	long long frontCharId = AccountsTable::getFrontChar(accountID);
 
 	std::vector<long long> chars = CharactersTable::getCharacters(accountID);
@@ -40,8 +40,8 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	bitStream.Write(charactersLength);
 	bitStream.Write(frontChar);
 
-	Logger::log("CHAR", "PACKETS", "#characters: " + std::to_string(charactersLength));
-	Logger::log("CHAR", "PACKETS", "1characters: " + std::to_string(frontChar));
+	Logger::log("CHAR", "PACKETS", "#characters: " + std::to_string(charactersLength), LOG_ALL);
+	Logger::log("CHAR", "PACKETS", "1characters: " + std::to_string(frontChar), LOG_ALL);
 
 	// This loop used to go through 4 chars but doesn't anymore
 	for (uint i = 0; i < charactersLength; i++) {
@@ -52,9 +52,8 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 			//Should never happen, old message, means nothing basically
 			std::cout << "[CHAR] Char " << std::to_string(i) << " doesn't exist yet." << std::endl;
 		}else{
-			Logger::log("CHAR", "PACKETS", "Fetching character...");
-			Logger::log("CHAR", "PACKETS", "Name is: " + ci.info.name);
-			Logger::log("CHAR", "PACKETS", "Unapproved Name is: " + ci.info.unapprovedName);
+			Logger::log("CHAR", "PACKETS", "Fetching character '" + ci.info.name + "'", LOG_DEBUG);
+			Logger::log("CHAR", "PACKETS", "Unapproved Name is: " + ci.info.unapprovedName, LOG_ALL);
 
 			charData.objectID = ci.info.objid;
 			charData.unknown1 = 0;
@@ -334,9 +333,9 @@ void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 		long lot = ObjectsTable::getTemplateOfItem(items.at(k));
 		if (lot == -1) lot = 0;
 		bitStream->Write(lot);
-		Logger::log("CHAR", "PACKETS", "equipped item: " + std::to_string(items.at(k)));
+		Logger::log("CHAR", "PACKETS", "equipped item: " + std::to_string(items.at(k)), LOG_ALL);
 	}
-	Logger::log("CHAR", "PACKETS", "User has " + std::to_string(numrows) + " items equipped");
+	Logger::log("CHAR", "PACKETS", "Character has " + std::to_string(numrows) + " items equipped", LOG_ALL);
 }
 
 string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine) {

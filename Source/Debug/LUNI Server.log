@@ -1,4 +1,4 @@
-﻿Der Buildvorgang wurde am 24.08.2015 22:59:28 gestartet.
+﻿Der Buildvorgang wurde am 26.08.2015 02:04:16 gestartet.
      1>Projekt "D:\Documentaire\Spiele\Lego Universe\Source\Source\LUNI Server.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IMySql\include /IZLIB\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _CRT_SECURE_NO_WARNINGS /D DEBUG /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt WorldLoop.cpp
@@ -33,7 +33,9 @@
          Debug\User.obj
          Debug\UtfConverter.obj
          Debug\World.obj
+         Debug\WorldConnection.obj
          Debug\WorldLoop.obj
+         Debug\Worlds.obj
          Debug\WorldServer.obj
          "D:\Documentaire\Spiele\Lego Universe\Source\Source\Debug\RakNet.lib"
          "D:\Documentaire\Spiele\Lego Universe\Source\Source\Debug\SUtil.lib"
@@ -42,4 +44,4 @@
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:02.69
+Verstrichene Zeit 00:00:03.21

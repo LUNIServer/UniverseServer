@@ -1,9 +1,20 @@
-﻿Der Buildvorgang wurde am 09.08.2015 21:35:27 gestartet.
-     1>Projekt "D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\SUtil\SUtil.vcxproj" auf Knoten "3", Build Ziel(e).
-     1>Lib:
-         SUtil.vcxproj -> D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\Release\SUtil.lib
-     1>Die Erstellung des Projekts "D:\Documentaire\Spiele\Lego Universe\LUNIServerProject-master\Source\LUNI Latest Dev\Source\SUtil\SUtil.vcxproj" ist abgeschlossen, Build Ziel(e).
+﻿Der Buildvorgang wurde am 24.08.2015 23:19:12 gestartet.
+     1>Projekt "D:\Documentaire\Spiele\Lego Universe\Source\Source\SUtil\SUtil.vcxproj" auf Knoten "3", Build Ziel(e).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Exceptions.cpp IniReader.cpp MemWrp.cpp Object.cpp
+         Exceptions.cpp
+         IniReader.cpp
+     1>IniReader.cpp(24): warning C4244: '=': Konvertierung von 'double' in 'float', möglicher Datenverlust
+         MemWrp.cpp
+         Object.cpp
+       Lib:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\Lib.exe /OUT:"D:\Documentaire\Spiele\Lego Universe\Source\Source\Release\SUtil.lib" /NOLOGO /LTCG Release\Exceptions.obj
+         Release\IniReader.obj
+         Release\MemWrp.obj
+         Release\Object.obj
+         SUtil.vcxproj -> D:\Documentaire\Spiele\Lego Universe\Source\Source\Release\SUtil.lib
+     1>Die Erstellung des Projekts "D:\Documentaire\Spiele\Lego Universe\Source\Source\SUtil\SUtil.vcxproj" ist abgeschlossen, Build Ziel(e).
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:00.07
+Verstrichene Zeit 00:00:02.24

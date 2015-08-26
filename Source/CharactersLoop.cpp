@@ -178,32 +178,15 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 									// Get Character ID
 									long long charobjid;
 									data->Read(charobjid);
-									
-									//vector< uchar > t;
-									//for (int i = 8; i <= 11; i++) t.push_back(packet->data[i]);
+
 									usr->SetCharacter(charobjid);
 									Session::play(usr->GetID(), charobjid);
-
-									// If DEBUG is on, and user had ID of one of these (It probably won't)
-									// Print who the char is logging in with
-								#ifdef DEBUG
-									/* stringstream s;
-									s << "\n[CHAR] Character logging in world with id: " << usr->nextcid;
-									if ( usr->nextcid == 2397732190 ) s << " CheekyMonkey!\n";
-									else if ( usr->nextcid == 2444680020 ) s << " monkeybrown!\n";
-									else if ( usr->nextcid == 1534792735 ) s << " GruntMonkey!\n";
-									else if ( usr->nextcid == 1457240027 ) s << " Shafantastic!\n";
-									else s << "Unknown Character ID: " << usr->nextcid << endl;
-									OutputQueue->Insert(s.str()); */
-								#endif
 								}
 
 								std::vector<char> str;
 								for (int k = 0; k < 16; k++){
-									std::cout << "[" << std::to_string(k) << "] " << std::to_string(cfg->redirectIp[k]) << std::endl;
 									if (cfg->redirectIp[k] > 0){
 										str.push_back(cfg->redirectIp[k]);
-										
 									}
 									else{
 										break;
@@ -211,12 +194,11 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 								}
 								std::string ip(str.begin(), str.end());
 								short port = cfg->redirectPort;
-								Logger::log("CHAR", "REDR", ip);
 								RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
 								PacketTools::WriteToPacket(redirect, ip, 33);
 								redirect->Write(port);
 								redirect->Write((unsigned char)0);
-								//WorldServer::sendPacket(redirect, packet->systemAddress);
+								Logger::log("CHAR", "REDR", "Redirecting to " + ip, LOG_DEBUG);
 								rakServer->Send(redirect, PacketPriority::SYSTEM_PRIORITY, PacketReliability::RELIABLE_ORDERED, 0, packet->systemAddress, false);
 
 								// Close connections to the char server for now
