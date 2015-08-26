@@ -96,6 +96,8 @@ void Component1::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 	}
 }
 
+unsigned int Component1::getComponentID(){ return 1; }
+
 Component1::Component1(){
 	this->flag1 = false;
 	this->flag2 = false;
@@ -236,6 +238,8 @@ void Component4::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 		packet->Write(data11.d4);
 	}
 }
+
+unsigned int Component4::getComponentID(){ return 4; }
 
 void Component4::setData1_1(ulonglong d1_1){ this->data1_1 = d1_1; this->flag1 = true; this->flag1_1 = true; }
 void Component4::setData1_2(uchar d1_2){ data1_2 = d1_2; flag1 = true; }
@@ -389,6 +393,8 @@ void Component7::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 	}
 }
 
+unsigned int Component7::getComponentID(){ return 7; }
+
 Component7::Component7(){
 	this->flag1 = false;
 	this->flag2 = false;
@@ -479,6 +485,9 @@ void Component17::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE p
 		packet->Write(this->data2); //may be a count
 	}
 }
+
+unsigned int Component17::getComponentID(){ return 17; }
+
 std::vector<COMPONENT17_EQUIPMENT> *Component17::getEquipment(){
 	return &this->equipment;
 }
@@ -516,5 +525,60 @@ bool Component17::unequipItem(long long objid){
 	}
 	return true;
 }
+
+#pragma endregion
+
+#pragma region Component9
+
+Component9::Component9(){
+
+}
+
+Component9::~Component9(){
+
+}
+
+void Component9::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType){
+	if (packetType == REPLICA_CONSTRUCTION_PACKET) packet->Write(false);
+}
+
+unsigned int Component9::getComponentID(){ return 9; }
+
+#pragma endregion
+
+#pragma region Component2
+
+Component2::Component2(){
+
+}
+
+Component2::~Component2(){
+
+}
+
+void Component2::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType){
+	if (packetType == REPLICA_CONSTRUCTION_PACKET) packet->Write(0UL);
+}
+
+unsigned int Component2::getComponentID(){ return 2; }
+
+#pragma endregion
+
+#pragma region Component107
+
+Component107::Component107(){
+
+}
+
+Component107::~Component107(){
+
+}
+
+void Component107::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType){
+	packet->Write(true);
+	packet->Write(0ULL);
+}
+
+unsigned int Component107::getComponentID(){ return 107; }
 
 #pragma endregion

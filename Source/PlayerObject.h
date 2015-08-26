@@ -6,9 +6,11 @@
 #include "SUtil\Common.h"
 #include "RakNet\Replica.h"
 
+#include "ReplicaObject.h"
+
 #include <string>
 
-class PlayerObject : public Replica{
+class PlayerObject : public ReplicaObject{
 private:
 	//Client reference
 	SystemAddress clientIP;
@@ -20,10 +22,13 @@ private:
 	long long objid;
 	std::wstring name;
 	// -- Components --
-	Component1 *component1;
-	Component7 *component7;
-	Component4 *component4;
-	Component17 *component17;
+	//Component1 *component1;
+	//Component7 *component7;
+	//Component4 *component4;
+	//Component17 *component17;
+	//Component9 *component9;
+	//Component2 *component2;
+	//Component107 *component107;
 public:
 	PlayerObject(long long objid, std::wstring name);
 	~PlayerObject();
@@ -35,6 +40,9 @@ public:
 	Component7 *getComponent7();
 	Component4 *getComponent4();
 	Component17 *getComponent17();
+	Component9 *getComponent9();
+	Component2 *getComponent2();
+	Component107 *getComponent107();
 
 	void doCreation(SystemAddress playerController, ZoneId playerZone, bool createOthers = true);
 	void create(SystemAddress address, bool himself = false);

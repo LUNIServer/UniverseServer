@@ -71,7 +71,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// server to function properly)
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
 		Logger::log("WRLD", "", "started! Listening on port " + std::to_string(cfg->listenPort));
-
+		Instances::registerInstance(ServerAddress);
 		//int serverinstanceid = InstancesTable::registerInstance(ServerAddress);
 		//s << "WORLD SERVER STARTED ON " << ServerAddress.ToString() << " AS INSTANCE " << std::to_string(serverinstanceid) << std::endl;
 	} else exit(2);

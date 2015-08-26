@@ -102,3 +102,10 @@ void Session::leave(long long charid){
 	Logger::log("GAME", "SESSION", "char " + std::to_string(charid) + " left world");
 	SessionsTable::leave(charid);
 }
+
+void Session::clearForInstance(int instanceid){
+	std::vector<SessionInfo> sess = SessionsTable::getClientsInInstance(instanceid);
+	for (unsigned int i = 0; i < sess.size(); i++){
+		SessionsTable::disconnect(sess.at(i).addr);
+	}
+}

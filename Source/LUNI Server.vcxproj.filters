@@ -168,6 +168,9 @@
     <ClInclude Include="WorldConnection.h">
       <Filter>Header Files\Network\Connections</Filter>
     </ClInclude>
+    <ClInclude Include="ReplicaObject.h">
+      <Filter>Header Files\Replica</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -265,6 +268,9 @@
     </ClCompile>
     <ClCompile Include="WorldConnection.cpp">
       <Filter>Source Files\Network\Connections</Filter>
+    </ClCompile>
+    <ClCompile Include="ReplicaObject.cpp">
+      <Filter>Source Files\Replica</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

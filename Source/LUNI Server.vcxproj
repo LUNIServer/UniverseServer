@@ -96,6 +96,7 @@
     <ClInclude Include="ReplicaComponents.h" />
     <ClInclude Include="ReplicaData.h" />
     <ClInclude Include="ReplicaDefinitions.h" />
+    <ClInclude Include="ReplicaObject.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ServerDB.h" />
     <ClInclude Include="serverLoop.h" />
@@ -129,6 +130,7 @@
     <ClCompile Include="Replica.cpp" />
     <ClCompile Include="ReplicaComponents.cpp" />
     <ClCompile Include="ReplicaData.cpp" />
+    <ClCompile Include="ReplicaObject.cpp" />
     <ClCompile Include="ServerDB.cpp" />
     <ClCompile Include="serverLoop.cpp" />
     <ClCompile Include="AuthPackets.cpp" />

@@ -405,6 +405,41 @@ std::vector<SessionInfo> SessionsTable::getClientsInWorld(unsigned short zoneid)
 	return query;*/
 }
 
+std::vector<SessionInfo> SessionsTable::getClientsInInstance(int instanceid){
+	//TODO: implement instances into database
+	std::vector<SessionInfo> query;
+	std::stringstream str;
+	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions`;";
+	auto qr = Database::Query(str.str());
+	if (qr == NULL){
+		Logger::logError("ACDB", "MYSQL", "getting clients in instance #" + std::to_string(instanceid), mysql_error(Database::getConnection()));
+		return query;
+	}
+	auto num = mysql_num_rows(qr);
+	if (num == NULL || num == 0)
+		return query;
+	else{
+		query.reserve((unsigned int)num);
+		MYSQL_ROW row;
+		while (row = mysql_fetch_row(qr)){
+			SessionInfo sinfo;
+			sinfo.addr.SetBinaryAddress(row[0]);
+			sinfo.phase = static_cast<SessionPhase>(std::stoi(row[2]));
+			if (row[3] != NULL){
+				sinfo.accountid = std::stoi(row[3]);
+			}
+			if (row[4] != NULL){
+				sinfo.activeCharId = std::stoll(row[4]);
+			}
+			if (row[5] != NULL){
+				sinfo.zone = std::stoi(row[5]);
+			}
+			query.push_back(sinfo);
+		}
+		return query;
+	}
+}
+
 //Worlds
 SessionInfo SessionsTable::enter(long long charid, unsigned short zoneId){
 	SystemAddress addr = SessionsTable::findCharacter(charid);

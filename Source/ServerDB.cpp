@@ -1,6 +1,8 @@
 #include "Database.h"
 #include "ServerDB.h"
 
+#include "Logger.h"
+
 #include <sstream>
 #include <iostream>
 
@@ -13,9 +15,10 @@ int InstancesTable::registerInstance(SystemAddress addr){
 
 int InstancesTable::getInstanceId(SystemAddress addr){
 	std::stringstream str;
-	str << "SELECT `instanceid` FROM `instances` WHERE `server_address` = '" << addr.ToString() << "');";
+	str << "SELECT `instanceid` FROM `instances` WHERE `server_address` = '" << addr.ToString() << "';";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
+		Logger::logError("SVDB", "MYSQL", "getting instance id", mysql_error(Database::getConnection()));
 		return -1;
 	}
 	else{
@@ -31,9 +34,9 @@ int InstancesTable::getInstanceId(SystemAddress addr){
 
 void InstancesTable::unregisterInstance(SystemAddress addr){
 	std::stringstream str;
-	str << "DELETE FROM `instances` WHERE `server_address` = '" << addr.ToString() << "');";
+	str << "DELETE FROM `instances` WHERE `server_address` = '" << addr.ToString() << "';";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
-		std::cout << "[ACDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("SVDB", "MYSQL", "unregistering instance", mysql_error(Database::getConnection()));
 	}
 }

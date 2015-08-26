@@ -15,4 +15,6 @@ namespace Session{
 
 	void enter(long long charid, unsigned short Zone);
 	void leave(long long charid);
+
+	void clearForInstance(int sessionid);
 }

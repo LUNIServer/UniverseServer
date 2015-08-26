@@ -12,6 +12,7 @@
 class ReplicaComponent{
 public:
 	virtual void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType) = 0;
+	virtual unsigned int getComponentID() = 0;
 };
 
 #pragma region Component1
@@ -140,6 +141,7 @@ public:
 	~Component1();
 
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
 
 	void setData1(COMPONENT1_DATA1 data1);
 	COMPONENT1_DATA1 getData1();
@@ -232,6 +234,7 @@ public:
 	~Component4();
 
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
 
 	void setData1_1(ulonglong d1_1);
 	void setData1_2(uchar d1_2);
@@ -361,6 +364,7 @@ public:
 	~Component7();
 
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
 	std::vector<COMPONENT7_DATA1> *getData1Ref();
 	std::vector<COMPONENT7_DATA2> *getData2Ref();
 	COMPONENT7_DATA3 getData3();
@@ -403,10 +407,41 @@ public:
 	Component17();
 	~Component17();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
 	void setData2(ulong d2);
 	ulong getData2();
 	std::vector<COMPONENT17_EQUIPMENT> *getEquipment();
 	long equipItem(long long objid, ushort slot = 0);
 	bool unequipItem(long long objid);
+};
+#pragma endregion
+
+#pragma region Component9
+class Component9 : public ReplicaComponent{
+public:
+	Component9();
+	~Component9();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+};
+#pragma endregion
+
+#pragma region Component2
+class Component2 : public ReplicaComponent{
+public:
+	Component2();
+	~Component2();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+};
+#pragma endregion
+
+#pragma region Component107
+class Component107 : public ReplicaComponent{
+public:
+	Component107();
+	~Component107();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
 };
 #pragma endregion

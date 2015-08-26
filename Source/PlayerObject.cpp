@@ -18,38 +18,34 @@ PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->objid = objid;
 	this->name = name;
 
-	this->component1 = new Component1();
-	this->component7 = new Component7();
-	this->component4 = new Component4();
-	this->component17 = new Component17();
+	this->addComponent(new Component1());
+	this->addComponent(new Component7());
+	this->addComponent(new Component4());
+	this->addComponent(new Component17());
+	this->addComponent(new Component9());
+	this->addComponent(new Component2());
+	this->addComponent(new Component107());
 
-	COMPONENT7_DATA4 d4 = this->component7->getData4();
+	COMPONENT7_DATA4 d4 = this->getComponent7()->getData4();
 	d4.health = 5;
 	d4.maxHealthN = 5.0F;
 	d4.maxHealth = 5.0F;
 	//d4.imagination = 1;
 	//d4.maxImagination = 15.0F;
 	//d4.maxImaginationN = 15.0F;
-	this->component7->setData4(d4);
+	this->getComponent7()->setData4(d4);
 
 	auto qr = Database::Query("SELECT `object` FROM `equipment` WHERE `owner` = '" + std::to_string(objid) + "';");
 	ushort numrows = (ushort) mysql_num_rows(qr);
 	for (ushort k = 0; k < numrows; k++){
 		auto ftc = mysql_fetch_row(qr);
 		long long itemid = std::stoll(ftc[0]);
-		this->component17->equipItem(itemid);
+		this->getComponent17()->equipItem(itemid);
 	}
 }
 
 PlayerObject::~PlayerObject(){
-	delete this->component1;
-	this->component1 = NULL;
-	delete this->component7;
-	this->component7 = NULL;
-	delete this->component4;
-	this->component4 = NULL;
-	delete this->component17;
-	this->component17 = NULL;
+	this->deleteComponents();
 	replicaManager.DereferencePointer(this);
 }
 
@@ -59,10 +55,13 @@ std::wstring PlayerObject::getName(){
 
 // --- Components ---
 
-Component1 *PlayerObject::getComponent1(){ return this->component1; }
-Component7 *PlayerObject::getComponent7(){ return this->component7; }
-Component4 *PlayerObject::getComponent4(){ return this->component4; }
-Component17 *PlayerObject::getComponent17(){ return this->component17; }
+Component1 *PlayerObject::getComponent1(){ return (Component1 *) this->getComponent(1); }
+Component7 *PlayerObject::getComponent7(){ return (Component7 *) this->getComponent(7); }
+Component4 *PlayerObject::getComponent4(){ return (Component4 *) this->getComponent(4); }
+Component17 *PlayerObject::getComponent17(){ return (Component17 *) this->getComponent(17); }
+Component9 *PlayerObject::getComponent9(){ return (Component9 *) this->getComponent(9); }
+Component2 *PlayerObject::getComponent2(){ return (Component2 *) this->getComponent(2); }
+Component107 *PlayerObject::getComponent107(){ return (Component107 *) this->getComponent(107); }
 
 void PlayerObject::doCreation(SystemAddress playerController, ZoneId playerZone, bool createOthers){
 	this->clientIP = playerController;
@@ -152,29 +151,10 @@ void PlayerObject::destruct(){
 
 ReplicaReturnResult PlayerObject::SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp){
 	//This is the construction Packet
-
 	Logger::log("REPL", "PLAYER", "Send construction of" + UtfConverter::ToUtf8(this->name) + " to " + std::string(systemAddress.ToString()));
 	replicaPacketGeneral(outBitStream, REPLICA_CONSTRUCTION_PACKET, this->objid, this->name);
-
-	this->component1->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	this->component7->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	this->component4->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	//replicaPacketLOT1i24(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 24
-	//replicaPacketLOT1i27(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 27
-	//replicaPacketLOT1i28(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 28
-	//replicaPacketLOT1i29(outBitStream, REPLICA_CONSTRUCTION_PACKET, PLAYER_STYLE()); //Index 29
-
-	this->component17->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	
-	//replicaPacketLOT1i30(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 30
-
-	replicaPacketLOT1i31(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 31
-	replicaPacketLOT1i32(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 32
-
-	replicaPacketLOT1i36(outBitStream, REPLICA_CONSTRUCTION_PACKET); //Index 36
-
+	this->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
 	replicaManager.SetScope(this, true, systemAddress, false);
-
 	return REPLICA_PROCESSING_DONE;
 }
 ReplicaReturnResult PlayerObject::SendDestruction(RakNet::BitStream *outBitStream, SystemAddress systemAddress, bool *includeTimestamp){
@@ -205,24 +185,8 @@ ReplicaReturnResult PlayerObject::ReceiveScopeChange(RakNet::BitStream *inBitStr
 ReplicaReturnResult PlayerObject::Serialize(bool *sendTimestamp, RakNet::BitStream *outBitStream, RakNetTime lastSendTime,
 	PacketPriority *priority, PacketReliability *reliability, RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags){
 	//This is the Serialization packet
-
 	replicaPacketGeneral(outBitStream, REPLICA_SERIALIZATION_PACKET, this->objid, this->name);
-	//std::cout << "[WRLD] Serializing Player" << std::endl;
-	this->component1->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
-	this->component7->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
-	this->component4->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
-	//replicaPacketLOT1i24(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 24
-	//replicaPacketLOT1i27(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 27
-	//replicaPacketLOT1i28(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 28
-	//replicaPacketLOT1i29(outBitStream, REPLICA_SERIALIZATION_PACKET, PLAYER_STYLE()); //Index 29
-
-	this->component17->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
-	//replicaPacketLOT1i30(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 30
-	replicaPacketLOT1i31(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 31
-	replicaPacketLOT1i32(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 32
-
-	replicaPacketLOT1i36(outBitStream, REPLICA_SERIALIZATION_PACKET); //Index 36
-
+	this->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
 	return REPLICA_PROCESSING_DONE;
 }
 ReplicaReturnResult PlayerObject::Deserialize(RakNet::BitStream *inBitStream, RakNetTime timestamp, RakNetTime lastDeserializeTime, SystemAddress systemAddress){

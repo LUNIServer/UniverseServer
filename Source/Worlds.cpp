@@ -1,6 +1,8 @@
 #include "Worlds.h"
 #include "RakNet\BitStream.h"
 #include "WorldServer.h"
+#include "ServerDB.h"
+#include "Account.h"
 #include "Logger.h"
 
 bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION pos, unsigned short instance, unsigned long clone){
@@ -33,3 +35,24 @@ bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION p
 	WorldServer::sendPacket(stream, address);
 	return true;
 }
+
+int Instances::registerInstance(SystemAddress address){
+	//TODO: We do this a little differently to not rocket up the instanceids,
+	//We should delete and recreate the instance once it has more content then just the address
+	int instanceid = InstancesTable::getInstanceId(address);
+	if (instanceid > -1){
+		//Instance was registered
+		//InstancesTable::unregisterInstance(address);
+		//Clear sessions
+		Logger::log("WRLD", "INSTANCE", std::string(address.ToString()) + " already registered, clearing sessions");
+		Session::clearForInstance(instanceid);
+		return instanceid;
+	}
+	else{
+		return InstancesTable::registerInstance(address);
+	}
+}
+
+//void ObjectsManager::registerObject(ReplicaObject object){
+//
+//}
