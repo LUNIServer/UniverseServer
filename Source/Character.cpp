@@ -1,47 +1,33 @@
 #include "Character.h"
 #include "Database.h"
+#include "CharactersDB.h"
 #include <sstream>
 using namespace std;
 
 // This is the character initialization by the Character ID
 Character::Character(long long charid) {
-	long long id = charid; // This is the Character ID
-
-	stringstream o; // This is a stringstream that stores information
-	o << id; // Add the Character ID to the stringstream 'o'
-	string qr = "SELECT `name`, `lastZoneId`, `x`, `y`, `z` FROM `characters` WHERE `objectID` = " + o.str(); // Create the MySQL query string
-	string qrc = "SELECT `shirtColor`, `pantsColor`, `hairStyle`, `hairColor`, `eyebrows`, `eyes`, `mouth` FROM `characters` WHERE `objectID` = " + o.str();
-	string qrl = "SELECT `level`, `uScore` FROM `characters` WHERE `objectID` = " + o.str();
-	auto row = mysql_fetch_row(Database::Query(qr)); // Query the MySQL database for user
-	auto row2 = mysql_fetch_row(Database::Query(qrc)); // Query the MySQL database for user
-	auto row3 = mysql_fetch_row(Database::Query(qrl));
-
-	// name = row[2] + '0';
-	for (uint i = 0; i < strlen(row[0]); i++) Name.push_back(row[0][i]); // Keep adding the next character to the Name
-	Name.push_back(0); // Add a null terminator to the end of the name
-
-	// Clear the stringstream
-	o.clear();
+	ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(charid);
+	
+	this->Name = std::vector<unsigned char>(cinfo.info.name.begin(), cinfo.info.name.end());
+	this->Name.push_back(0);
 
 	// Copy the world into the stringstream
-	ushort zoneid = stoi(row[1]);
-	ZoneId zone = static_cast<ZoneId>(zoneid);
-	this->Data.lastZone = zone;
+	this->Data.lastZone = static_cast<ZoneId>(cinfo.lastPlace.zoneID);
 
-	this->pos.x = stof(row[2]);
-	this->pos.y = stof(row[3]);
-	this->pos.z = stof(row[4]);
+	this->pos.x = cinfo.lastPlace.x;
+	this->pos.y = cinfo.lastPlace.y;
+	this->pos.z = cinfo.lastPlace.z;
 
-	this->level = stoi(row3[0]);
+	this->level = 6; //TODO: dynamic
 	this->charobjid = charid;
 		
-	this->Data.minifig.shirtcolor = stoi(row2[0]);
-	this->Data.minifig.pants = stoi(row2[1]);
-	this->Data.minifig.hairstyle = stoi(row2[2]);
-	this->Data.minifig.haircolor = stoi(row2[3]);
-	this->Data.minifig.eyebrows = stoi(row2[4]);
-	this->Data.minifig.eyes = stoi(row2[5]);
-	this->Data.minifig.mouth = stoi(row2[6]); 
+	this->Data.minifig.shirtcolor = cinfo.style.shirtColor;
+	this->Data.minifig.pants = cinfo.style.pantsColor;
+	this->Data.minifig.hairstyle = cinfo.style.hairStyle;
+	this->Data.minifig.haircolor = cinfo.style.hairColor;
+	this->Data.minifig.eyebrows = cinfo.style.eyebrows;
+	this->Data.minifig.eyes = cinfo.style.eyes;
+	this->Data.minifig.mouth = cinfo.style.mouth;
 }
 
 // This is the character initialization by a packet

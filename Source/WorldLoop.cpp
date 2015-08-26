@@ -402,14 +402,28 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 				usr->DestructPlayer();
 				Player.erase(packet->systemAddress);
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_INWORLD);
-				
 			}
 				break;
-
+			case DefaultMessageIDTypes::ID_CONNECTION_LOST:
+			{
+				SessionInfo session = SessionsTable::getClientSession(packet->systemAddress);
+				Logger::log("WRLD", "", "Lost connection to " + std::string(packet->systemAddress.ToString()), LOG_ERROR);
+				if (session.phase >= SessionPhase::PHASE_AUTHENTIFIED){
+					auto usr = OnlineUsers->Find(packet->systemAddress);
+					if (session.phase >= SessionPhase::PHASE_PLAYING){
+						Friends::broadcastFriendLogout(session.activeCharId);
+						usr->DestructPlayer();
+						Player.erase(packet->systemAddress);
+					}
+					if (OnlineUsers->Remove(packet->systemAddress)) {}
+				}
+				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_INWORLD);
+			}
+				break;
 			default:
 				stringstream s;
-				s << "\n[WRLD] received unknown packet: " << RawDataToString(packet->data, packet->length) << endl;
-				OutputQueue->Insert(s.str());
+				Logger::log("WRLD", "", "recieved unknown packet [" + std::to_string(packetId) + "]", LOG_DEBUG);
+				Logger::log("WRLD", "", RawDataToString(packet->data, packet->length), LOG_DEBUG);
 		}
 
 		rakServer->DeallocatePacket(packet);
