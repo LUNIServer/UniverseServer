@@ -53,6 +53,6 @@ int Instances::registerInstance(SystemAddress address){
 	}
 }
 
-//void ObjectsManager::registerObject(ReplicaObject object){
-//
-//}
+void ObjectsManager::registerObject(ReplicaObject * object){
+
+}

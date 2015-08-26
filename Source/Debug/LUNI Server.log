@@ -1,8 +1,22 @@
-﻿Der Buildvorgang wurde am 26.08.2015 14:40:54 gestartet.
+﻿Der Buildvorgang wurde am 26.08.2015 15:59:31 gestartet.
      1>Projekt "D:\Documentaire\Spiele\Lego Universe\Source\Source\LUNI Server.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IMySql\include /IZLIB\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _CRT_SECURE_NO_WARNINGS /D DEBUG /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Worlds.cpp
-         Worlds.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IMySql\include /IZLIB\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _CRT_SECURE_NO_WARNINGS /D DEBUG /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt AuthLoop.cpp AuthPackets.cpp CharPackets.cpp CharactersLoop.cpp Packet.cpp PlayerObject.cpp User.cpp WorldLoop.cpp main.cpp serverLoop.cpp
+         AuthLoop.cpp
+         Code wird generiert...
+         Kompilieren...
+         serverLoop.cpp
+     1>d:\documentaire\spiele\lego universe\source\source\raknet\types.h(280): warning C4005: 'DEBUG': Makro-Neudefinition
+                 Befehlszeilenargumente: siehe vorherige Definition von "DEBUG"
+         main.cpp
+         WorldLoop.cpp
+         User.cpp
+         PlayerObject.cpp
+         Packet.cpp
+         CharactersLoop.cpp
+         CharPackets.cpp
+         AuthPackets.cpp
+         Code wird generiert...
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Documentaire\Spiele\Lego Universe\Source\Source\Debug\LUNI Server.exe" /INCREMENTAL /NOLOGO /LIBPATH:MySql\lib /LIBPATH:ZLIB\lib /LIBPATH:Debug ws2_32.lib libmysql.lib SUtil.lib zdll.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\Documentaire\Spiele\Lego Universe\Source\Source\Debug\LUNI Server.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Documentaire\Spiele\Lego Universe\Source\Source\Debug\LUNI Server.lib" /MACHINE:X86 Debug\Resource.res
          Debug\Account.obj
@@ -45,4 +59,4 @@
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:02.24
+Verstrichene Zeit 00:00:12.48

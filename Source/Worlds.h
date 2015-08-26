@@ -17,5 +17,5 @@ public:
 
 class ObjectsManager{
 public:
-	//static void registerObject(ReplicaObject object);
+	static void registerObject(ReplicaObject * object);
 };

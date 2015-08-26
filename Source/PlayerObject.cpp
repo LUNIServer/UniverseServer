@@ -4,6 +4,7 @@
 
 #include "RakNet\ReplicaManager.h"
 #include "UsersPool.h"
+#include "AccountsDB.h"
 
 #include "Logger.h"
 #include "UtfConverter.h"
@@ -64,10 +65,25 @@ Component2 *PlayerObject::getComponent2(){ return (Component2 *) this->getCompon
 Component107 *PlayerObject::getComponent107(){ return (Component107 *) this->getComponent(107); }
 
 void PlayerObject::doCreation(SystemAddress playerController, ZoneId playerZone, bool createOthers){
+	//Add information about the client
 	this->clientIP = playerController;
 	this->zone = playerZone;
+	//Create the object for the client
 	this->create(playerController, true);
-	typedef std::map<SystemAddress, ZoneId>::iterator PlayerIterator;
+
+	std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(playerZone);
+	for (std::vector<SessionInfo>::iterator it = sess.begin(); it != sess.end(); ++it){
+		if (it->addr != playerController){
+			Ref<User> other = WorldOnlineUsers->Find(it->addr);
+			PlayerObject *p = other->GetPlayer();
+			if (p != NULL){ //Player not null
+				if (createOthers) p->create(playerController); //Create Others for me
+			}
+		}
+		this->create(it->addr); //Create me for others
+	}
+
+	/*typedef std::map<SystemAddress, ZoneId>::iterator PlayerIterator;
 	for (PlayerIterator iterator = Player.begin(); iterator != Player.end(); iterator++) {
 		if (iterator->second == playerZone){ //Same World
 			if (iterator->first != playerController){ //Not Same Address
@@ -79,7 +95,7 @@ void PlayerObject::doCreation(SystemAddress playerController, ZoneId playerZone,
 				}
 			}
 		}
-	}
+	}*/
 }
 
 void PlayerObject::create(SystemAddress address, bool himself){
