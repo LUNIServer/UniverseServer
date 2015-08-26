@@ -18,23 +18,14 @@ private:
 
 	bool isCreated = false;
 	// -- Specific Values -- 
-	//REPLICA_OBJECT_POSITION position;
-	long long objid;
-	std::wstring name;
-	// -- Components --
-	//Component1 *component1;
-	//Component7 *component7;
-	//Component4 *component4;
-	//Component17 *component17;
-	//Component9 *component9;
-	//Component2 *component2;
-	//Component107 *component107;
 public:
 	PlayerObject(long long objid, std::wstring name);
 	~PlayerObject();
 
 	// -- Specific Values -- 
 	std::wstring getName();
+	long long getObjectID();
+
 	// -- Components --
 	Component1 *getComponent1();
 	Component7 *getComponent7();
@@ -52,13 +43,4 @@ public:
 	void doDestruction(SystemAddress playerController, ZoneId playerZone, bool destructOthers = true);
 	void destruct();
 	void destruct(SystemAddress address);
-
-	ReplicaReturnResult SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp);
-	ReplicaReturnResult SendDestruction(RakNet::BitStream *outBitStream, SystemAddress systemAddress, bool *includeTimestamp);
-	ReplicaReturnResult ReceiveDestruction(RakNet::BitStream *inBitStream, SystemAddress systemAddress, RakNetTime timestamp);
-	ReplicaReturnResult SendScopeChange(bool inScope, RakNet::BitStream *outBitStream, RakNetTime currentTime, SystemAddress systemAddress, bool *includeTimestamp);
-	ReplicaReturnResult ReceiveScopeChange(RakNet::BitStream *inBitStream, SystemAddress systemAddress, RakNetTime timestamp);
-	ReplicaReturnResult Serialize(bool *sendTimestamp, RakNet::BitStream *outBitStream, RakNetTime lastSendTime, PacketPriority *priority, PacketReliability *reliability, RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags);
-	ReplicaReturnResult Deserialize(RakNet::BitStream *inBitStream, RakNetTime timestamp, RakNetTime lastDeserializeTime, SystemAddress systemAddress);
-	int GetSortPriority(void) const { return 0; }	
 };

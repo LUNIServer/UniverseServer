@@ -215,9 +215,10 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									WorldServerPackets::CreateCharacter(packet->systemAddress, objid);
 
 									PlayerObject * player = new PlayerObject(objid, UtfConverter::FromUtf8(cinfo.info.name));
+									
 									Component1 * c1 = player->getComponent1();
-
 									c1->setPosition(pos);
+
 									Component4 * c4 = player->getComponent4();
 									c4->setLevel(6);
 									PLAYER_INFO pi;
@@ -233,8 +234,20 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									ps.mouthStyle = cinfo.style.mouth;
 									ps.pantsColor = cinfo.style.pantsColor;
 									ps.shirtColor = cinfo.style.shirtColor;
-
 									c4->setStyle(ps);
+
+									Component7 * c7 = player->getComponent7();
+									COMPONENT7_DATA4 d4 = c7->getData4();
+									d4.health = 5;
+									d4.maxHealthN = 5.0F;
+									d4.maxHealth = 5.0F;
+									c7->setData4(d4);
+
+									Component17 * c17 = player->getComponent17();
+									std::vector<long long> equip = EquipmentTable::getItems(objid);
+									for (unsigned int k = 0; k < equip.size(); k++){
+										c17->equipItem(equip.at(k));
+									}
 
 									usr->SetPlayer(player);
 									player->doCreation(packet->systemAddress, zid);

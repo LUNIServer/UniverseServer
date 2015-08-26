@@ -4,6 +4,8 @@
 #include "ReplicaData.h"
 #include "ReplicaObject.h"
 
+#include <unordered_map>
+
 class Worlds{
 public:
 	static bool loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION pos, unsigned short instance = 0, unsigned long clone = 0);
@@ -16,6 +18,9 @@ public:
 };
 
 class ObjectsManager{
+	static std::unordered_map<long long, ReplicaObject *> objects;
 public:
 	static void registerObject(ReplicaObject * object);
+	static void unregisterObject(ReplicaObject * object);
+	static ReplicaObject * getObjectByID(long long objid);
 };

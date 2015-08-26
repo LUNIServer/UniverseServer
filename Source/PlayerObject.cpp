@@ -5,6 +5,7 @@
 #include "RakNet\ReplicaManager.h"
 #include "UsersPool.h"
 #include "AccountsDB.h"
+#include "Worlds.h"
 
 #include "Logger.h"
 #include "UtfConverter.h"
@@ -19,6 +20,7 @@ PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->objid = objid;
 	this->name = name;
 
+	//The order is VERY IMPORTANT for the packet 1,7,4,17,9,2,107
 	this->addComponent(new Component1());
 	this->addComponent(new Component7());
 	this->addComponent(new Component4());
@@ -26,32 +28,21 @@ PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->addComponent(new Component9());
 	this->addComponent(new Component2());
 	this->addComponent(new Component107());
-
-	COMPONENT7_DATA4 d4 = this->getComponent7()->getData4();
-	d4.health = 5;
-	d4.maxHealthN = 5.0F;
-	d4.maxHealth = 5.0F;
-	//d4.imagination = 1;
-	//d4.maxImagination = 15.0F;
-	//d4.maxImaginationN = 15.0F;
-	this->getComponent7()->setData4(d4);
-
-	auto qr = Database::Query("SELECT `object` FROM `equipment` WHERE `owner` = '" + std::to_string(objid) + "';");
-	ushort numrows = (ushort) mysql_num_rows(qr);
-	for (ushort k = 0; k < numrows; k++){
-		auto ftc = mysql_fetch_row(qr);
-		long long itemid = std::stoll(ftc[0]);
-		this->getComponent17()->equipItem(itemid);
-	}
+	ObjectsManager::registerObject(this);
 }
 
 PlayerObject::~PlayerObject(){
 	this->deleteComponents();
+	ObjectsManager::unregisterObject(this);
 	replicaManager.DereferencePointer(this);
 }
 
 std::wstring PlayerObject::getName(){
 	return this->name;
+}
+
+long long PlayerObject::getObjectID(){
+	return this->objid;
 }
 
 // --- Components ---
@@ -74,28 +65,13 @@ void PlayerObject::doCreation(SystemAddress playerController, ZoneId playerZone,
 	std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(playerZone);
 	for (std::vector<SessionInfo>::iterator it = sess.begin(); it != sess.end(); ++it){
 		if (it->addr != playerController){
-			Ref<User> other = WorldOnlineUsers->Find(it->addr);
-			PlayerObject *p = other->GetPlayer();
-			if (p != NULL){ //Player not null
-				if (createOthers) p->create(playerController); //Create Others for me
+			PlayerObject * other = (PlayerObject *) ObjectsManager::getObjectByID(it->activeCharId);
+			if (other != NULL){ //Player not null
+				if (createOthers) other->create(playerController); //Create Others for me
+				this->create(it->addr); //Create me for others
 			}
 		}
-		this->create(it->addr); //Create me for others
 	}
-
-	/*typedef std::map<SystemAddress, ZoneId>::iterator PlayerIterator;
-	for (PlayerIterator iterator = Player.begin(); iterator != Player.end(); iterator++) {
-		if (iterator->second == playerZone){ //Same World
-			if (iterator->first != playerController){ //Not Same Address
-				Ref<User> other = WorldOnlineUsers->Find(iterator->first);
-				PlayerObject *p = other->GetPlayer();
-				if (p != NULL){ //Player not null
-					if (createOthers) p->create(playerController); //Create Others for me
-					this->create(iterator->first); //Create me for others
-				}
-			}
-		}
-	}*/
 }
 
 void PlayerObject::create(SystemAddress address, bool himself){
@@ -108,17 +84,12 @@ void PlayerObject::create(SystemAddress address, bool himself){
 
 void PlayerObject::doSerialization(SystemAddress playerController, ZoneId playerZone){
 	if (!isCreated){
-		std::cout << "[WORLD] ERROR: Player [objid:" << this->objid << "] has not been created!" << std::endl;
+		Logger::log("WRLD", "RMPL", "Player [objid:" + std::to_string(this->objid) + "] has not been created!", LOG_WARNING);
 	}
 	else{
-		this->serialize(playerController);
-		typedef std::map<SystemAddress, ZoneId>::iterator PlayerIterator;
-		for (PlayerIterator iterator = Player.begin(); iterator != Player.end(); iterator++) {
-			if (iterator->second == playerZone){ //Same World
-				if (iterator->first != playerController){ //Not Same Address
-					this->serialize(iterator->first);
-				}
-			}
+		std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(playerZone);
+		for (std::vector<SessionInfo>::iterator it = sess.begin(); it != sess.end(); ++it){
+			this->serialize(it->addr);
 		}
 	}
 }
@@ -133,22 +104,16 @@ void PlayerObject::serialize(){
 
 void PlayerObject::doDestruction(SystemAddress playerController, ZoneId playerZone, bool destructOthers){
 	if (!isCreated){
-		std::cout << "[WORLD] ERROR: Player [objid:" << this->objid << "] has not been created!" << std::endl;
+		Logger::log("REPL", "PLAYER", "Player [objid:" + std::to_string(this->objid) + "] has not been created!", LOG_WARNING);
 	}
 	else{
 		isCreated = false;
-		typedef std::map<SystemAddress, ZoneId>::iterator PlayerIterator;
-		for (PlayerIterator iterator = Player.begin(); iterator != Player.end(); iterator++) {
-			if (iterator->second == playerZone){ //Same World
-				if (iterator->first != playerController){ //Not Same Address
-					
-					Ref<User> other = WorldOnlineUsers->Find(iterator->first); 
-					PlayerObject *p = other->GetPlayer();
-					if (p != NULL){ //Player not null
-						this->destruct(iterator->first); //Destroy me for all the others
-						if (destructOthers) p->destruct(playerController); //Then destroy all others for me
-					}
-				}
+		std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(playerZone);
+		for (std::vector<SessionInfo>::iterator it = sess.begin(); it != sess.end(); ++it){
+			if (it->addr != playerController){
+				this->destruct(it->addr);
+				PlayerObject * p = (PlayerObject *) ObjectsManager::getObjectByID(it->activeCharId);
+				if (destructOthers & (p != NULL)) p->destruct(playerController);
 			}
 		}
 		this->destruct(playerController); //Destroying my char for me
@@ -163,50 +128,4 @@ void PlayerObject::destruct(){
 	if (isCreated){
 		this->doDestruction(this->clientIP, this->zone);
 	}
-}
-
-ReplicaReturnResult PlayerObject::SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp){
-	//This is the construction Packet
-	Logger::log("REPL", "PLAYER", "Send construction of" + UtfConverter::ToUtf8(this->name) + " to " + std::string(systemAddress.ToString()));
-	replicaPacketGeneral(outBitStream, REPLICA_CONSTRUCTION_PACKET, this->objid, this->name);
-	this->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	replicaManager.SetScope(this, true, systemAddress, false);
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::SendDestruction(RakNet::BitStream *outBitStream, SystemAddress systemAddress, bool *includeTimestamp){
-	//This is the destruction packet
-	std::cout << "Send destruction of '";
-	std::wcout << this->name;
-	std::cout << "' to " << systemAddress.ToString() << std::endl;
-
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::ReceiveDestruction(RakNet::BitStream *inBitStream, SystemAddress systemAddress, RakNetTime timestamp){
-	std::cout << "Recieve destruction of '";
-	std::wcout << this->name;
-	std::cout << "' to " << systemAddress.ToString() << std::endl;
-	//This happens only on the client side
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::SendScopeChange(bool inScope, RakNet::BitStream *outBitStream, RakNetTime currentTime, SystemAddress systemAddress, bool *includeTimestamp){
-
-	//We have to do this, so the scope change isn't cancelled
-	outBitStream->Write(inScope);
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::ReceiveScopeChange(RakNet::BitStream *inBitStream, SystemAddress systemAddress, RakNetTime timestamp){
-	//This happens only on the client side
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::Serialize(bool *sendTimestamp, RakNet::BitStream *outBitStream, RakNetTime lastSendTime,
-	PacketPriority *priority, PacketReliability *reliability, RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags){
-	//This is the Serialization packet
-	replicaPacketGeneral(outBitStream, REPLICA_SERIALIZATION_PACKET, this->objid, this->name);
-	this->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
-	return REPLICA_PROCESSING_DONE;
-}
-ReplicaReturnResult PlayerObject::Deserialize(RakNet::BitStream *inBitStream, RakNetTime timestamp, RakNetTime lastDeserializeTime, SystemAddress systemAddress){
-	//TODO implement deserialize once the Serialization isn't static any more
-	std::cout << "[WRLD] CLIENT SENT SERIALIZE" << std::endl;
-	return REPLICA_PROCESSING_DONE;
 }

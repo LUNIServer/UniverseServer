@@ -53,6 +53,16 @@ int Instances::registerInstance(SystemAddress address){
 	}
 }
 
-void ObjectsManager::registerObject(ReplicaObject * object){
+std::unordered_map<long long, ReplicaObject *> ObjectsManager::objects;
 
+void ObjectsManager::registerObject(ReplicaObject * object){
+	objects.insert(std::make_pair(object->getObjectID(), object));
+}
+
+void ObjectsManager::unregisterObject(ReplicaObject * object){
+	objects.erase(object->getObjectID());
+}
+
+ReplicaObject * ObjectsManager::getObjectByID(long long objid){
+	return objects.find(objid)->second;
 }
