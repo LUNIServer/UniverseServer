@@ -712,6 +712,36 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				cout << std::endl;
 			}
 				break;
+			case 230:
+			{
+				//Delete Item from Inventory
+				bool mode;
+				data->Read(mode);
+				unsigned long uk1;
+				data->Read(uk1);
+				unsigned long long uk2;
+				data->Read(uk2);
+				bool a1, a2, a3, a4, a5, a6, a7;
+				data->Read(a1);
+				data->Read(a2);
+				data->Read(a3);
+				data->Read(a4);
+				data->Read(a5);
+				data->Read(a6);
+				data->Read(a7);
+				long long itemid;
+				data->Read(itemid);
+				unsigned char uk4;
+				data->Read(uk4);
+				unsigned long uk5;
+				data->Read(uk5);
+				if (mode == true){
+					Logger::log("WLRD", "INVENTORY", "Delete item " + std::to_string(objid) + " from character " + std::to_string(objid));
+					InventoryTable::deleteItem(objid, itemid);
+					ObjectsTable::deletObject(itemid);
+				}
+			}
+				break;
 			case 231:
 			{
 				//Equip an item
@@ -1267,7 +1297,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 							Chat::sendChatMessage(systemAddress, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
 						}
 						else{
-							Chat::sendChatMessage(systemAddress, L"Usage: /setitem <ItemID> <Amount> <Slot>");
+							Chat::sendChatMessage(systemAddress, L"Usage: /setitem <LOT> <Amount> <Slot>");
 						}
 						flag = true;
 					}

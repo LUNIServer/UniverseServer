@@ -58,10 +58,14 @@ void InventoryTable::deleteInventory(long long charid){
 
 void InventoryTable::insertItem(long long charid, long long objid, unsigned long qnt, unsigned long slot, bool linked){
 	std::stringstream str;
-	str << "INSERT INTO `luni`.`inventory` (`owner`, `object`, `qnt`, `slot`, `linked`) VALUES('" << charid << "', '" << objid << "', '" << std::to_string(qnt) << "', '" << std::to_string(slot) << "', '";
+	str << "INSERT INTO `inventory` (`owner`, `object`, `qnt`, `slot`, `linked`) VALUES('" << charid << "', '" << objid << "', '" << std::to_string(qnt) << "', '" << std::to_string(slot) << "', '";
 	if (linked) str << "1"; else str << "0";
 	str << "');";
 	Database::Query(str.str());
+}
+
+void InventoryTable::deleteItem(long long charid, long long objid){
+	Database::Query("DELETE FROM `inventory` WHERE `owner` = '" + std::to_string(charid) + "' AND `object` = '" + std::to_string(objid) + "';");
 }
 
 std::vector<InventoryItem> InventoryTable::getItems(long long charid){
@@ -124,6 +128,10 @@ long long ObjectsTable::createObject(long lot){
 	Database::Query(str.str());
 	long long objid = mysql_insert_id(Database::getConnection());
 	return objid;
+}
+
+void ObjectsTable::deletObject(long long objid){
+	Database::Query("DELETE FROM `objects` WHERE `objectid` = '" + std::to_string(objid) + "';");
 }
 
 RocketInfo ObjectsTable::getRocketInfo(long long objid){

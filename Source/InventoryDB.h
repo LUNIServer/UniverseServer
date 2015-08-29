@@ -39,6 +39,7 @@ public:
 	static long long getItemFromSlot(long long charid, unsigned long slot);
 	static void deleteInventory(long long charid);
 	static void insertItem(long long charid, long long objid, unsigned long qnt, unsigned long slot, bool linked);
+	static void deleteItem(long long charid, long long objid);
 	static std::vector<InventoryItem> getItems(long long charid);
 };
 
@@ -50,6 +51,7 @@ public:
 	static ObjectInfo getItemInfo(long long objid);
 	//Create an object with the specified LOT
 	static long long createObject(long lot);
+	static void deletObject(long long objid);
 
 	//Custom Objects:
 	//Rocket (6416)
