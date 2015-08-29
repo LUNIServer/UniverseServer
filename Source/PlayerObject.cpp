@@ -13,12 +13,13 @@
 #include <map>
 
 extern ReplicaManager replicaManager;
-extern std::map<SystemAddress, ZoneId> Player;
+//extern std::map<SystemAddress, ZoneId> Player;
 extern Ref< UsersPool > WorldOnlineUsers;
 
 PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->objid = objid;
 	this->name = name;
+	this->LOT = 1UL;
 
 	//The order is VERY IMPORTANT for the packet 1,7,4,17,9,2,107
 	this->addComponent(new Component1());

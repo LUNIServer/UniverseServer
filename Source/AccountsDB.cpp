@@ -247,6 +247,7 @@ SystemAddress SessionsTable::findAccount(unsigned int accountid){
 			SystemAddress addr;
 			auto row = mysql_fetch_row(qr);
 			addr.SetBinaryAddress(row[0]);
+			Logger::log("ACDB", "DEBUG", std::string(row[0]) + " loaded as " + std::string(addr.ToString()) + " (p:" + std::to_string(addr.port) + ")", LOG_DEBUG);
 			return addr;
 		}
 		else{

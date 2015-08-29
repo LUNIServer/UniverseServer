@@ -41,7 +41,7 @@ using namespace std;
 ReplicaManager replicaManager;
 NetworkIDManager networkIdManager;
 
-std::map<SystemAddress, ZoneId> Player;
+//std::map<SystemAddress, ZoneId> Player;
 Ref< UsersPool > WorldOnlineUsers;
 
 void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< string > > OutputQueue) {
@@ -187,11 +187,11 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 								
 								//------
 								auto usr = OnlineUsers->Find(packet->systemAddress);
-								std::pair<std::map<SystemAddress, ZoneId>::iterator, bool> ret;
-								ret = Player.insert(std::pair<SystemAddress, ZoneId>(packet->systemAddress, usr->getWorld()));
-								if (ret.second == false) {
-									Player.at(packet->systemAddress) = usr->getWorld();
-								}
+								//std::pair<std::map<SystemAddress, ZoneId>::iterator, bool> ret;
+								//ret = Player.insert(std::pair<SystemAddress, ZoneId>(packet->systemAddress, usr->getWorld()));
+								//if (ret.second == false) {
+								//	Player.at(packet->systemAddress) = usr->getWorld();
+								//}
 								//------
 
 								Logger::log("WRLD", "LEVEL", "Client loading complete");
@@ -280,7 +280,14 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 								if (reciever != L""){
 									str << " for " << UtfConverter::ToUtf8(reciever);
 								}
-								str	<< ": '" << UtfConverter::ToUtf8(text) << "'";
+								str << ": '";
+								if (text.size() > 20){
+									str << UtfConverter::ToUtf8(text.substr(0, 17)) << "...";
+								}
+								else{
+									str << UtfConverter::ToUtf8(text);
+								}
+								str << "'";
 								Logger::log("WRLD", "MODR", str.str(), LOG_DEBUG);
 
 								RakNet::BitStream  * bs = WorldServer::initPacket(RemoteConnection::CLIENT, 59);
@@ -400,7 +407,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 					Logger::log("WRLD", "CLIENT", "Disconnected " + usr->GetUsername());
 				Friends::broadcastFriendLogout(usr->GetCurrentCharacter()->charobjid);
 				usr->DestructPlayer();
-				Player.erase(packet->systemAddress);
+				//Player.erase(packet->systemAddress);
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_INWORLD);
 			}
 				break;
@@ -413,7 +420,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 					if (session.phase >= SessionPhase::PHASE_PLAYING){
 						Friends::broadcastFriendLogout(session.activeCharId);
 						usr->DestructPlayer();
-						Player.erase(packet->systemAddress);
+						//Player.erase(packet->systemAddress);
 					}
 					if (OnlineUsers->Remove(packet->systemAddress)) {}
 				}

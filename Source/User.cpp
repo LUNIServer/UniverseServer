@@ -19,7 +19,7 @@
 
 using namespace std;
 
-extern std::map<SystemAddress, ZoneId> Player;
+//extern std::map<SystemAddress, ZoneId> Player;
 
 // This is the user initalization
 User::User(uint id, const string& username, const SystemAddress& systemAddress) {
@@ -144,7 +144,7 @@ bool User::ChangeWorld(ZoneId zone, RakPeerInterface* rakServer, SystemAddress &
 		RakNet::BitStream worldLoad;
 		bool flag = this->LoadWorld(zone, &worldLoad);
 		if (!flag) return false; //World is not accessible
-		Player.erase(systemAddress);
+		//Player.erase(systemAddress);
 		Session::leave(this->current->charobjid);
 		
 		this->current->pos = getZoneSpawnPoint(zone, this->getWorld());

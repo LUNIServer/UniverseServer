@@ -87,7 +87,7 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	}
 
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-	SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+	//SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
 ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {

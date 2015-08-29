@@ -63,7 +63,7 @@ void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAd
 	CreateAllExtraPacketData(&bitStream);
 
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-	SavePacketOverwrite("test_login.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+	//SavePacketOverwrite("test_login.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
 // Function to easily create extra packet data and write it to bitStream

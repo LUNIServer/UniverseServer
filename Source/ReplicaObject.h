@@ -9,6 +9,7 @@ class ReplicaObject : public Replica {
 public:
 	long long objid;
 	std::wstring name;
+	unsigned long LOT;
 
 	ReplicaComponent *getComponent(unsigned int componentid);
 	void addComponent(ReplicaComponent * component);

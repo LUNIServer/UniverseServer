@@ -24,6 +24,7 @@ void ReplicaObject::addComponent(ReplicaComponent * component){
 }
 
 void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYPE packetType){
+	replicaPacketGeneral(packet,packetType, this->objid, this->name);
 	for (std::vector<ReplicaComponent *>::iterator it = components.begin(); it != components.end(); ++it){
 		(*it)->writeToPacket(packet, packetType);
 	}
@@ -42,7 +43,6 @@ ReplicaReturnResult ReplicaObject::SendConstruction(RakNetTime currentTime, Syst
 	//This is the construction Packet
 	Logger::log("REPL", "OBJECT", "Send construction of '" + UtfConverter::ToUtf8(this->name) + "' to " + std::string(systemAddress.ToString()), LOG_DEBUG);
 	//TODO: move this function into here somwhere, and make the LOT dynamic (see serialization)
-	replicaPacketGeneral(outBitStream, REPLICA_CONSTRUCTION_PACKET, this->objid, this->name);
 	this->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
 	replicaManager.SetScope(this, true, systemAddress, false);
 	return REPLICA_PROCESSING_DONE;
@@ -75,7 +75,6 @@ ReplicaReturnResult ReplicaObject::Serialize(bool *sendTimestamp, RakNet::BitStr
 	PacketPriority *priority, PacketReliability *reliability, RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags){
 	//This is the Serialization packet
 	//TODO: move this function into here somwhere, and make the LOT dynamic (see construction)
-	replicaPacketGeneral(outBitStream, REPLICA_SERIALIZATION_PACKET, this->objid, this->name);
 	this->writeToPacket(outBitStream, REPLICA_SERIALIZATION_PACKET);
 	return REPLICA_PROCESSING_DONE;
 }

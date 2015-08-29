@@ -69,6 +69,10 @@ ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	qrs << "FROM `characters` WHERE `objectID` = '" << std::to_string(objid) << "';";
 	std::string qrss = qrs.str();
 	auto qr = Database::Query(qrss);
+	if (qr == NULL){
+		Logger::logError("CHDB", "MYSQL", "getting charinfo by objid", mysql_error(Database::getConnection()));
+		return ListCharacterInfo();
+	}
 	return CharactersTable::getCharacterInfo(qr);
 }
 
@@ -222,7 +226,7 @@ std::string FriendsTable::getFriendsStatus(long long charidx, long long charidy)
 std::vector<long long> FriendsTable::getFriends(long long charobjid){
 	std::string qr = "SELECT `charida`, `charidb` FROM `friends` WHERE (`charida` = '" + std::to_string(charobjid) + "' OR `charidb` = '" + std::to_string(charobjid) + "') AND `status` IN ('FRIENDS', 'BEST_FRIEND_REQUEST', 'ACCEPTED');";
 	auto qr2 = Database::Query(qr);
-	std::vector<long long> friends;	
+	std::vector<long long> friends;
 	if (mysql_num_rows(qr2) == 0 || mysql_num_rows(qr2) == NULL)
 		return friends;
 	else{

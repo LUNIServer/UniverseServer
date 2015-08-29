@@ -45,11 +45,11 @@ struct SessionInfo{
 	}
 };
 
-struct SystemAddressHasher {
-	size_t operator()(const SystemAddress& t) const {
-		return t.binaryAddress;
-	}
-};
+//struct SystemAddressHasher {
+//	size_t operator()(const SystemAddress& t) const {
+//		return t.binaryAddress;
+//	}
+//};
 
 class AccountsTable{
 public:
