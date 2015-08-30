@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 15. Aug 2015 um 00:37
+-- Erstellungszeit: 27. Aug 2015 um 01:29
 -- Server-Version: 5.6.24
 -- PHP-Version: 5.6.8
 
@@ -15,6 +15,9 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
+
+CREATE DATABASE IF NOT EXISTS `luni`;
+USE `luni`;
 
 --
 -- Datenbank: `luni`
@@ -34,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `ip` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT '127.0.0.1',
   `rank` smallint(1) NOT NULL DEFAULT '0',
   `numChars` tinyint(4) NOT NULL,
-  `frontChar` tinyint(4) NOT NULL,
+  `frontChar` bigint(20) NOT NULL,
   `lastLog` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `activeSub` smallint(1) NOT NULL DEFAULT '0',
   `subTime` int(32) NOT NULL,
@@ -42,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `locked` tinyint(4) NOT NULL,
   `banned` tinyint(4) NOT NULL,
   `loginTries` int(1) NOT NULL
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -51,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 --
 
 CREATE TABLE IF NOT EXISTS `characters` (
-  `id` bigint(20) unsigned NOT NULL,
+  `id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `accountID` int(10) unsigned NOT NULL,
   `objectID` bigint(20) NOT NULL,
   `name` varchar(25) COLLATE utf8_unicode_ci NOT NULL,
@@ -86,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `characters` (
   `bestFriends` varchar(50) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `level` int(3) NOT NULL DEFAULT '1',
   `uScore` int(32) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM AUTO_INCREMENT=1152921504606846994 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=1152921504606847010 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -98,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `equipment` (
   `id` int(11) NOT NULL,
   `owner` bigint(20) NOT NULL COMMENT 'objid of equiping player',
   `object` bigint(20) NOT NULL
-) ENGINE=MyISAM AUTO_INCREMENT=171 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=595 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -111,7 +114,18 @@ CREATE TABLE IF NOT EXISTS `friends` (
   `charida` bigint(20) NOT NULL,
   `charidb` bigint(20) NOT NULL,
   `status` enum('REQUEST','ACCEPTED','DECLINED','FRIENDS','BEST_FRIEND_REQUEST','BEST_FRIENDS') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'REQUEST'
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `instances`
+--
+
+CREATE TABLE IF NOT EXISTS `instances` (
+  `instanceid` int(11) NOT NULL,
+  `server_address` varchar(22) NOT NULL
+) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -126,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `inventory` (
   `qnt` smallint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'quantity',
   `slot` smallint(3) unsigned NOT NULL COMMENT 'bag slot',
   `linked` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM AUTO_INCREMENT=46 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=133 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -144,7 +158,7 @@ CREATE TABLE IF NOT EXISTS `mails` (
   `attachment_count` int(11) NOT NULL DEFAULT '0',
   `sent_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `is_read` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -188,7 +202,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   `nose_cone_template` int(11) DEFAULT NULL COMMENT '(for LOT 6416)',
   `cockpit_template` int(11) DEFAULT NULL COMMENT '(for LOT 6416)',
   `engine_template` int(11) DEFAULT NULL COMMENT '(for LOT 6416)'
-) ENGINE=MyISAM AUTO_INCREMENT=1152921510794154825 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=1152921510794154987 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -205,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `login_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `charid` bigint(20) DEFAULT NULL,
   `zoneid` int(11) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=363 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -249,6 +263,12 @@ ALTER TABLE `equipment`
 --
 ALTER TABLE `friends`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indizes für die Tabelle `instances`
+--
+ALTER TABLE `instances`
+  ADD PRIMARY KEY (`instanceid`);
 
 --
 -- Indizes für die Tabelle `inventory`
@@ -300,32 +320,37 @@ ALTER TABLE `worlds`
 -- AUTO_INCREMENT für Tabelle `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=11;
+  MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=19;
 --
 -- AUTO_INCREMENT für Tabelle `characters`
 --
 ALTER TABLE `characters`
-  MODIFY `objectID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1152921504606846994;
+  MODIFY `objectID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1152921504606847010;
 --
 -- AUTO_INCREMENT für Tabelle `equipment`
 --
 ALTER TABLE `equipment`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=171;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=595;
 --
 -- AUTO_INCREMENT für Tabelle `friends`
 --
 ALTER TABLE `friends`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=17;
+--
+-- AUTO_INCREMENT für Tabelle `instances`
+--
+ALTER TABLE `instances`
+  MODIFY `instanceid` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=35;
 --
 -- AUTO_INCREMENT für Tabelle `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=46;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=133;
 --
 -- AUTO_INCREMENT für Tabelle `mails`
 --
 ALTER TABLE `mails`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
 --
 -- AUTO_INCREMENT für Tabelle `missions`
 --
@@ -340,12 +365,12 @@ ALTER TABLE `npcs`
 -- AUTO_INCREMENT für Tabelle `objects`
 --
 ALTER TABLE `objects`
-  MODIFY `objectid` bigint(64) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1152921510794154825;
+  MODIFY `objectid` bigint(64) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1152921510794154987;
 --
 -- AUTO_INCREMENT für Tabelle `sessions`
 --
 ALTER TABLE `sessions`
-  MODIFY `sessionid` int(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=10;
+  MODIFY `sessionid` int(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=363;
 --
 -- AUTO_INCREMENT für Tabelle `worlds`
 --
