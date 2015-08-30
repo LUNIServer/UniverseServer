@@ -24,7 +24,32 @@ void ReplicaObject::addComponent(ReplicaComponent * component){
 }
 
 void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYPE packetType){
-	replicaPacketGeneral(packet,packetType, this->objid, this->name);
+	if (packetType == REPLICA_PACKET_TYPE::REPLICA_CONSTRUCTION_PACKET){
+		packet->Write(this->objid);
+		packet->Write(this->LOT);
+
+		packet->Write((uchar)this->name.size());
+		for (uint k = 0; k < this->name.size(); k++){
+			packet->Write(this->name.at(k));
+		}
+
+		packet->Write(0UL);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		bool isMythran = false;
+		packet->Write(isMythran);
+		if (isMythran){
+			packet->Write((uchar)2);
+		}
+	}
+	packet->Write(true);
+	packet->Write(false);
+	packet->Write(false);
+
 	for (std::vector<ReplicaComponent *>::iterator it = components.begin(); it != components.end(); ++it){
 		(*it)->writeToPacket(packet, packetType);
 	}
