@@ -10,6 +10,7 @@ public:
 	long long objid;
 	std::wstring name;
 	unsigned long LOT;
+	unsigned char gmlevel = 0;
 
 	ReplicaComponent *getComponent(unsigned int componentid);
 	void addComponent(ReplicaComponent * component);

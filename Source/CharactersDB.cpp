@@ -63,7 +63,7 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
+	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `objectID` = '" << std::to_string(objid) << "';";
@@ -79,7 +79,7 @@ ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 ListCharacterInfo CharactersTable::getCharacterInfo(std::string name){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
+	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `name` = '" << name << "';";
@@ -97,29 +97,30 @@ ListCharacterInfo CharactersTable::getCharacterInfo(MYSQL_RES *res){
 	else {
 		//Info
 		auto r = mysql_fetch_row(res);
-		i.info.objid = std::stoll(r[0]);
-		i.info.name = r[1];
-		i.info.unapprovedName = r[2];
-		if (std::stoi(r[3]) == 1) i.info.nameRejected = true;
-		if (std::stoi(r[4]) == 1) i.info.isFreeToPlay = true;
+		i.info.accountid = std::stoul(r[0]);
+		i.info.objid = std::stoll(r[1]);
+		i.info.name = r[2];
+		i.info.unapprovedName = r[3];
+		if (std::stoi(r[4]) == 1) i.info.nameRejected = true;
+		if (std::stoi(r[5]) == 1) i.info.isFreeToPlay = true;
 		//Style
-		i.style.shirtColor = std::stoul(r[5]);
-		i.style.shirtStyle = std::stoul(r[6]);
-		i.style.pantsColor = std::stoul(r[7]);
-		i.style.hairStyle = std::stoul(r[8]);
-		i.style.hairColor = std::stoul(r[9]);
-		i.style.lh = std::stoul(r[10]);
-		i.style.rh = std::stoul(r[11]);
-		i.style.eyebrows = std::stoul(r[12]);
-		i.style.eyes = std::stoul(r[13]);
-		i.style.mouth = std::stoul(r[14]);
+		i.style.shirtColor = std::stoul(r[6]);
+		i.style.shirtStyle = std::stoul(r[7]);
+		i.style.pantsColor = std::stoul(r[8]);
+		i.style.hairStyle = std::stoul(r[9]);
+		i.style.hairColor = std::stoul(r[10]);
+		i.style.lh = std::stoul(r[11]);
+		i.style.rh = std::stoul(r[12]);
+		i.style.eyebrows = std::stoul(r[13]);
+		i.style.eyes = std::stoul(r[14]);
+		i.style.mouth = std::stoul(r[15]);
 		//Place
-		i.lastPlace.zoneID = std::stoi(r[15]);
-		i.lastPlace.mapInstance = std::stoi(r[16]);
-		i.lastPlace.mapClone = std::stoul(r[17]);
-		i.lastPlace.x = std::stof(r[18]);
-		i.lastPlace.y = std::stof(r[19]);
-		i.lastPlace.z = std::stof(r[20]);
+		i.lastPlace.zoneID = std::stoi(r[16]);
+		i.lastPlace.mapInstance = std::stoi(r[17]);
+		i.lastPlace.mapClone = std::stoul(r[18]);
+		i.lastPlace.x = std::stof(r[19]);
+		i.lastPlace.y = std::stof(r[20]);
+		i.lastPlace.z = std::stof(r[21]);
 	}
 	return i;
 }

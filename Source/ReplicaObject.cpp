@@ -4,6 +4,7 @@
 #include "UtfConverter.h"
 #include "Replica.h"
 #include "RakNet\ReplicaManager.h"
+#include "Packet.h"
 
 extern ReplicaManager replicaManager;
 
@@ -29,7 +30,7 @@ void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYP
 		packet->Write(this->LOT);
 
 		packet->Write((uchar)this->name.size());
-		for (uint k = 0; k < this->name.size(); k++){
+		for (unsigned int k = 0; k < this->name.size(); k++){
 			packet->Write(this->name.at(k));
 		}
 
@@ -40,10 +41,9 @@ void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYP
 		packet->Write(false);
 		packet->Write(false);
 		packet->Write(false);
-		bool isMythran = false;
-		packet->Write(isMythran);
-		if (isMythran){
-			packet->Write((uchar)2);
+		packet->Write(this->gmlevel > 0);
+		if (this->gmlevel > 0){
+			packet->Write(this->gmlevel);
 		}
 	}
 	packet->Write(true);

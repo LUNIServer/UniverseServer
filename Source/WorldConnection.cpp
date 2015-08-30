@@ -74,7 +74,7 @@ void WorldServerPackets::CreateCharacter(SystemAddress address, long long charob
 	ldf->writeBOOL(L"editor_enabled", false);
 	ldf->writeS32(L"editor_level", 0);
 	ldf->writeBOOL(L"freetrial", false);
-	ldf->writeS32(L"gmlevel", 0); //0 - Normal, 1 - Mythran
+	ldf->writeS32(L"gmlevel", AccountsTable::getRank(s.accountid)); //0 - Normal, 1 - Mythran
 	ldf->writeBOOL(L"legoclub", true);
 	ldf->writeS64(L"levelid", 0); //Try e3 04 f4 74 95 51 08 20 if this breaks
 

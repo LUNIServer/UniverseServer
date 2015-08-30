@@ -216,6 +216,9 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 
 									PlayerObject * player = new PlayerObject(objid, UtfConverter::FromUtf8(cinfo.info.name));
 									
+									//Temporarily ?
+									player->gmlevel = AccountsTable::getRank(s.accountid);
+
 									Component1 * c1 = player->getComponent1();
 									c1->setPosition(pos);
 
@@ -1093,6 +1096,9 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 								RakNet::BitStream *aw = usr->sendMessage(L"/w <recipient> <message>", L"Command Usage");
 								WorldServer::sendPacket(aw, systemAddress);
 							}
+							if (params.at(0) == L"/loc"){
+								Chat::sendChatMessage(systemAddress, L"/loc", L"Command Usage");
+							}
 							if (params.at(0) == L"/help"){
 								RakNet::BitStream *aw = usr->sendMessage(L"/help [/<command>]", L"Command Usage");
 								WorldServer::sendPacket(aw, systemAddress);
@@ -1131,7 +1137,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 					// -- Custom commands --
 
-					if (command == L"tp"){
+					if (command == L"tp" || command == L"testmap"){
 						if (params.size() > 0){
 							ushort argumentValue = stoi(params.at(0));
 							ZoneId zone = static_cast<ZoneId>(argumentValue);
@@ -1165,6 +1171,33 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 							redirect->Write(port);
 							redirect->Write((unsigned char) 1);
 							WorldServer::sendPacket(redirect, systemAddress);
+						}
+						flag = true;
+					}
+
+					if (command == L"flight" || command == L"fly" || command == L"jetpack"){
+						bool f2 = true;
+						if (params.size() > 0){
+							if (params.at(0) == L"off" || params.at(0) == L"false"){
+								WorldServerPackets::SendGameMessage(systemAddress, usr->GetCurrentCharacter()->charobjid, 561);
+								f2 = false;
+							}
+						}
+						if (f2){
+							RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(objid, 561);
+							pc->Write((ulong)0x70ba);
+							pc->Write((ushort)0x8);
+							pc->Write((uchar)0x5);
+							pc->Write((uchar)0x2);
+							pc->Write((ushort)0xc);
+							pc->Write((uchar)0x3);
+							pc->Write((ushort)0x6c1);
+							pc->Write((uchar)0x0);
+							pc->Write((uchar)0x1);
+							pc->Write((uchar)0x80);
+							pc->Write((uchar)0x7f);
+							pc->Write((ulong)0xa7);
+							WorldServer::sendPacket(pc, systemAddress);
 						}
 						flag = true;
 					}
