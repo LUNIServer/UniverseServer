@@ -14,6 +14,8 @@
 #include "Encryption.h"
 #include "Logger.h"
 
+#include "Worlds.h"
+
 #include <sstream>
 #include <map>
 
@@ -130,7 +132,7 @@ PlayerObject *User::GetPlayer(){
 
 void User::DestructPlayer(){ //TODO: investigate player getting transparent when rejoining the same world
 	if (this->player != NULL){
-		this->player->destruct();
+		//this->player->destruct();
 		delete this->player;
 		this->player = NULL;
 	}
@@ -161,6 +163,7 @@ bool User::ChangeWorld(ZoneId zone, RakPeerInterface* rakServer, SystemAddress &
 
 		rakServer->Send(&worldLoad, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 		
+		ObjectsManager::clientLeaveWorld(this->current->charobjid, systemAddress);
 		this->DestructPlayer();
 		return true;
 	}

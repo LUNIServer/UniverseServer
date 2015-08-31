@@ -4,8 +4,25 @@
 #include "UtfConverter.h"
 #include "Replica.h"
 #include "RakNet\ReplicaManager.h"
+#include "Packet.h"
+#include "Worlds.h"
+#include "WorldServer.h"
 
-extern ReplicaManager replicaManager;
+//extern ReplicaManager replicaManager;
+
+ReplicaObject::~ReplicaObject(){
+	this->deleteComponents();
+	ObjectsManager::unregisterObject(this);
+	WorldServer::getRM()->DereferencePointer(this);
+}
+
+std::wstring ReplicaObject::getName(){
+	return this->name;
+}
+
+long long ReplicaObject::getObjectID(){
+	return this->objid;
+}
 
 ReplicaComponent *ReplicaObject::getComponent(unsigned int componentid){
 	std::vector<ReplicaComponent *>::iterator it = std::find_if(components.begin(), components.end(), [&](ReplicaComponent * o){
@@ -24,7 +41,31 @@ void ReplicaObject::addComponent(ReplicaComponent * component){
 }
 
 void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYPE packetType){
-	replicaPacketGeneral(packet,packetType, this->objid, this->name);
+	if (packetType == REPLICA_PACKET_TYPE::REPLICA_CONSTRUCTION_PACKET){
+		packet->Write(this->objid);
+		packet->Write(this->LOT);
+
+		packet->Write((uchar)this->name.size());
+		for (unsigned int k = 0; k < this->name.size(); k++){
+			packet->Write(this->name.at(k));
+		}
+
+		packet->Write(0UL);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(false);
+		packet->Write(this->gmlevel > 0);
+		if (this->gmlevel > 0){
+			packet->Write(this->gmlevel);
+		}
+	}
+	packet->Write(true);
+	packet->Write(false);
+	packet->Write(false);
+
 	for (std::vector<ReplicaComponent *>::iterator it = components.begin(); it != components.end(); ++it){
 		(*it)->writeToPacket(packet, packetType);
 	}
@@ -37,14 +78,11 @@ void ReplicaObject::deleteComponents(){
 	}
 }
 
-//TODO integrate Replica Manager into WorldServer class
-
 ReplicaReturnResult ReplicaObject::SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp){
 	//This is the construction Packet
 	Logger::log("REPL", "OBJECT", "Send construction of '" + UtfConverter::ToUtf8(this->name) + "' to " + std::string(systemAddress.ToString()), LOG_DEBUG);
-	//TODO: move this function into here somwhere, and make the LOT dynamic (see serialization)
 	this->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	replicaManager.SetScope(this, true, systemAddress, false);
+	WorldServer::getRM()->SetScope(this, true, systemAddress, false);
 	return REPLICA_PROCESSING_DONE;
 }
 

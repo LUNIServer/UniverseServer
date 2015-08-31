@@ -28,6 +28,7 @@ struct CharacterStyle{
 };
 
 struct CharacterInfo{
+	unsigned int accountid = 0;
 	long long objid = 0;
 	std::string name;
 	std::string unapprovedName;
