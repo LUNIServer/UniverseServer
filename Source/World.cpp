@@ -45,3 +45,7 @@ std::string& operator+(std::string& str, const ZoneId value){
 	// Undefine WRITE_ELEMENT
 #undef WRITE_ELEMENT
 }
+
+bool operator==(const World& left, const World& right){
+	return ((left.clone == right.clone) && (left.instance == right.instance) && (left.zone == right.zone));
+}

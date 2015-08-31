@@ -2,9 +2,15 @@
 #include <stdio.h>
 
 RakPeerInterface * WorldServer::rakServer = NULL;
+ReplicaManager * WorldServer::replicaManager = NULL;
 
-void WorldServer::publishWorldServer(RakPeerInterface* peer){
-	rakServer = peer;
+void WorldServer::publishWorldServer(RakPeerInterface* peer, ReplicaManager * rm){
+	WorldServer::rakServer = peer;
+	WorldServer::replicaManager = rm;
+}
+
+ReplicaManager * WorldServer::getRM(){
+	return WorldServer::replicaManager;
 }
 
 RakNet::BitStream *WorldServer::initPacket(RemoteConnection conntype, unsigned long packetid){

@@ -23,7 +23,19 @@ enum ZoneId : ushort {
 std::ostream& operator<<(std::ostream& out, const ZoneId value);
 std::string& operator+(std::string& str, const ZoneId value);
 
-// This is the World struct which stores a ZoneId
+// This is the World struct
 struct World {
-	ZoneId zone;
+	unsigned short zone = 0;
+	unsigned short instance = 0;
+	unsigned long clone = 0;
+
+	World(unsigned short zoneid, unsigned short instanceid, unsigned long cloneid){
+		this->zone = zoneid;
+		this->instance = instanceid;
+		this->clone = cloneid;
+	}
+
+	World(){}
 };
+
+bool operator==(const World& left, const World& right);

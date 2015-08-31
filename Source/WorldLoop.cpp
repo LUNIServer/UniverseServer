@@ -112,11 +112,8 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	// Set the optional callbacks to send and receive download complete notifications
 	//replicaManager.SetDownloadCompleteCB(&sendDownloadCompleteCB, &receiveDownloadCompleteCB);
 
-	ReplicaComponent *cp = new Component1();
-	cp->writeToPacket(new RakNet::BitStream(), REPLICA_PACKET_TYPE::REPLICA_CONSTRUCTION_PACKET);
-
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
-	WorldServer::publishWorldServer(rakServer);
+	WorldServer::publishWorldServer(rakServer, &replicaManager);
 
 	//LUNI_WRLD = true;
 
@@ -218,6 +215,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									
 									//Temporarily ?
 									player->gmlevel = AccountsTable::getRank(s.accountid);
+									player->world.zone = zid;
 
 									Component1 * c1 = player->getComponent1();
 									c1->setPosition(pos);
@@ -253,7 +251,9 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 									}
 
 									usr->SetPlayer(player);
-									player->doCreation(packet->systemAddress, zid);
+									
+									ObjectsManager::clientJoinWorld(player, packet->systemAddress);
+									//player->doCreation(packet->systemAddress, zid);
 
 									WorldServerPackets::SendGameMessage(packet->systemAddress, objid, 1642);
 									WorldServerPackets::SendGameMessage(packet->systemAddress, objid, 509);
@@ -304,43 +304,43 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 							case CLIENT_POSITION_UPDATE: //user moving / update request?
 							{
 								SessionInfo i = SessionsTable::getClientSession(packet->systemAddress);
-								if (i.phase > SessionPhase::PHASE_NONE){
-									auto usr = OnlineUsers->Find(packet->systemAddress);
-									PlayerObject *player = usr->GetPlayer();
+								if (i.phase > SessionPhase::PHASE_PLAYING){
+									PlayerObject * player = (PlayerObject *) ObjectsManager::getObjectByID(i.activeCharId);
+									
+									//auto usr = OnlineUsers->Find(packet->systemAddress);
+									//PlayerObject *player = usr->GetPlayer();
 									if (player != NULL){
 										Component1 *c1 = player->getComponent1();
-										RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
-										data->SetReadOffset(64);
-
+										
 										float x, y, z;
-										data->Read(x);
-										data->Read(y);
-										data->Read(z);
+										pdata->Read(x);
+										pdata->Read(y);
+										pdata->Read(z);
 										c1->setPosition(COMPONENT1_POSITION(x, y, z));
 
 										float rx, ry, rz, rw;
-										data->Read(rx);
-										data->Read(ry);
-										data->Read(rz);
-										data->Read(rw);
+										pdata->Read(rx);
+										pdata->Read(ry);
+										pdata->Read(rz);
+										pdata->Read(rw);
 										c1->setRotation(COMPONENT1_ROTATION(rx, ry, rz, rw));
 
 										bool onGround;
-										data->Read(onGround);
+										pdata->Read(onGround);
 										c1->setOnGround(onGround);
 
 
 										bool unknownBit;
-										data->Read(unknownBit);
+										pdata->Read(unknownBit);
 										c1->setData6_d4(unknownBit);
 										bool hasVelocityInfo;
-										data->Read(hasVelocityInfo);
+										pdata->Read(hasVelocityInfo);
 
 										if (hasVelocityInfo){
 											float vx, vy, vz;
-											data->Read(vx);
-											data->Read(vy);
-											data->Read(vz);
+											pdata->Read(vx);
+											pdata->Read(vy);
+											pdata->Read(vz);
 											c1->setVelocity(COMPONENT1_VELOCITY(vx, vy, vz));
 										}
 										else{
@@ -348,36 +348,31 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 										}
 
 										bool hasAngularVelocityInfo;
-										data->Read(hasAngularVelocityInfo);
+										pdata->Read(hasAngularVelocityInfo);
 
 										if (hasAngularVelocityInfo){
 											float avx, avy, avz;
-											data->Read(avx);
-											data->Read(avy);
-											data->Read(avz);
+											pdata->Read(avx);
+											pdata->Read(avy);
+											pdata->Read(avz);
 											c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(avx, avy, avz));
 										}
 										else{
 											c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(0, 0, 0));
 										}
-										player->serialize();
+										ObjectsManager::serialize(player); //player->serialize();
+									}else{
+										//Player is null????
 									}
-
 								}
 							}
 								break;
 							default:
 								flagUseParser = true;
 						}
-
 						break;
-
 					default:
 						flagUseParser = true;
-						
-						/*stringstream s;
-						s << "\n[WRLD] received unknown packet: " << RawDataToString(packet->data, packet->length) << endl;
-						OutputQueue->Insert(s.str());*/
 				}
 				
 				//End of the normal packet parsing.
@@ -409,8 +404,8 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 				if (OnlineUsers->Remove(packet->systemAddress))
 					Logger::log("WRLD", "CLIENT", "Disconnected " + usr->GetUsername());
 				Friends::broadcastFriendLogout(usr->GetCurrentCharacter()->charobjid);
+				ObjectsManager::clientLeaveWorld(usr->GetCurrentCharacter()->charobjid, packet->systemAddress);
 				usr->DestructPlayer();
-				//Player.erase(packet->systemAddress);
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_INWORLD);
 			}
 				break;
@@ -422,8 +417,8 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 					auto usr = OnlineUsers->Find(packet->systemAddress);
 					if (session.phase >= SessionPhase::PHASE_PLAYING){
 						Friends::broadcastFriendLogout(session.activeCharId);
+						ObjectsManager::clientLeaveWorld(usr->GetCurrentCharacter()->charobjid, packet->systemAddress);
 						usr->DestructPlayer();
-						//Player.erase(packet->systemAddress);
 					}
 					if (OnlineUsers->Remove(packet->systemAddress)) {}
 				}
@@ -435,14 +430,12 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 				Logger::log("WRLD", "", "recieved unknown packet [" + std::to_string(packetId) + "]", LOG_DEBUG);
 				Logger::log("WRLD", "", RawDataToString(packet->data, packet->length), LOG_DEBUG);
 		}
-
 		rakServer->DeallocatePacket(packet);
 	}
 
 	//InstancesTable::unregisterInstance(ServerAddress);
 
 	Logger::log("WRLD", "", "Quitting");
-
 	rakServer->Shutdown(0);
 	RakNetworkFactory::DestroyRakPeerInterface(rakServer);
 
@@ -533,14 +526,12 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			break;
 		case ChatPacketID::ADD_FRIEND_REQUEST:
 		{
-			ulonglong unknown;
+			unsigned long long unknown;
 			data->Read(unknown);
 			if (unknown != 0) cout << "8bytes not 0 please investigate";
-			//ushort lengthU;
-			//data->Read(lengthU);
-			vector<wchar_t> input;
+			std::vector<wchar_t> input;
 			bool eos = false;
-			for (uint k = 0; k < 33; k++){
+			for (unsigned int k = 0; k < 33; k++){
 				wchar_t chr;
 				data->Read(chr);
 				if (chr == 0) eos = true;
@@ -568,7 +559,6 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			break;
 		case ChatPacketID::GET_FRIENDS_LIST:
 			Logger::log("WRLD", "PARSER", "Requesting Friends-List");
-			//TODO: Please implement using 53-05-00-1e
 			Friends::handleWorldJoin(usr->GetCurrentCharacter()->charobjid);
 			//Friends::sendFriendsList(usr->GetCurrentCharacter()->charobjid);
 			//Friends::broadcastFriendLogin(usr->GetCurrentCharacter()->charobjid);
@@ -591,15 +581,12 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			unsigned char b;
 			data->Read(a);
 			data->Read(b);
-			std::cout << "[WRLD] [CHAT] Client requests private chat with ";
 			std::wstring pstr = PacketTools::ReadFromPacket(data, 33);
-			std::wcout << pstr;
-			std::cout << " (" << std::to_string(a) << "|" << std::to_string(b) << ")";
-			std::cout << std::endl;
+			Logger::log("WRLD", "CHAT", "Client requests private chat with " + UtfConverter::ToUtf8(pstr) + " (" + std::to_string(a) + "|" + std::to_string(b) + ")");
 		}
 			break;
 		default:
-			cout << "[WRLD] Recieved unknown CHAT packet (" << packetId << ")" << endl;
+			Logger::log("WRLD", "PACKET", "Recieved unknown CHAT packet (" + std::to_string(packetId) + ")");
 			printData = true;
 			break;
 		}
@@ -607,7 +594,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		break;
 	case RemoteConnection::UNKNOWNCONN:
 		//Unknown connection type
-		cout << "[WRLD] Recieved unknown UNKNOWNCONN packet (" << packetId << ")" << endl;
+		Logger::log("WRLD", "PACKET", "Recieved unknown UNKNOWNCONN packet (" + std::to_string(packetId) + ")");
 		printData = true;
 		break;
 	case RemoteConnection::SERVER:
@@ -616,37 +603,50 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		case WorldPacketID::CLIENT_CHARACTER_LIST_REQUEST:
 		{
 			//Only happens when getting charlist ingame
-			std::cout << "[CHAR] CLIENT_CHARACTER_LIST_REQUEST" << std::endl;
-			std::cout << "[CHAR] Sending char packet..." << std::endl;
-			SendCharPacket(rakServer, systemAddress, usr->GetID());
+			Logger::log("WORLD", "CHARS", "CLIENT_CHARACTER_LIST_REQUEST");
+			Logger::log("WORLD", "CHARS", "Sending char packet...");
+			SessionInfo s = SessionsTable::getClientSession(systemAddress);
+			ObjectsManager::clientLeaveWorld(s.activeCharId, systemAddress);
+			Session::quit(s.activeCharId);
+			SendCharPacket(rakServer, systemAddress, s.accountid);
 			break;
 		}
 		case WorldPacketID::CLIENT_LOGIN_REQUEST:
+		{
+			SessionInfo s = SessionsTable::getClientSession(systemAddress);
 			long long objid;
 			data->Read(objid);
-			if (usr != NULL) {
+			if (s.phase >= SessionPhase::PHASE_AUTHENTIFIED) {
 				usr->DestructPlayer();
 				usr->SetCharacter(objid);
-				Session::play(usr->GetID(), objid);
-				RakNet::BitStream worldLoad;
-				usr->LoadWorld(usr->getWorld(), &worldLoad);
-				rakServer->Send(&worldLoad, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+				Session::play(s.accountid, objid);
+				s = SessionsTable::getClientSession(systemAddress);
+				
+				ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(s.activeCharId);
+				COMPONENT1_POSITION pos = COMPONENT1_POSITION(cinfo.lastPlace.x, cinfo.lastPlace.y, cinfo.lastPlace.z);
+				ZoneId zone = static_cast<ZoneId>(cinfo.lastPlace.zoneID);
+				Worlds::loadWorld(systemAddress, zone, pos, cinfo.lastPlace.mapInstance, cinfo.lastPlace.mapClone);
+				
+				//RakNet::BitStream worldLoad;
+				//usr->LoadWorld(usr->getWorld(), &worldLoad);
+				//rakServer->Send(&worldLoad, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 			}
+		}
 			break;
 		case WorldPacketID::CLIENT_ROUTE_PACKET:
-			ulong subPacketLength;
+			unsigned long subPacketLength;
 			data->Read(subPacketLength);
 			Logger::log("WRLD", "PARSER", "Recieved routing packet; Length: " + std::to_string(subPacketLength));
 			parsePacket(rakServer, systemAddress, data, subPacketLength, usr);
 			break;
 		case WorldPacketID::CLIENT_GAME_MSG:
 		{
-			longlong objid;
+			long long objid;
 			data->Read(objid);
 			
 			std::stringstream ss;
 			data->SetReadOffset(data->GetReadOffset() - 32);
-			for (uint k = 0; k < 32; k++){
+			for (unsigned int k = 0; k < 32; k++){
 				bool flag;
 				data->Read(flag);
 				if (flag){
@@ -655,7 +655,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			}
 			std::string flags = ss.str();
 
-			ushort msgid;
+			unsigned short msgid;
 			data->Read(msgid);
 #ifdef DEBUG
 			//We ignore what was here, because bitstream seems way better to use in this case.
@@ -666,26 +666,24 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 #endif
 			switch (msgid){
 			case 41:
-				ushort speedchatid;
+				unsigned short speedchatid;
 				data->Read(speedchatid);
-				cout << "[WRLD] Speedchat: " << getSpeedchatMessage(speedchatid) << endl;
-				ulonglong rest;
+				Logger::log("WRLD", "SPEEDCHAT", getSpeedchatMessage(speedchatid), LOG_DEBUG);
+				unsigned long long rest;
 				data->Read(rest);
 				if (rest > 0) data->SetReadOffset(data->GetReadOffset() - 64); // Display Data when present
 				//Speedchat has more Information than I thought.
 				//When an object is nearby, it sends its objid with the speedchat packet
 				//This may be related to something like the quest in Avant Gardens
 				//where you have to salute to the Commander
-				ushort something;
+				unsigned short something;
 				data->Read(something);
 				if (data->GetNumberOfUnreadBits() > 0){
-					ulonglong object;
+					unsigned long long object;
 					data->Read(object);
-					cout << "Object: " << object << std::endl;
 					ObjectInformation o = getObjectInformation(object);
-					cout << getObjectDescription(o, object) << endl;
+					Logger::log("WRLD", "SPEEDCHAT", "Object: " + std::to_string(object) + ", " + getObjectDescription(o, object));
 				}
-
 				printData = true;
 				break;
 			case 124:
@@ -693,6 +691,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				break;
 			case 224:
 			{
+				SessionInfo s = SessionsTable::getClientSession(systemAddress);
 				//Move item in Inventory
 				//When you move on item on top of another item, then the two change their place
 				bool flag;
@@ -701,18 +700,16 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				data->Read(objid);
 				long long unknown;
 				data->Read(unknown);
-				ulong slot;
+				unsigned long slot;
 				data->Read(slot);
 
-				std::cout << "[WRLD] Move obj [" << objid << "] to slot '" << slot << "' (" << unknown << "|" << flag << ") ";
-				InventoryTable::moveItemToSlot(objid, usr->GetCurrentCharacter()->charobjid, slot);
+				Logger::log("WRLD", "INVENTORY", "Move obj[" + std::to_string(objid) + "] to slot '" + std::to_string(slot) + "' (" + std::to_string(unknown) + "|" + std::to_string(flag), LOG_DEBUG);
+				InventoryTable::moveItemToSlot(objid, s.activeCharId, slot);
 
 				bool end;
 				for (int k = 0; k < 7; k++){
 					data->Read(end);
-					if (end) cout << k;
 				}
-				cout << std::endl;
 			}
 				break;
 			case 230:
@@ -766,8 +763,8 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				if (player != NULL){
 					long lot = player->getComponent17()->equipItem(objid);
 					EquipmentTable::equipItem(usr->GetCurrentCharacter()->charobjid, objid);
-					player->serialize();
-
+					//player->serialize();
+					ObjectsManager::serialize(player);
 					if (lot == LOT::LOT_JETPACK){
 						RakNet::BitStream ef;
 						sendGameMessage(usr->GetCurrentCharacter()->charobjid, &ef, 561);
@@ -813,7 +810,8 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					}
 					else{
 						EquipmentTable::unequipItem(usr->GetCurrentCharacter()->charobjid, objid);
-						player->serialize();
+						//player->serialize();
+						ObjectsManager::serialize(player);
 						long lot = ObjectsTable::getTemplateOfItem(objid);
 						if (lot == LOT::LOT_JETPACK){
 							RakNet::BitStream ef;
@@ -1243,7 +1241,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 								if (player != NULL){
 									std::vector<COMPONENT17_EQUIPMENT> *eq = player->getComponent17()->getEquipment();
 									eq->clear();
-									player->serialize();
+									ObjectsManager::serialize(player);  // player->serialize();
 								}
 							}
 						}
@@ -1266,7 +1264,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 									else{
 										eq->push_back(eqi);
 									}
-									player->serialize();
+									ObjectsManager::serialize(player);  //player->serialize();
 								}
 							}
 						}
@@ -1295,7 +1293,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 									else{
 										player->getComponent17()->equipItem(objid);
 									}
-									player->serialize();
+									ObjectsManager::serialize(player);  //player->serialize();
 								}
 							}
 							if (params.at(0) == L"unequip"){
@@ -1310,7 +1308,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 										rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 									}
 									else{
-										player->serialize();
+										ObjectsManager::serialize(player); // player->serialize();
 									}
 								}
 							}
@@ -1338,8 +1336,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					if (command == L"destruct"){
 						PlayerObject *player = usr->GetPlayer();
 						if (player != NULL){
-							player->doDestruction(systemAddress, usr->getWorld(), false);
-							
+							ObjectsManager::clientLeaveWorld(player->objid, systemAddress); //player->doDestruction(systemAddress, usr->getWorld(), false);
 						}
 						flag = true;
 					}
@@ -1347,50 +1344,30 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					if (command == L"create"){
 						PlayerObject *player = usr->GetPlayer();
 						if (player != NULL){
-							player->doCreation(systemAddress, usr->getWorld(), false);
+							ObjectsManager::clientJoinWorld(player, systemAddress);
+							//player->doCreation(systemAddress, usr->getWorld(), false);
 						}
 						flag = true;
 					}
 
 					if (command == L"pos" || command == L"position"){
-						bool flag2 = true;
-						if (params.size() >= 4){
-							if (params.at(0) == L"set"){
-								float newx = stof(params.at(1));
-								float newy = stof(params.at(2));
-								float newz = stof(params.at(3));
-								
-								PlayerObject *player = usr->GetPlayer();
-								if (player != NULL){
-									player->getComponent1()->setPosition(COMPONENT1_POSITION(newx, newy, newz));
-									player->doDestruction(systemAddress, usr->getWorld(), false);
-								}
-
-								std::wstringstream wstr;
-								wstr << L"Set Position: (" << newx << "|" << newy << "|" << newz << ")";
-								RakNet::BitStream *aw = usr->sendMessage(wstr.str());
-								rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-								std::wstringstream wstr2;
-								wstr2 << L"Your character has been disassembled. To reconstruct him at your target location, type '/create'";
-								RakNet::BitStream *aw2 = usr->sendMessage(wstr2.str(), L"Toni Teleport");
-								rakServer->Send(aw2, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-
-								flag = true;
-								flag2 = false;
-							}
+						if (params.size() > 0 && params.at(0) == L"set"){
+							Chat::sendChatMessage(systemAddress, L"Use /ot to set your position", L"Toni Teleport");
 						}
-						if (flag2){
-							
-							std::wstringstream wstr;
-							PlayerObject *player = usr->GetPlayer();
-							if (player != NULL){
-								COMPONENT1_POSITION pos = player->getComponent1()->getPosition();
-								wstr << L"Position: (" << pos.x << "|" << pos.y << "|" << pos.z << ")";
-							}
-							RakNet::BitStream *aw = usr->sendMessage(wstr.str());
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-							flag = true;
+						std::wstringstream wstr;
+						PlayerObject *player = usr->GetPlayer();
+						if (player != NULL){
+							COMPONENT1_POSITION pos = player->getComponent1()->getPosition();
+							wstr << L"Position: (" << pos.x << "|" << pos.y << "|" << pos.z << ")";
 						}
+						RakNet::BitStream *aw = usr->sendMessage(wstr.str());
+						rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+						flag = true;
+					}
+
+					if (command == L"loc"){
+						//Client side command
+						flag = true;
 					}
 
 					if (command == L"friends"){
@@ -1498,7 +1475,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 									}
 								}
 								player->getComponent7()->setData4(d4);
-								player->serialize();
+								ObjectsManager::serialize(player);  //player->serialize();
 							}
 						}
 						flag = true;
@@ -1520,7 +1497,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 									}
 								}
 								player->getComponent7()->setData4(d4);
-								player->serialize();
+								ObjectsManager::serialize(player); //player->serialize();
 							}
 						}
 						flag = true;
@@ -1542,7 +1519,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 									}
 								}
 								player->getComponent7()->setData4(d4);
-								player->serialize();
+								ObjectsManager::serialize(player);  //player->serialize();
 							}
 						}
 						flag = true;
@@ -1556,7 +1533,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 								COMPONENT7_DATA4 d4 = player->getComponent7()->getData4();
 								player->getComponent7()->setData4(d4);
 								d4.d7 = num;
-								player->serialize();
+								ObjectsManager::serialize(player);  //player->serialize();
 							}
 						}
 						flag = true;

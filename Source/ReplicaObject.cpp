@@ -5,8 +5,24 @@
 #include "Replica.h"
 #include "RakNet\ReplicaManager.h"
 #include "Packet.h"
+#include "Worlds.h"
+#include "WorldServer.h"
 
-extern ReplicaManager replicaManager;
+//extern ReplicaManager replicaManager;
+
+ReplicaObject::~ReplicaObject(){
+	this->deleteComponents();
+	ObjectsManager::unregisterObject(this);
+	WorldServer::getRM()->DereferencePointer(this);
+}
+
+std::wstring ReplicaObject::getName(){
+	return this->name;
+}
+
+long long ReplicaObject::getObjectID(){
+	return this->objid;
+}
 
 ReplicaComponent *ReplicaObject::getComponent(unsigned int componentid){
 	std::vector<ReplicaComponent *>::iterator it = std::find_if(components.begin(), components.end(), [&](ReplicaComponent * o){
@@ -62,14 +78,11 @@ void ReplicaObject::deleteComponents(){
 	}
 }
 
-//TODO integrate Replica Manager into WorldServer class
-
 ReplicaReturnResult ReplicaObject::SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp){
 	//This is the construction Packet
 	Logger::log("REPL", "OBJECT", "Send construction of '" + UtfConverter::ToUtf8(this->name) + "' to " + std::string(systemAddress.ToString()), LOG_DEBUG);
-	//TODO: move this function into here somwhere, and make the LOT dynamic (see serialization)
 	this->writeToPacket(outBitStream, REPLICA_CONSTRUCTION_PACKET);
-	replicaManager.SetScope(this, true, systemAddress, false);
+	WorldServer::getRM()->SetScope(this, true, systemAddress, false);
 	return REPLICA_PROCESSING_DONE;
 }
 

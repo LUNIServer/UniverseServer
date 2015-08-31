@@ -1,6 +1,7 @@
 #pragma once
 #include "ReplicaComponents.h"
 #include "RakNet\Replica.h"
+#include "World.h"
 
 #include <vector>
 
@@ -11,13 +12,18 @@ public:
 	std::wstring name;
 	unsigned long LOT;
 	unsigned char gmlevel = 0;
+	World world;
+
+	~ReplicaObject();
+
+	// -- Specific Values -- 
+	std::wstring getName();
+	long long getObjectID();
 
 	ReplicaComponent *getComponent(unsigned int componentid);
 	void addComponent(ReplicaComponent * component);
 	void writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYPE packetType);
 	void deleteComponents();
-
-	virtual long long getObjectID() = 0;
 
 	ReplicaReturnResult SendConstruction(RakNetTime currentTime, SystemAddress systemAddress, unsigned int &flags, RakNet::BitStream *outBitStream, bool *includeTimestamp);
 	ReplicaReturnResult SendDestruction(RakNet::BitStream *outBitStream, SystemAddress systemAddress, bool *includeTimestamp);
