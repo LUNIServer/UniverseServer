@@ -1236,19 +1236,98 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 						flag = true;
 					}
 
-					if (command == L"setitem"){
-						if (params.size() == 3){
-							long id = stoi(params.at(0));
+					if (command == L"gmadditem"){
+						if (params.size() == 2){
+							long lot = stoi(params.at(0));
 							unsigned long amount = stoi(params.at(1));
-							unsigned long slot = stoi(params.at(2)) - 1;
 
-							long long objid = ObjectsTable::createObject(id);
-							InventoryTable::insertItem(usr->GetCurrentCharacter()->charobjid, objid, amount, slot, false);
+							unsigned long slot = -1;
+							for (int i = 0; (slot == -1) && (i != 24); i++){
+								if (InventoryTable::getItemFromSlot(usr->GetCurrentCharacter()->charobjid, i) == -1)
+									slot = i;
+							}
 
-							Chat::sendChatMessage(systemAddress, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+							if (slot == -1){
+								Chat::sendChatMessage(systemAddress, L"Can't add requested item to your inventory. There aren't any free slots!");
+							}
+							else{
+								long long objid = ObjectsTable::createObject(lot);
+								InventoryTable::insertItem(usr->GetCurrentCharacter()->charobjid, objid, amount, slot, false);
+
+								Chat::sendChatMessage(systemAddress, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+							}
+						}
+						else if (params.size() == 3){
+							long lot = stoi(params.at(0));
+							unsigned long amount = stoi(params.at(1));
+							string name(params.at(2).begin(), params.at(2).end());
+
+							std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(usr->getWorld());
+
+							bool found = false;
+							for (unsigned int k = 0; (!found) && (k < sess.size()); k++){
+								if (sess.at(k).phase > SessionPhase::PHASE_AUTHENTIFIED){
+									CharacterInfo characterInfo = CharactersTable::getCharacterInfo(sess.at(k).activeCharId).info;
+
+									if (name == characterInfo.name){
+										found = true;
+
+										unsigned long slot = -1;
+										for (int i = 0; (slot == -1) && (i != 24); i++){
+											if (InventoryTable::getItemFromSlot(sess.at(k).activeCharId, i) == -1)
+												slot = i;
+										}
+
+										if (slot == -1){
+											stringstream ss;
+											ss << "Can't add requested item to ";
+											ss << characterInfo.name;
+											ss << "'s inventory. There aren't any free slots!";
+											string str = ss.str();
+											wstring message(str.begin(), str.end());
+
+											Chat::sendChatMessage(systemAddress, message);
+										}
+										else{
+											long long objid = ObjectsTable::createObject(lot);
+											InventoryTable::insertItem(sess.at(k).activeCharId, objid, amount, slot, false);
+
+											stringstream ss;
+											ss << "Successfully added the requested item to ";
+											ss << characterInfo.name;
+											ss << "'s inventory!";
+											string str = ss.str();
+											wstring message(str.begin(), str.end());
+
+											Chat::sendChatMessage(systemAddress, message);
+
+											stringstream ss2;
+											ss2 << usr->GetCurrentCharacter()->GetName();
+											ss2 << " added an item with LOT ";
+											ss2 << to_string(lot);
+											ss2 << " to your inventory. Please travel to another world or relog to reload your inventory.";
+											str = ss2.str();
+											message = wstring(str.begin(), str.end());
+
+											Chat::sendChatMessage(sess.at(k).addr, message);
+										}
+									}
+								}
+							}
+
+							if (!found){
+								stringstream ss;
+								ss << "Can't add requested item to ";
+								ss << name;
+								ss << "'s inventory. Player not online!";
+								string str = ss.str();
+								wstring message(str.begin(), str.end());
+
+								Chat::sendChatMessage(systemAddress, message);
+							}
 						}
 						else{
-							Chat::sendChatMessage(systemAddress, L"Usage: /setitem <LOT> <Amount> <Slot>");
+							Chat::sendChatMessage(systemAddress, L"Usage: /gmadditem <LOT> <Amount> [Player Name]");
 						}
 						flag = true;
 					}
