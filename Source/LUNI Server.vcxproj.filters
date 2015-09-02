@@ -171,6 +171,9 @@
     <ClInclude Include="ReplicaObject.h">
       <Filter>Header Files\Replica</Filter>
     </ClInclude>
+    <ClInclude Include="ChatCommands.h">
+      <Filter>Header Files\Mechanics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -271,6 +274,9 @@
     </ClCompile>
     <ClCompile Include="ReplicaObject.cpp">
       <Filter>Source Files\Replica</Filter>
+    </ClCompile>
+    <ClCompile Include="ChatCommands.cpp">
+      <Filter>Source Files\Mechanics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

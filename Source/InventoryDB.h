@@ -51,7 +51,7 @@ public:
 	static ObjectInfo getItemInfo(long long objid);
 	//Create an object with the specified LOT
 	static long long createObject(long lot);
-	static void deletObject(long long objid);
+	static void deleteObject(long long objid);
 
 	//Custom Objects:
 	//Rocket (6416)

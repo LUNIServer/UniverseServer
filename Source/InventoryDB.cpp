@@ -130,7 +130,7 @@ long long ObjectsTable::createObject(long lot){
 	return objid;
 }
 
-void ObjectsTable::deletObject(long long objid){
+void ObjectsTable::deleteObject(long long objid){
 	Database::Query("DELETE FROM `objects` WHERE `objectid` = '" + std::to_string(objid) + "';");
 }
 

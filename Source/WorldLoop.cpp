@@ -27,6 +27,8 @@
 #include "WorldServer.h"
 #include "WorldConnection.h"
 
+#include "ChatCommands.h"
+
 #include "zlib.h"
 
 #include "UtfConverter.h"
@@ -114,6 +116,9 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
 	WorldServer::publishWorldServer(rakServer, &replicaManager);
+
+	ChatCommandManager::registerCommands((ChatCommandHandler *) new FlightCommandHandler());
+	ChatCommandManager::registerCommands((ChatCommandHandler *) new TeleportCommandHandler());
 
 	//LUNI_WRLD = true;
 
@@ -738,12 +743,13 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				if (mode == true){
 					Logger::log("WLRD", "INVENTORY", "Delete item " + std::to_string(objid) + " from character " + std::to_string(objid));
 					InventoryTable::deleteItem(objid, itemid);
-					ObjectsTable::deletObject(itemid);
+					ObjectsTable::deleteObject(itemid);
 				}
 			}
 				break;
 			case 231:
 			{
+				SessionInfo s = SessionsTable::getClientSession(systemAddress);
 				//Equip an item
 				bool flag;
 				data->Read(flag);
@@ -751,42 +757,39 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				data->Read(flag2);
 				long long objid;
 				data->Read(objid);
-				std::cout << "[WRLD] [CS] Equip obj [" << objid << "](" << flag << "|" << flag2 << ") ";
+				Logger::log("WORLD", "EQUIP", "Equip obj [" + std::to_string(objid) + "]", LOG_ALL);
 				bool end;
 				for (int k = 0; k < 7; k++){
 					data->Read(end);
-					if (end) cout << k;
 				}
-				std::cout << std::endl;
 
-				PlayerObject *player = usr->GetPlayer();
+				PlayerObject *player = (PlayerObject *) ObjectsManager::getObjectByID(s.activeCharId);
 				if (player != NULL){
 					long lot = player->getComponent17()->equipItem(objid);
 					EquipmentTable::equipItem(usr->GetCurrentCharacter()->charobjid, objid);
-					//player->serialize();
 					ObjectsManager::serialize(player);
 					if (lot == LOT::LOT_JETPACK){
-						RakNet::BitStream ef;
-						sendGameMessage(usr->GetCurrentCharacter()->charobjid, &ef, 561);
-						ef.Write((ulong)0x70ba);
-						ef.Write((ushort)0x8);
-						ef.Write((uchar)0x5);
-						ef.Write((uchar)0x2);
-						ef.Write((ushort)0xc);
-						ef.Write((uchar)0x3);
-						ef.Write((ushort)0x6c1);
-						ef.Write((uchar)0x0);
-						ef.Write((uchar)0x1);
-						ef.Write((uchar)0x80);
-						ef.Write((uchar)0x7f);
-						ef.Write((ulong)0xa7);
-						rakServer->Send(&ef, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+						RakNet::BitStream * ef = WorldServerPackets::InitGameMessage(s.activeCharId, 561);
+						ef->Write((unsigned long)0x70ba);
+						ef->Write((unsigned short)0x8);
+						ef->Write((unsigned char)0x5);
+						ef->Write((unsigned char)0x2);
+						ef->Write((unsigned short)0xc);
+						ef->Write((unsigned char)0x3);
+						ef->Write((unsigned short)0x6c1);
+						ef->Write((unsigned char)0x0);
+						ef->Write((unsigned char)0x1);
+						ef->Write((unsigned char)0x80);
+						ef->Write((unsigned char)0x7f);
+						ef->Write((unsigned long)0xa7);
+						WorldServer::sendPacket(ef, systemAddress);
 					}
 				}
 			}
 				break;
 			case 233:
 			{
+				SessionInfo s = SessionsTable::getClientSession(systemAddress);
 				bool flag;
 				data->Read(flag);
 				bool flag2;
@@ -795,28 +798,24 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				data->Read(flag3);
 				long long objid;
 				data->Read(objid);
-				std::cout << "[WRLD] [CS] Unquip obj [" << objid << "] (" << flag << "|" << flag2 << "|" << flag3 << ") ";
+				Logger::log("WRLD", "EQUIP", "Unequip object [" + std::to_string(objid) + "]", LOG_ALL);
 				bool end;
 				for (int k = 0; k < 5; k++){
 					data->Read(end);
-					if (end) cout << k;
 				}
-				std::cout << std::endl;
 				PlayerObject *player = usr->GetPlayer();
 				if (player != NULL){
 					bool un = player->getComponent17()->unequipItem(objid);
 					if (!un){
-						std::cout << "[WRLD] [CS] ERROR: Item not found!" << std::endl;
+						Logger::log("WRLD", "EQUIP", "ERROR: item not found", LOG_ERROR);
 					}
 					else{
 						EquipmentTable::unequipItem(usr->GetCurrentCharacter()->charobjid, objid);
-						//player->serialize();
 						ObjectsManager::serialize(player);
 						long lot = ObjectsTable::getTemplateOfItem(objid);
 						if (lot == LOT::LOT_JETPACK){
 							RakNet::BitStream ef;
-							sendGameMessage(usr->GetCurrentCharacter()->charobjid, &ef, 561);
-							rakServer->Send(&ef, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+							WorldServerPackets::SendGameMessage(systemAddress, s.activeCharId, 561);
 						}
 					}
 				}
@@ -831,36 +830,32 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				bool flag1;
 				data->Read(flag1);
 				data->SetReadOffset(data->GetReadOffset() - 1);
-				ulonglong something3;
+				unsigned long long something3;
 				data->Read(something3);
 				bool flag;
 				data->Read(flag);
-				ulonglong object;
+				unsigned long long object;
 				data->Read(object);
 
-				std::stringstream oss;
-				data->SetReadOffset(data->GetReadOffset() - 32);
-				for (uint k = 0; k < 32; k++){
-					bool flag;
-					data->Read(flag);
-					if (flag){
-						oss << " [" << (k) << "]";
-					}
-				}
-				std::string objectTypes = oss.str();
+				//std::stringstream oss;
+				//data->SetReadOffset(data->GetReadOffset() - 32);
+				//for (uint k = 0; k < 32; k++){
+					//bool flag;
+					//data->Read(flag);
+					//if (flag){
+					//	oss << " [" << (k) << "]";
+					//}
+				//}
+				//std::string objectTypes = oss.str();
 
 				//uchar something4; -- With the flag up there, this has to be just padding
 				//data->Read(something4);
-				cout << "[WRLD] Interaction: "; //objid: " << object << objectTypes;
+				
 				ObjectInformation o = getObjectInformation(object);
-				cout << getObjectDescription(o, object) << endl;
-				if (something3 > 0) cout << " [1:" << something3 << "]";
-				if (flag1) cout << " [FLAG:A]";
-				if (flag) cout << " [FLAG:B]";
-				if ((something3 > 0) || flag1 || flag) cout << std::endl;
+				Logger::log("WRLD", "INTERACT", getObjectDescription(o, object));
 
 				bool b;
-				for (uchar a = 0; a < 7; a++) data->Read(b);
+				for (unsigned char a = 0; a < 7; a++) data->Read(b);
 
 				handleObject(o, rakServer, systemAddress, usr);
 			}
@@ -871,7 +866,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				data->Read(object);
 				//cout << "Object: " << object << std::endl;
 				ObjectInformation o = getObjectInformation(object);
-				cout << getObjectDescription(o, object) << endl;
+				Logger::log("WRLD", "LOAD?", getObjectDescription(o, object));
 				//Some sort of loading, L8: objid
 			}
 				break;
@@ -879,26 +874,24 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			{
 				//Some sort of script
 				//e.g. Closing a plaque
-				ulong something;
+				unsigned long something;
 				data->Read(something);
-				ulong len;
+				unsigned long len;
 				data->Read(len);
-				vector<wchar_t> mV;
+				std::vector<wchar_t> mV;
 				mV.reserve(len);
-				for (ulong k = 0; k < len; k++){
+				for (unsigned long k = 0; k < len; k++){
 					wchar_t mC;
 					data->Read(mC);
 					mV.push_back(mC);
 				}
 				std::wstring script(mV.begin(), mV.end());
-				ulong something2;
+				unsigned long something2;
 				data->Read(something2);
-				cout << "[WRLD] Script Command (530): '";
-				wcout << script;
-				cout << "'";
-				if (something > 0) cout << " [1:" << something << "]";
-				if (something2 > 0) cout << " [2:" << something2 << "]";
-				cout << endl;
+				Logger::log("WRLD", "SCRIPT", "530: " + UtfConverter::ToUtf8(script));
+				//if (something > 0) cout << " [1:" << something << "]";
+				//if (something2 > 0) cout << " [2:" << something2 << "]";
+				//cout << endl;
 			}
 				break;
 			case 603:
@@ -912,10 +905,12 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			case 717:
 				//This happens independant of the Zone you are in, and these are NOT the object IDs of the characters equipment.
 				//It is still probably some sort of registering of Objects
-				cout << "Registering object?!" << endl;
+				Logger::log("WRLD", "ZONELOAD", "Registering Object???", LOG_ALL);
 				break;
 			case 770:
 			{
+				SessionInfo s = SessionsTable::getClientSession(systemAddress);
+				
 				//Some sort of script
 				//e.g. Closing a postbox
 				//For this message, the objid is the ID of the postbox in question
@@ -926,54 +921,42 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				//object:fireEventServerSide('text', object)
 				//Which is exactly what we recieve here.
 
-				ulong len;
+				unsigned long len;
 				data->Read(len);
-				vector<wchar_t> mV;
+				std::vector<wchar_t> mV;
 				mV.reserve(len);
-				for (ulong k = 0; k < len; k++){
+				for (unsigned long k = 0; k < len; k++){
 					wchar_t mC;
 					data->Read(mC);
 					mV.push_back(mC);
 				}
 				std::wstring script(mV.begin(), mV.end());
-				cout << "[WRLD] Script Command (770): '";
-				wcout << script;
-				cout << "'" << std::endl;
-
-				std::stringstream ss;
-				ss << "Flags:";
-				for (uchar k = 0; k < 3; k++){
-					bool f;
+				Logger::log("WRLD", "SCRIPT", "770: " + UtfConverter::ToUtf8(script), LOG_DEBUG);
+				bool f;
+				for (unsigned char k = 0; k < 3; k++){
 					data->Read(f);
-					if (f) ss << " [" << k << "]";
-				}
-				std::string flags = ss.str();
-				if (flags.length() > 6){
-					cout << flags << endl;
 				}
 
-				ulonglong object;
+				unsigned long long object;
 				data->Read(object);
-				//cout << "objid:" << object << endl;
 				ObjectInformation o = getObjectInformation(object);
-				cout << getObjectDescription(o, object) << endl;
+				Logger::log("WRLD", "SCRIPT", "Object: " + getObjectDescription(o, object), LOG_DEBUG);
 
 				bool dat;
-				for (uchar i = 0; i < 5; i++){
+				for (unsigned char i = 0; i < 5; i++){
 					data->Read(dat);
 				}
 
 				if (script == L"toggleMail"){
-					Mail::closeMailbox(usr->GetCurrentCharacter()->charobjid);
+					Mail::closeMailbox(s.activeCharId);
 				}
-
 			}
 				break;
 			case 767:
 				bool isStart;
 				data->Read(isStart);
 				bool dat;
-				for (uchar i = 0; i < 7; i++){
+				for (unsigned char i = 0; i < 7; i++){
 					data->Read(dat);
 				}
 				if (isStart) Logger::log("WRLD", "PARSER", "Camerapath started"); else Logger::log("WRLD", "PARSER", "Camerapath finished");
@@ -990,100 +973,98 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				break;
 			case 850: //Chat messages and commands, starting with '/'
 			{
-				ulong unknown;
+				unsigned long unknown;
 				data->Read(unknown);
-				ulong len;
+				unsigned long len;
 				data->Read(len);
-				cout << "[WRLD] Recieved Packet of Length " << len << endl;
+				Logger::log("WRLD", "CHAT", "Recieved Packet of Length " + std::to_string(len), LOG_ALL);
 				vector<wchar_t> msgVector;
 				msgVector.reserve(len);
-				for (ulong k = 0; k < len; k++){
+				for (unsigned long k = 0; k < len; k++){
 					wchar_t mchr;
 					data->Read(mchr);
 					msgVector.push_back(mchr);
 				}
 
 				std::wstring message(msgVector.begin(), msgVector.end());
-				cout << "[WRLD] Recieved Message: \"";
-				wcout << message;
-				cout << "\"" << endl;
+				Logger::log("WRLD", "CHAT", "Recieved message: \"" + UtfConverter::ToUtf8(message) + "\"");
 
 				if (message.substr(0, 1) == L"/"){
-					long commandEnd = message.find_first_of(L" ");
-					wstring command;
-					vector<wstring> params;
-					if (commandEnd == -1){
-						//The command has no spaces, it is just the command name
-						command = message.substr(1, message.size() - 1);
-					}
-					else{
-						//command name isfrom char 1 with length commandEnd - 1
-						command = message.substr(1, commandEnd - 1);
-						wstring param_str = message.substr(commandEnd + 1);
-						long lpos = param_str.find_first_of(L" ");
-						bool append = false;
-						while ((param_str.size() > 0) && (lpos > -1)){
-							std::wstring next = param_str.substr(0, lpos);
-							if (append){
-								if (endsWith(next, L"\"")){ //Ends with '"'
-									params.at(params.size() - 1).append(L" ").append(removeRight(next, 1));
-									append = false;
-								}
-								else{
-									params.at(params.size() - 1).append(L" ").append(next);
-								}
-							}
-							else{
-								if (startsWith(next, L"\"")){
-									bool flag = (next.size() > 1) && endsWith(next, L"\"");
-									if (!flag){
-										append = true;
-										std::cout << "APP";
-										params.push_back(param_str.substr(1, lpos - 1));
-									}
-									else{
-										std::cout << "BLOCK";
-										params.push_back(param_str.substr(1, lpos - 2));
-									}
-								}
-								else{
-									params.push_back(param_str.substr(0, lpos));
-								}
-							}
-							param_str = param_str.substr(lpos + 1);
-							lpos = param_str.find_first_of(L" ");
-						}
-						if (param_str.size() > 0){
-							if (append){
-								if (param_str.substr(param_str.size() - 1, 1).compare(L"\"") == 0){ //Ends with '"'
-									params.at(params.size() - 1).append(L" ").append(param_str.substr(0, param_str.size() - 1));
-								}else{
-									params.at(params.size() - 1).append(L" ").append(param_str);
-								}
-								append = false;
-							}
-							else{
-								if (startsWith(param_str, L"\"") && endsWith(param_str, L"\"")){
-									params.push_back(remove(param_str, 1,1));
-								}
-								else{
-									params.push_back(param_str);
-								}
-							}
-						}
-					}
-					cout << "[WRLD] Command: '";
-					wcout << command;
-					cout << "'" << endl;
+					std::wstring command;
+					std::vector<std::wstring> params;
+					unsigned char state = 0;
 
-					cout << "[WRLD] Params: ";
-					for (ushort k = 0; k < params.size(); k++){
-						if (k>0) cout << ", ";
-						cout << "'";
-						wcout << params.at(k);
-						cout << "'";
+					for (unsigned int k = 0; k < message.length(); k++){
+						wchar_t chr = message.at(k);
+						if (state == 0){
+							//Nothing is parsed yet
+							if (chr == L'/'){ //Needs to start with '/'
+								state = 1; //Set state to STATE_COMMAND
+							}else{
+								break;
+							}
+						}
+						else if (state == 1){
+							//We are parsing the command name
+							if (chr == L' '){
+								state = 2;
+							}else{
+								command.push_back(chr);
+							}
+						}
+						else if (state == 2){
+							//expecting commands
+							if (chr == L' '){
+								//We could have two modes: add an empty param or ignore more spaces
+								//Aditionally we can test if the last one was already an empty one
+								//To be safe for now, just ignore it
+							}
+							else if (chr == L'"'){ //Start of a string command
+								params.push_back(L"");
+								state = 4;
+							}
+							else{
+								//Start of a normal command
+								params.push_back(std::wstring(1, chr));
+								state = 3;
+							}
+						}
+						else if (state == 3){
+							//Normal param
+							if (chr == L' '){
+								state = 2;
+							}
+							else{
+								params.at(params.size() - 1).append(1, chr);
+							}
+						}
+						else if (state == 4){
+							//String param
+							if (chr == L'"'){
+								state = 2;
+								//what do we do with that? It should be a parsing error when not followed by a space
+							}
+							else if (chr == L'\\'){
+								state = 5;
+							}
+							else{
+								params.at(params.size() - 1).append(1, chr);
+							}
+						}
+						else if (state == 5){
+							//Escape sequences
+							if (chr == L'n'){
+								params.at(params.size() - 1).append(L"\n");
+							}
+							else if (chr == L't'){
+								params.at(params.size() - 1).append(L"\t");
+							}
+							else{
+								params.at(params.size() - 1).append(1, chr);
+							}
+						}
 					}
-					cout << endl;
+					Logger::log("WRLD", "CHAT", "Command: " + UtfConverter::ToUtf8(command));
 
 					bool flag = false;
 
@@ -1170,67 +1151,6 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 							redirect->Write((unsigned char) 1);
 							WorldServer::sendPacket(redirect, systemAddress);
 						}
-						flag = true;
-					}
-
-					if (command == L"flight" || command == L"fly" || command == L"jetpack"){
-						bool f2 = true;
-						if (params.size() > 0){
-							if (params.at(0) == L"off" || params.at(0) == L"false"){
-								WorldServerPackets::SendGameMessage(systemAddress, usr->GetCurrentCharacter()->charobjid, 561);
-								f2 = false;
-							}
-						}
-						if (f2){
-							RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(objid, 561);
-							pc->Write((ulong)0x70ba);
-							pc->Write((ushort)0x8);
-							pc->Write((uchar)0x5);
-							pc->Write((uchar)0x2);
-							pc->Write((ushort)0xc);
-							pc->Write((uchar)0x3);
-							pc->Write((ushort)0x6c1);
-							pc->Write((uchar)0x0);
-							pc->Write((uchar)0x1);
-							pc->Write((uchar)0x80);
-							pc->Write((uchar)0x7f);
-							pc->Write((ulong)0xa7);
-							WorldServer::sendPacket(pc, systemAddress);
-						}
-						flag = true;
-					}
-
-					if (command == L"move"){
-						RakNet::BitStream gmmsg2;
-						sendGameMessage(objid, &gmmsg2, 509); //Enable Movement
-						rakServer->Send(&gmmsg2, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						flag = true;
-					}
-
-					if (command == L"ot"){
-						RakNet::BitStream *bs = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
-						bs->Write(usr->GetCurrentCharacter()->charobjid);
-						bs->Write((unsigned short)19);
-						bs->Write(false);
-						bs->Write(false);
-						bs->Write(false);
-						float x = 0.0F;
-						float y = 0.0F;
-						float z = 0.0F;
-						if (params.size() > 2){
-							x = std::stof(params.at(0));
-							y = std::stof(params.at(1));
-							z = std::stof(params.at(2));
-						}
-						bs->Write(x);
-						bs->Write(y);
-						bs->Write(z);
-						SessionInfo s = SessionsTable::getClientSession(systemAddress);
-						std::vector<SessionInfo> sessionsz = SessionsTable::getClientsInWorld(s.zone);
-						for (unsigned int k = 0; k < sessionsz.size(); k++){
-							WorldServer::sendPacket(bs, sessionsz.at(k).addr);
-						}
-						
 						flag = true;
 					}
 
@@ -1602,12 +1522,14 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					}
 
 					if (!flag){
-						cout << "[WRLD] Command not found" << endl;
-						std::wstring notFoundMessage = L"Command '";
-						notFoundMessage.append(command);
-						notFoundMessage.append(L"' does not exist");
-						RakNet::BitStream *aw = usr->sendMessage(notFoundMessage);
-						rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+						//cout << "[WRLD] Command not found" << endl;
+						//std::wstring notFoundMessage = L"Command '";
+						//notFoundMessage.append(command);
+						//notFoundMessage.append(L"' does not exist");
+						//RakNet::BitStream *aw = usr->sendMessage(notFoundMessage);
+						//rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
+						SessionInfo s = SessionsTable::getClientSession(systemAddress);
+						ChatCommandManager::handleCommand(command, &s, &params);
 					}
 				}
 			}
@@ -1867,8 +1789,28 @@ bool handleObject(ObjectInformation obj, RakPeerInterface* rakServer, SystemAddr
 		case ObjectType::LaunchPad:
 		{
 			ZoneId zone = getLaunchPadTarget(obj);
-			if (zone != ZoneId::NO_ZONE){
-				usr->ChangeWorld(zone, rakServer, systemAddress);
+			if (zone != ZoneId::NO_ZONE && zone != ZoneId::KEELHAUL_CANYON){
+				SessionInfo s = SessionsTable::getClientSession(systemAddress);
+				COMPONENT1_POSITION pos = getZoneSpawnPoint(zone, static_cast<ZoneId>(s.zone));
+				bool flag = Worlds::loadWorld(systemAddress, zone, pos, 0, 0);
+				if (flag){
+					Session::leave(s.activeCharId);
+
+					usr->GetCurrentCharacter()->pos = getZoneSpawnPoint(zone, static_cast<ZoneId>(s.zone));
+					usr->GetCurrentCharacter()->Data.lastZone = zone;
+
+					WorldPlace place;
+					place.zoneID = zone;
+					place.mapClone = 0;
+					place.mapInstance = 0;
+					place.x = pos.x;
+					place.y = pos.y;
+					place.z = pos.z;
+					CharactersTable::setCharactersPlace(s.activeCharId, place);
+
+					ObjectsManager::clientLeaveWorld(s.activeCharId, systemAddress);
+					usr->DestructPlayer();
+				}
 			}
 		}
 			break;

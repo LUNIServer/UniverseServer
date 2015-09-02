@@ -7,8 +7,6 @@
 #include "Logger.h"
 #include "PlayerObject.h"
 
-//extern ReplicaManager replicaManager;
-
 bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION pos, unsigned short instance, unsigned long clone){
 	RakNet::BitStream * stream = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MSG_CLIENT_LOAD_STATIC_ZONE);
 
