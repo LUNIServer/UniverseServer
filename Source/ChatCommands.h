@@ -36,3 +36,27 @@ class TeleportCommandHandler : ChatCommandHandler{
 	std::wstring getShortDescription();
 	std::wstring getSyntax();
 };
+
+class WhisperCommandHandler : ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};
+
+class TestmapCommandHandler : ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};
+
+class SwitchCommandHandler : ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};

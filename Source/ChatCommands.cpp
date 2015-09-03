@@ -2,6 +2,14 @@
 #include "Social.h"
 #include "WorldConnection.h"
 #include "WorldServer.h"
+#include "UtfConverter.h"
+#include "Logger.h"
+#include "World.h"
+#include "GameMessages.h"
+#include "ReplicaData.h"
+#include "Worlds.h"
+#include "Account.h"
+#include "Packet.h"
 
 std::vector<ChatCommandHandler *> ChatCommandManager::ChatCommandHandlers;
 std::unordered_map<std::wstring, ChatCommandHandler *> ChatCommandManager::ChatCommands;
@@ -15,11 +23,37 @@ void ChatCommandManager::registerCommands(ChatCommandHandler * CommandHandler){
 }
 
 void ChatCommandManager::handleCommand(std::wstring command, SessionInfo *s, std::vector<std::wstring> * params){
-	std::unordered_map<std::wstring, ChatCommandHandler *>::iterator it = ChatCommandManager::ChatCommands.find(command);
-	if (it != ChatCommandManager::ChatCommands.end()){
-		it->second->handleCommand(s, params);
-	}else{
-		Chat::sendChatMessage(s->addr, L"Command " + command + L" does not exist!");
+	if (command == L"help"){
+		bool flag = true;
+		if (params->size() > 0){
+			std::wstring com = params->at(0);
+			if (com.at(0) == L'/'){
+				com = com.substr(1, com.size() - 1);
+			}
+			std::unordered_map<std::wstring, ChatCommandHandler *>::iterator it = ChatCommandManager::ChatCommands.find(com);
+			if (it != ChatCommandManager::ChatCommands.end()){
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + com + L" " + it->second->getSyntax());
+				Chat::sendChatMessage(s->addr, it->second->getDescription());
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Command " + params->at(0) + L" was not found");
+			}
+			flag = false;
+		}
+		if (flag){
+			for (unsigned int k = 0; k < ChatCommandManager::ChatCommandHandlers.size(); k++){
+				Chat::sendChatMessage(s->addr, L"/" + ChatCommandManager::ChatCommandHandlers.at(k)->getCommandNames().at(0) + L"\t\t" + ChatCommandManager::ChatCommandHandlers.at(k)->getShortDescription());
+			}
+		}
+	}
+	else{
+		std::unordered_map<std::wstring, ChatCommandHandler *>::iterator it = ChatCommandManager::ChatCommands.find(command);
+		if (it != ChatCommandManager::ChatCommands.end()){
+			it->second->handleCommand(s, params);
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Command " + command + L" does not exist!");
+		}
 	}
 }
 
@@ -88,15 +122,119 @@ void TeleportCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstr
 }
 
 std::vector<std::wstring> TeleportCommandHandler::getCommandNames(){
-	return{ L"tele", L"teleport", L"ot"};
+	return{ L"teleport", L"tele", L"ot"};
 }
 
 std::wstring TeleportCommandHandler::getDescription(){
-	return L"Teleports a player to the specified location or 0|0|0";
+	return L"Teleports a player to the specified location or map origin";
 }
 std::wstring TeleportCommandHandler::getShortDescription(){
-	return L"teleport player";
+	return L"Teleport player";
 }
 std::wstring TeleportCommandHandler::getSyntax(){
 	return L"[<x> <y> <z>]";
+}
+
+void WhisperCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 1){
+		std::wstring reciever = params->at(0);
+		std::wstring message = params->at(1);
+		for (unsigned int k = 2; k < params->size(); k++){
+			message.append(L" ");
+			message.append(params->at(k));
+		}
+		Logger::log("WRLD", "COMMAND", "Private message to " + UtfConverter::ToUtf8(reciever));
+		Logger::log("WRLD", "COMMAND", UtfConverter::ToUtf8(message));
+	}
+}
+
+std::vector<std::wstring> WhisperCommandHandler::getCommandNames(){
+	return{ L"whisper", L"w", L"tell" };
+}
+
+std::wstring WhisperCommandHandler::getDescription(){
+	return L"Sends another player a private chat message";
+}
+std::wstring WhisperCommandHandler::getShortDescription(){
+	return L"Private Chat";
+}
+std::wstring WhisperCommandHandler::getSyntax(){
+	return L"<reciever> <message>";
+}
+
+void TestmapCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 0){
+		unsigned short argumentValue = std::stoi(params->at(0));
+		ZoneId zone = static_cast<ZoneId>(argumentValue);
+		Logger::log("WRLD", "CHAT", "Requesting teleport to " + std::to_string(argumentValue));
+		bool f = false;
+		if (getWorldTarget(zone).size() > 0){
+			if (zone != ZoneId::NO_ZONE && zone != ZoneId::KEELHAUL_CANYON){
+				COMPONENT1_POSITION pos = getZoneSpawnPoint(zone, static_cast<ZoneId>(s->zone));
+				f = Worlds::loadWorld(s->addr, zone, pos, 0, 0);
+				if (f){
+					Session::leave(s->activeCharId);
+
+					WorldPlace place;
+					place.zoneID = zone;
+					place.mapClone = 0;
+					place.mapInstance = 0;
+					place.x = pos.x;
+					place.y = pos.y;
+					place.z = pos.z;
+					CharactersTable::setCharactersPlace(s->activeCharId, place);
+					ObjectsManager::clientLeaveWorld(s->activeCharId, s->addr);
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"Cannot teleport to this zone");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Cannot teleport to this zone");
+			}
+		}
+		if (!f){
+			Chat::sendChatMessage(s->addr, L"Cannot teleport to WorldID " + params->at(0));
+		}
+	}
+}
+
+std::vector<std::wstring> TestmapCommandHandler::getCommandNames(){
+	return{ L"testmap", L"tp" };
+}
+
+std::wstring TestmapCommandHandler::getDescription(){
+	return L"Sends the player to another world";
+}
+std::wstring TestmapCommandHandler::getShortDescription(){
+	return L"World Travel";
+}
+std::wstring TestmapCommandHandler::getSyntax(){
+	return L"<ZoneId>";
+}
+
+void SwitchCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 1){
+		std::string ip = UtfConverter::ToUtf8(params->at(0));
+		short port = (short)std::stoi(params->at(1));
+		RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
+		PacketTools::WriteToPacket(redirect, ip, 33);
+		redirect->Write(port);
+		redirect->Write((unsigned char)1);
+		WorldServer::sendPacket(redirect, s->addr);
+	}
+}
+
+std::vector<std::wstring> SwitchCommandHandler::getCommandNames(){
+	return{ L"switch", L"tpx" };
+}
+
+std::wstring SwitchCommandHandler::getDescription(){
+	return L"Sends the player to another server";
+}
+std::wstring SwitchCommandHandler::getShortDescription(){
+	return L"Change Servers";
+}
+std::wstring SwitchCommandHandler::getSyntax(){
+	return L"<IP> <port>";
 }

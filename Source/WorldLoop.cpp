@@ -119,6 +119,8 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 
 	ChatCommandManager::registerCommands((ChatCommandHandler *) new FlightCommandHandler());
 	ChatCommandManager::registerCommands((ChatCommandHandler *) new TeleportCommandHandler());
+	ChatCommandManager::registerCommands((ChatCommandHandler *) new WhisperCommandHandler());
+	ChatCommandManager::registerCommands((ChatCommandHandler *) new TestmapCommandHandler());
 
 	//LUNI_WRLD = true;
 
@@ -1068,92 +1070,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 					bool flag = false;
 
-					// -- Client defined commands --
-					if (command == L"help"){
-						if (params.size() > 0){
-							if (params.at(0) == L"/w"){
-								RakNet::BitStream *aw = usr->sendMessage(L"/w <recipient> <message>", L"Command Usage");
-								WorldServer::sendPacket(aw, systemAddress);
-							}
-							if (params.at(0) == L"/loc"){
-								Chat::sendChatMessage(systemAddress, L"/loc", L"Command Usage");
-							}
-							if (params.at(0) == L"/help"){
-								RakNet::BitStream *aw = usr->sendMessage(L"/help [/<command>]", L"Command Usage");
-								WorldServer::sendPacket(aw, systemAddress);
-							}
-						}
-						else{
-							std::wstring help(L"");
-							help.append(L"/help			This command"); //These tabs are like that to align the text in game
-							help.append(L"\n/pos		Show current position");
-							help.append(L"\n/tp			Teleport to another world");
-
-							RakNet::BitStream *aw = usr->sendMessage(help, L"Command Help");
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						}
-						flag = true;
-					}
-
-					if (command == L"w"){
-						//Private Chat command
-						if (params.size() > 1){
-							std::wstring reciever = params.at(0);
-							std::wstring message = params.at(1);
-							for (unsigned int k = 2; k < params.size(); k++){
-								message.append(L" ");
-								message.append(params.at(k));
-							}
-							std::cout << "[WRLD] [COMMAND] Private Message to ";
-							std::wcout << reciever;
-							std::cout << std::endl;
-							std::cout << "[WRLD] [COMMAND] ";
-							std::wcout << message;
-							std::cout << std::endl;
-						}
-						flag = true;
-					}
-
 					// -- Custom commands --
-
-					if (command == L"tp" || command == L"testmap"){
-						if (params.size() > 0){
-							ushort argumentValue = stoi(params.at(0));
-							ZoneId zone = static_cast<ZoneId>(argumentValue);
-							cout << "[WRLD] Requesting Teleport to " << zone << endl;
-							bool f = false;
-							if (getWorldTarget(zone).size() > 0){
-								f = usr->ChangeWorld(zone, rakServer, systemAddress);
-							}
-							if (!f){
-								std::wstringstream strs;
-								strs << L"Cannot teleport to WorldID " << params.at(0);
-								std::wstring rmsg = strs.str();
-								std::wcout << rmsg;
-								RakNet::BitStream *aw = usr->sendMessage(rmsg);
-								rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-							}
-						}
-						else{
-							RakNet::BitStream *aw = usr->sendMessage(L"Usage: /tp <ZoneId>");
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						}
-						flag = true;
-					}
-
-					if (command == L"tpx"){
-						if (params.size() > 1){
-							std::string ip = UtfConverter::ToUtf8(params.at(0));
-							short port = (short) std::stoi(params.at(1));
-							RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
-							PacketTools::WriteToPacket(redirect, ip, 33);
-							redirect->Write(port);
-							redirect->Write((unsigned char) 1);
-							WorldServer::sendPacket(redirect, systemAddress);
-						}
-						flag = true;
-					}
-
 					if (command == L"eq"){ //Equipment
 						if (params.size() > 0){
 							if (params.at(0) == L"clear"){
@@ -1601,12 +1518,6 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					}
 
 					if (!flag){
-						//cout << "[WRLD] Command not found" << endl;
-						//std::wstring notFoundMessage = L"Command '";
-						//notFoundMessage.append(command);
-						//notFoundMessage.append(L"' does not exist");
-						//RakNet::BitStream *aw = usr->sendMessage(notFoundMessage);
-						//rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 						SessionInfo s = SessionsTable::getClientSession(systemAddress);
 						ChatCommandManager::handleCommand(command, &s, &params);
 					}
