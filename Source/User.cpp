@@ -73,7 +73,6 @@ void User::SetCharacter(long long cid){
 
 void User::SetPlayer(PlayerObject * p){
 	if (this->player != NULL){
-		delete this->player;
 		cout << "[WARN] WARNING: Player Object was not destroyed";
 	}
 	this->player = p;
@@ -133,7 +132,6 @@ PlayerObject *User::GetPlayer(){
 void User::DestructPlayer(){ //TODO: investigate player getting transparent when rejoining the same world
 	if (this->player != NULL){
 		//this->player->destruct();
-		delete this->player;
 		this->player = NULL;
 	}
 }

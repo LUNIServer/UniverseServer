@@ -10,6 +10,8 @@
 #include "Worlds.h"
 #include "Account.h"
 #include "Packet.h"
+#include "InventoryDB.h"
+#include "PlayerObject.h"
 
 std::vector<ChatCommandHandler *> ChatCommandManager::ChatCommandHandlers;
 std::unordered_map<std::wstring, ChatCommandHandler *> ChatCommandManager::ChatCommands;
@@ -237,4 +239,185 @@ std::wstring SwitchCommandHandler::getShortDescription(){
 }
 std::wstring SwitchCommandHandler::getSyntax(){
 	return L"<IP> <port>";
+}
+
+void ItemsCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 1){
+		if (params->at(0) == L"create"){
+			long lot = std::stol(params->at(1));
+			long long objid = ObjectsTable::createObject(lot);
+			Chat::sendChatMessage(s->addr, L"Object created with id: " + std::to_wstring(objid - 1152921510794154770));
+		}
+
+		if (params->at(0) == L"equip"){
+			long long objid = 1152921510794154770 + std::stoll(params->at(1));
+			PlayerObject *player = (PlayerObject *) ObjectsManager::getObjectByID(s->activeCharId);
+			if (player != NULL){
+				if (params->size() > 2){
+					ushort slot = std::stoi(params->at(2));
+					player->getComponent17()->equipItem(objid, slot);
+				}
+				else{
+					player->getComponent17()->equipItem(objid);
+				}
+				ObjectsManager::serialize(player);  //player->serialize();
+			}
+		}
+		if (params->at(0) == L"unequip"){
+			long long objid = 1152921510794154770 + std::stoll(params->at(1));
+			PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
+			if (player != NULL){
+				bool un = player->getComponent17()->unequipItem(objid);
+				if (!un){
+					Chat::sendChatMessage(s->addr, L"Object not found");
+				}
+				else{
+					ObjectsManager::serialize(player); // player->serialize();
+				}
+			}
+		}
+	}
+}
+
+std::vector<std::wstring> ItemsCommandHandler::getCommandNames(){
+	return{ L"inventory", L"item"};
+}
+
+std::wstring ItemsCommandHandler::getDescription(){
+	return L"Manages Items for a player";
+}
+
+std::wstring ItemsCommandHandler::getShortDescription(){
+	return L"Manage Items";
+}
+
+std::wstring ItemsCommandHandler::getSyntax(){
+	return L"(create <LOT>|equip <num>|unequip <num>)";
+}
+
+void AddItemCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() == 2){
+		long lot = std::stoi(params->at(0));
+		unsigned long amount = std::stoi(params->at(1));
+
+		unsigned long slot = -1;
+		for (int i = 0; (slot == -1) && (i != 24); i++){
+			if (InventoryTable::getItemFromSlot(s->activeCharId, i) == -1)
+				slot = i;
+		}
+
+		if (slot == -1){
+			Chat::sendChatMessage(s->addr, L"Can't add requested item to your inventory. There aren't any free slots!");
+		}
+		else{
+			long long objid = ObjectsTable::createObject(lot);
+			InventoryTable::insertItem(s->activeCharId, objid, amount, slot, false);
+			Chat::sendChatMessage(s->addr, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+		}
+	}
+	else if (params->size() == 3){
+		long lot = std::stoi(params->at(0));
+		unsigned long amount = std::stoi(params->at(1));
+		std::string name = UtfConverter::ToUtf8(params->at(2));
+
+		bool found = false;
+		long long charid = CharactersTable::getObjidFromCharacter(name);
+		if (charid > 0){
+			SystemAddress addr = SessionsTable::findCharacter(charid);
+			if (addr != UNASSIGNED_SYSTEM_ADDRESS){
+				found = true;
+
+				unsigned long slot = -1;
+				for (int i = 0; (slot == -1) && (i != 24); i++){
+					if (InventoryTable::getItemFromSlot(charid, i) == -1)
+						slot = i;
+				}
+
+				if (slot == -1){
+					std::stringstream ss;
+					ss << "Can't add requested item to ";
+					ss << name;
+					ss << "'s inventory. There aren't any free slots!";
+
+					Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+				}
+				else{
+					long long objid = ObjectsTable::createObject(lot);
+					InventoryTable::insertItem(charid, objid, amount, slot, false);
+
+					std::stringstream ss;
+					ss << "Successfully added the requested item to ";
+					ss << name;
+					ss << "'s inventory!";
+					Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+
+					std::string source = "UNKNOWN";
+					
+					ListCharacterInfo c = CharactersTable::getCharacterInfo(s->activeCharId);
+					if (c.info.objid > 0){
+						source = c.info.name;
+					}
+					std::stringstream ss2;
+					ss2 << source;
+					ss2 << " added an item with LOT ";
+					ss2 << std::to_string(lot);
+					ss2 << " to your inventory. Please travel to another world or relog to reload your inventory.";
+					Chat::sendChatMessage(addr, UtfConverter::FromUtf8(ss2.str()));
+				}
+			}
+		}
+
+		if (!found){
+			std::stringstream ss;
+			ss << "Can't add requested item to ";
+			ss << name;
+			ss << "'s inventory. Player not found/online!";
+			Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+		}
+	}
+	else{
+		Chat::sendChatMessage(s->addr, L"Syntac: /gmadditem " + this->getSyntax());
+	}
+}
+
+std::vector<std::wstring> AddItemCommandHandler::getCommandNames(){
+	return{ L"gmadditem" };
+}
+
+std::wstring AddItemCommandHandler::getDescription(){
+	return L"Adds an Item to a Users Inventory";
+}
+
+std::wstring AddItemCommandHandler::getShortDescription(){
+	return L"Adds an Item";
+}
+
+std::wstring AddItemCommandHandler::getSyntax(){
+	return L"<LOT> <amount> [<name>]";
+}
+
+void PositionCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
+	std::wstringstream wstr;
+	if (player != NULL){
+		COMPONENT1_POSITION pos = player->getComponent1()->getPosition();
+		wstr << L"Position: (" << pos.x << "|" << pos.y << "|" << pos.z << ")";
+	}
+	Chat::sendChatMessage(s->addr, wstr.str());
+}
+
+std::vector<std::wstring> PositionCommandHandler::getCommandNames(){
+	return{ L"pos", L"position" };
+}
+
+std::wstring PositionCommandHandler::getDescription(){
+	return L"Displays the position";
+}
+
+std::wstring PositionCommandHandler::getShortDescription(){
+	return L"Display Position";
+}
+
+std::wstring PositionCommandHandler::getSyntax(){
+	return L"";
 }

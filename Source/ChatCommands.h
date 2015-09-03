@@ -21,7 +21,7 @@ public:
 	static void handleCommand(std::wstring command, SessionInfo *s, std::vector<std::wstring> * params);
 };
 
-class FlightCommandHandler : ChatCommandHandler{
+class FlightCommandHandler : public ChatCommandHandler{
 	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
 	std::vector<std::wstring> getCommandNames();
 	std::wstring getDescription();
@@ -29,7 +29,7 @@ class FlightCommandHandler : ChatCommandHandler{
 	std::wstring getSyntax();
 };
 
-class TeleportCommandHandler : ChatCommandHandler{
+class TeleportCommandHandler : public ChatCommandHandler{
 	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
 	std::vector<std::wstring> getCommandNames();
 	std::wstring getDescription();
@@ -37,7 +37,7 @@ class TeleportCommandHandler : ChatCommandHandler{
 	std::wstring getSyntax();
 };
 
-class WhisperCommandHandler : ChatCommandHandler{
+class WhisperCommandHandler : public ChatCommandHandler{
 	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
 	std::vector<std::wstring> getCommandNames();
 	std::wstring getDescription();
@@ -45,7 +45,7 @@ class WhisperCommandHandler : ChatCommandHandler{
 	std::wstring getSyntax();
 };
 
-class TestmapCommandHandler : ChatCommandHandler{
+class TestmapCommandHandler : public ChatCommandHandler{
 	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
 	std::vector<std::wstring> getCommandNames();
 	std::wstring getDescription();
@@ -53,7 +53,31 @@ class TestmapCommandHandler : ChatCommandHandler{
 	std::wstring getSyntax();
 };
 
-class SwitchCommandHandler : ChatCommandHandler{
+class SwitchCommandHandler : public ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};
+
+class ItemsCommandHandler : public ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};
+
+class AddItemCommandHandler : public ChatCommandHandler{
+	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
+	std::vector<std::wstring> getCommandNames();
+	std::wstring getDescription();
+	std::wstring getShortDescription();
+	std::wstring getSyntax();
+};
+
+class PositionCommandHandler : public ChatCommandHandler{
 	void handleCommand(SessionInfo *s, std::vector<std::wstring> * params);
 	std::vector<std::wstring> getCommandNames();
 	std::wstring getDescription();

@@ -138,6 +138,7 @@ void ObjectsManager::clientLeaveWorld(long long objid, SystemAddress addr){
 			WorldServer::getRM()->Destruct(it->second, addr, false);
 		}
 	}
+	delete object;
 }
 
 void ObjectsManager::clientJoinWorld(ReplicaObject * player, SystemAddress addr){
