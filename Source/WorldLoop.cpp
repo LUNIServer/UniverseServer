@@ -125,6 +125,10 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThread
 	ChatCommandManager::registerCommands(new AddItemCommandHandler());
 	ChatCommandManager::registerCommands(new ItemsCommandHandler());
 	ChatCommandManager::registerCommands(new PositionCommandHandler());
+	ChatCommandManager::registerCommands(new ClientCommandHandler());
+	ChatCommandManager::registerCommands(new AttributeCommandHandler());
+	ChatCommandManager::registerCommands(new PacketCommandHandler());
+	ChatCommandManager::registerCommands(new AnnouncementCommandHandler());
 
 	//LUNI_WRLD = true;
 
@@ -1072,263 +1076,18 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 					}
 					Logger::log("WRLD", "CHAT", "Command: " + UtfConverter::ToUtf8(command));
 
-					bool flag = false;
+					//Packet 1: 2365 (ZoneControl Object)
+					//Packet 2: objid: 288300744895889662 LOT: 6635 SpawnerId: 72567767517768 (Mardolf the Orange)
+					//Packet 3: objid: 288300744895889664 LOT: 6636 SpawnerId: 72567767517769 (Rad Eccles)
+					//Packet 4: objid: 288300744895889669 LOT: 3495 SpawnerId: 72567767517772
+					//Packet 5: objid: 288300744895899827 LOT: 6726 SpawnerId: 72567767517771
+					//Packet 6: objid: 288300744895909034 LOT: 5637 SpawnerId: 3695535 NodeID: 1, Starts with Index 20 (position), x:-309.645782, y:288.356626, z: 70.64473 (Robot Dog Pet)
+					//Packet 7: objid: 288300744895889606 LOT: 3646 SpawnerId: 3695538 NodeId: 3, 
+					//Packet 8: objid: 288300744895930870 LOT: 9717 SpawnerId: 72567767517763,
+					//Packet 9: PLAYER
 
-					if (command == L"pos" || command == L"position"){
-						if (params.size() > 0 && params.at(0) == L"set"){
-							Chat::sendChatMessage(systemAddress, L"Use /ot to set your position", L"Toni Teleport");
-						}
-						std::wstringstream wstr;
-						PlayerObject *player = usr->GetPlayer();
-						if (player != NULL){
-							COMPONENT1_POSITION pos = player->getComponent1()->getPosition();
-							wstr << L"Position: (" << pos.x << "|" << pos.y << "|" << pos.z << ")";
-						}
-						RakNet::BitStream *aw = usr->sendMessage(wstr.str());
-						rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						flag = true;
-					}
-
-					if (command == L"loc"){
-						//Client side command
-						flag = true;
-					}
-
-					if (command == L"friends"){
-						if (params.size() > 0){
-							if (params.at(0) == L"requests"){
-								Friends::checkFriendRequests(usr->GetCurrentCharacter()->charobjid);
-							}
-						}
-						if (params.size() > 1){
-							if (params.at(0) == L"status"){
-								std::string target = UtfConverter::ToUtf8(params.at(1));
-								Friends::sendFriendRequestResponse(usr->GetCurrentCharacter()->charobjid, target);
-								RakNet::BitStream *aw = usr->sendMessage(L"Sending Friend Request Response");
-								WorldServer::sendPacket(aw, systemAddress);
-							}
-						}
-						else{
-
-						}
-						flag = true;
-					}
-
-					if (command == L"replica"){
-						if (params.size() > 0){
-							//Packet 1: 2365 (ZoneControl Object)
-							//Packet 2: objid: 288300744895889662 LOT: 6635 SpawnerId: 72567767517768 (Mardolf the Orange)
-							//Packet 3: objid: 288300744895889664 LOT: 6636 SpawnerId: 72567767517769 (Rad Eccles)
-							//Packet 4: objid: 288300744895889669 LOT: 3495 SpawnerId: 72567767517772
-							//Packet 5: objid: 288300744895899827 LOT: 6726 SpawnerId: 72567767517771
-							//Packet 6: objid: 288300744895909034 LOT: 5637 SpawnerId: 3695535 NodeID: 1, Starts with Index 20 (position), x:-309.645782, y:288.356626, z: 70.64473 (Robot Dog Pet)
-							//Packet 7: objid: 288300744895889606 LOT: 3646 SpawnerId: 3695538 NodeId: 3, 
-							//Packet 8: objid: 288300744895930870 LOT: 9717 SpawnerId: 72567767517763, 
-							//Packet 9: PLAYER
-
-							
-
-							int num = stoi(params.at(0));
-							stringstream fl;
-							fl << ".\\worldTest\\NS\\replica\\ns_replica" << num << ".bin";
-							auto v = OpenPacket(fl.str());
-							ServerSendPacket(rakServer, v, systemAddress);
-							std::wstringstream msg;
-							msg << "Created Replica Packet " << num;
-							RakNet::BitStream *aw = usr->sendMessage(msg.str());
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						}
-						flag = true;
-					}
-
-					if (command == L"replica2"){
-						if (params.size() > 0){
-							//Packet 62s: objid: 288300744895892667 LOT: 6368, Spawner: 70368747895233
-
-							int num = stoi(params.at(0));
-							stringstream fl;
-							std::wstringstream msg;
-							if (params.size() > 1){
-								int num2 = stoi(params.at(1));
-								fl << ".\\worldTest\\replica\\" << num << "s_" << num2 << ".bin";
-								msg << "Created Replica Packet " << num << "_" << num2;
-							}
-							else{
-								fl << ".\\worldTest\\replica\\" << num << "s.bin";
-								msg << "Created Replica Packet " << num;
-							}
-							auto v = OpenPacket(fl.str());
-							ServerSendPacket(rakServer, v, systemAddress);
-							RakNet::BitStream *aw = usr->sendMessage(msg.str());
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						}
-						flag = true;
-					}
-
-					if (command == L"replica3"){
-						//1: objid 1152921510473527054 PLAYER?
-
-
-						if (params.size() > 0){
-							int num = stoi(params.at(0));
-							stringstream fl;
-							fl << ".\\worldTest\\replica\\replica" << num << ".bin";
-							auto v = OpenPacket(fl.str());
-							ServerSendPacket(rakServer, v, systemAddress);
-							std::wstringstream msg;
-							msg << "Created Replica Packet " << num;
-							RakNet::BitStream *aw = usr->sendMessage(msg.str());
-							rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-						}
-						flag = true;
-					}
-
-					if (command == L"health"){
-						if (params.size() > 0){
-							ulong num = stol(params.at(0));
-							PlayerObject *player = usr->GetPlayer();
-							if (player != NULL){
-								COMPONENT7_DATA4 d4 = player->getComponent7()->getData4();
-								d4.health = num;
-								if (params.size() > 1){
-									float max = stof(params.at(1));
-									d4.maxHealth = max;
-									if (params.size() > 2){
-										float max2 = stof(params.at(1));
-										d4.maxHealthN = max2;
-									}
-								}
-								player->getComponent7()->setData4(d4);
-								ObjectsManager::serialize(player);  //player->serialize();
-							}
-						}
-						flag = true;
-					}
-
-					if (command == L"armor"){
-						if (params.size() > 0){
-							ulong num = stol(params.at(0));
-							PlayerObject *player = usr->GetPlayer();
-							if (player != NULL){
-								COMPONENT7_DATA4 d4 = player->getComponent7()->getData4();
-								d4.armor = num;
-								if (params.size() > 1){
-									float max = stof(params.at(1));
-									d4.maxArmor = max;
-									if (params.size() > 2){
-										float max2 = stof(params.at(1));
-										d4.maxArmorN = max2;
-									}
-								}
-								player->getComponent7()->setData4(d4);
-								ObjectsManager::serialize(player); //player->serialize();
-							}
-						}
-						flag = true;
-					}
-
-					if (command == L"imagi"){
-						if (params.size() > 0){
-							ulong num = stol(params.at(0));
-							PlayerObject *player = usr->GetPlayer();
-							if (player != NULL){
-								COMPONENT7_DATA4 d4 = player->getComponent7()->getData4();
-								d4.imagination = num;
-								if (params.size() > 1){
-									float max = stof(params.at(1));
-									d4.maxImagination = max;
-									if (params.size() > 2){
-										float max2 = stof(params.at(1));
-										d4.maxImaginationN = max2;
-									}
-								}
-								player->getComponent7()->setData4(d4);
-								ObjectsManager::serialize(player);  //player->serialize();
-							}
-						}
-						flag = true;
-					}
-
-					if (command == L"d747"){
-						if (params.size() > 0){
-							ulong num = stol(params.at(0));
-							PlayerObject *player = usr->GetPlayer();
-							if (player != NULL){
-								COMPONENT7_DATA4 d4 = player->getComponent7()->getData4();
-								player->getComponent7()->setData4(d4);
-								d4.d7 = num;
-								ObjectsManager::serialize(player);  //player->serialize();
-							}
-						}
-						flag = true;
-					}
-
-					if (command == L"packet"){
-						std::wstring msg = L"Usage: /packet <path>";
-						if (params.size() > 0){
-							vector<uchar> v = OpenPacket(UtfConverter::ToUtf8(params.at(0)));
-							if (v.size() > 0){
-								ServerSendPacket(rakServer, v, systemAddress);
-								msg = L"Success sending packet";
-							}else{
-								msg = L"Error sending packet";
-							}
-						}
-						Chat::sendChatMessage(usr->GetCurrentCharacter()->charobjid, msg, L"System");
-						flag = true;
-					}
-
-					if (command == L"popup"){
-						if (params.size() > 1){
-							long long charid;
-							std::wstring rec = params.at(0);
-							bool flagOne = false;
-							if (rec == L"#"){
-								charid = usr->GetCurrentCharacter()->charobjid;
-								flagOne = true;
-							}
-							else if (rec == L"*"){
-								std::string msg = UtfConverter::ToUtf8(params.at(1));
-								std::string title = "Information";
-								if (params.size() > 2){
-									title = UtfConverter::ToUtf8(params.at(2));
-								}
-								SessionInfo s = SessionsTable::getClientSession(systemAddress);
-								std::vector<SessionInfo> wsessions = SessionsTable::getClientsInWorld(s.zone);
-								for (unsigned int i = 0; i < wsessions.size(); i++){
-									Chat::sendMythranInfo(wsessions.at(i).activeCharId, msg, title);
-								}
-							}
-							else{
-								charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
-								flagOne = true;
-							}
-
-							if (flagOne){
-								if (charid > 0){
-									std::string msg = UtfConverter::ToUtf8(params.at(1));
-									std::string title = "Information";
-									if (params.size() > 2){
-										title = UtfConverter::ToUtf8(params.at(2));
-									}
-									Chat::sendMythranInfo(charid, msg, title);
-								}
-								else{
-									std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
-									Chat::sendChatMessage(usr->GetCurrentCharacter()->charobjid, response);
-								}
-							}
-						}
-						else{
-							Chat::sendChatMessage(usr->GetCurrentCharacter()->charobjid, L"Usage: /popup <playername|*> <message> [title]");
-						}
-						flag = true;
-					}
-
-					if (!flag){
-						SessionInfo s = SessionsTable::getClientSession(systemAddress);
-						ChatCommandManager::handleCommand(command, &s, &params);
-					}
+					SessionInfo s = SessionsTable::getClientSession(systemAddress);
+					ChatCommandManager::handleCommand(command, &s, &params);
 				}
 			}
 				break;

@@ -12,6 +12,7 @@
 #include "Packet.h"
 #include "InventoryDB.h"
 #include "PlayerObject.h"
+#include "serverLoop.h"
 
 std::vector<ChatCommandHandler *> ChatCommandManager::ChatCommandHandlers;
 std::unordered_map<std::wstring, ChatCommandHandler *> ChatCommandManager::ChatCommands;
@@ -44,7 +45,30 @@ void ChatCommandManager::handleCommand(std::wstring command, SessionInfo *s, std
 		}
 		if (flag){
 			for (unsigned int k = 0; k < ChatCommandManager::ChatCommandHandlers.size(); k++){
-				Chat::sendChatMessage(s->addr, L"/" + ChatCommandManager::ChatCommandHandlers.at(k)->getCommandNames().at(0) + L"\t\t" + ChatCommandManager::ChatCommandHandlers.at(k)->getShortDescription());
+				std::wstring desc = ChatCommandManager::ChatCommandHandlers.at(k)->getShortDescription();
+				std::wstring cmd = ChatCommandManager::ChatCommandHandlers.at(k)->getCommandNames().at(0);
+				unsigned long stringvalue = cmd.size() * 4;
+				short diff = 0;
+				std::wstring space = L"\t\t";
+				for (unsigned int l = 0; l < cmd.size(); l++){
+					wchar_t c = cmd.at(l);
+					if (c == L'm') diff = diff + 2;
+					else if (c == L'w') diff = diff + 2;
+					else if (c == L'r') diff = diff - 1;
+					else if (c == L'f') diff = diff - 2;
+					else if (c == L't') diff = diff - 2;
+					else if (c == L'i') diff = diff - 3;
+					else if (c == L'j') diff = diff - 3;
+					else if (c == L'l') diff = diff - 3;
+				}
+
+				if ((stringvalue + diff) > 30){
+					space = L"\t";
+				}
+				
+				if (desc != L""){
+					Chat::sendChatMessage(s->addr, L"/" + cmd + space + desc);
+				}
 			}
 		}
 	}
@@ -407,7 +431,7 @@ void PositionCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstr
 }
 
 std::vector<std::wstring> PositionCommandHandler::getCommandNames(){
-	return{ L"pos", L"position" };
+	return{ L"position", L"pos"};
 }
 
 std::wstring PositionCommandHandler::getDescription(){
@@ -420,4 +444,164 @@ std::wstring PositionCommandHandler::getShortDescription(){
 
 std::wstring PositionCommandHandler::getSyntax(){
 	return L"";
+}
+
+void ClientCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+
+}
+
+std::vector<std::wstring> ClientCommandHandler::getCommandNames(){
+	return{ L"loc"};
+}
+
+std::wstring ClientCommandHandler::getDescription(){
+	return L"";
+}
+
+std::wstring ClientCommandHandler::getShortDescription(){
+	return L"";
+}
+
+std::wstring ClientCommandHandler::getSyntax(){
+	return L"";
+}
+
+void AttributeCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 1){
+		std::wstring attr = params->at(0);
+		unsigned long value = std::stoul(params->at(1));
+		bool max = false;
+		float maxV = 0;
+		if (params->size() > 2){
+			max = true;
+			maxV = std::stof(params->at(2));
+		}
+		PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
+		if (player != NULL){
+			Component7 * c7 = player->getComponent7();
+			COMPONENT7_DATA4 d4 = c7->getData4();
+			if (attr == L"health"){
+				d4.health = value;
+				if (max) d4.maxHealth = maxV;
+			}
+			else if (attr == L"armor"){
+				d4.armor = value;
+				if (max) d4.maxArmor = maxV;
+			}
+			else if (attr == L"imagi"){
+				d4.imagination = value;
+				if (max) d4.maxImagination = maxV;
+			}
+			c7->setData4(d4);
+			ObjectsManager::serialize(player);
+		}
+	}
+}
+
+std::vector<std::wstring> AttributeCommandHandler::getCommandNames(){
+	return{ L"setattr" };
+}
+
+std::wstring AttributeCommandHandler::getDescription(){
+	return L"Sets attributes for the player";
+}
+
+std::wstring AttributeCommandHandler::getShortDescription(){
+	return L"Set Attributes";
+}
+
+std::wstring AttributeCommandHandler::getSyntax(){
+	return L"(health|armor|imagi) <value> [<max>]";
+}
+
+void PacketCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	std::wstring msg = L"Usage: /packet <path>";
+	if (params->size() > 0){
+		std::vector<unsigned char> v = OpenPacket(UtfConverter::ToUtf8(params->at(0)));
+		if (v.size() > 0){
+			WorldServer::sendPacket(v, s->addr);
+			msg = L"Success sending packet";
+		}
+		else{
+			msg = L"Error sending packet";
+		}
+	}
+	Chat::sendChatMessage(s->addr, msg, L"System");
+}
+
+std::vector<std::wstring> PacketCommandHandler::getCommandNames(){
+	return{ L"packet" };
+}
+
+std::wstring PacketCommandHandler::getDescription(){
+	return L"Sends a packet from disk";
+}
+
+std::wstring PacketCommandHandler::getShortDescription(){
+	return L"Send Packet";
+}
+
+std::wstring PacketCommandHandler::getSyntax(){
+	return L"<file>";
+}
+
+void AnnouncementCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() > 1){
+		long long charid;
+		std::wstring rec = params->at(0);
+		bool flagOne = false;
+		if (rec == L"#"){
+			charid = s->activeCharId;
+			flagOne = true;
+		}
+		else if (rec == L"*"){
+			std::string msg = UtfConverter::ToUtf8(params->at(1));
+			std::string title = "Information";
+			if (params->size() > 2){
+				title = UtfConverter::ToUtf8(params->at(2));
+			}
+			std::vector<SessionInfo> wsessions = SessionsTable::getClientsInWorld(s->zone);
+			for (unsigned int i = 0; i < wsessions.size(); i++){
+				Chat::sendMythranInfo(wsessions.at(i).activeCharId, msg, title);
+			}
+		}
+		else{
+			charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
+			flagOne = true;
+		}
+
+		if (flagOne){
+			if (charid > 0){
+				std::string msg = UtfConverter::ToUtf8(params->at(1));
+				std::string title = "Information";
+				if (params->size() > 2){
+					title = UtfConverter::ToUtf8(params->at(2));
+				}
+				Chat::sendMythranInfo(charid, msg, title);
+			}
+			else{
+				std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
+				Chat::sendChatMessage(s->addr, response);
+			}
+		}
+	}
+	else{
+		Chat::sendChatMessage(s->addr, L"Usage: /popup " + this->getSyntax());
+	}
+}
+
+std::vector<std::wstring> AnnouncementCommandHandler::getCommandNames(){
+	return{ L"announce", L"popup" };
+}
+
+std::wstring AnnouncementCommandHandler::getDescription(){
+	return L"Sends a localized Mythran announcement";
+}
+
+std::wstring AnnouncementCommandHandler::getShortDescription(){
+	return L"Send Announcement";
+}
+
+std::wstring AnnouncementCommandHandler::getSyntax(){
+	return L"(<playername>|*|#) <message> [<title>]";
 }
