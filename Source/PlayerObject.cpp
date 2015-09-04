@@ -3,7 +3,6 @@
 #include "Replica.h"
 
 #include "RakNet\ReplicaManager.h"
-#include "UsersPool.h"
 #include "AccountsDB.h"
 #include "Worlds.h"
 
@@ -14,7 +13,6 @@
 
 extern ReplicaManager replicaManager;
 //extern std::map<SystemAddress, ZoneId> Player;
-extern Ref< UsersPool > WorldOnlineUsers;
 
 PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->objid = objid;

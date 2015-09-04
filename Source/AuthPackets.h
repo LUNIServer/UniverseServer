@@ -2,7 +2,6 @@
 
 #include "Common.h"
 #include "Packet.h"
-#include "User.h"
 
 #include "RakNet\RakPeerInterface.h"
 #include "RakNet\MessageIdentifiers.h"

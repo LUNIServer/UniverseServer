@@ -1,7 +1,6 @@
 #include "serverLoop.h"
 
 #include "legoPackets.h"
-#include "User.h"
 #include "CharPackets.h"
 #include "Account.h"
 #include "Characters.h"
@@ -17,7 +16,7 @@
 
 using namespace std;
 
-void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< string > > OutputQueue) {
+void CharactersLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< string > > OutputQueue) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
 
@@ -71,16 +70,16 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 		#endif
 
 		RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
-		uchar packetID;
+		unsigned char packetID;
 		data->Read(packetID);
 
 		switch (packetID) {
 			case ID_LEGO_PACKET:
-				ushort networkType;
+				unsigned short networkType;
 				data->Read(networkType);
-				ulong packetType;
+				unsigned long packetType;
 				data->Read(packetType);
-				uchar pad;
+				unsigned char pad;
 				data->Read(pad);
 				switch (networkType) {
 					case GENERAL:
@@ -117,30 +116,31 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 
 							case CLIENT_CHARACTER_LIST_REQUEST:
 							{
-								auto usr = OnlineUsers->Find(packet->systemAddress);
-								SystemAddress addr = packet->systemAddress;
+								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
 
-								Logger::log("CHAR", "", std::string(addr.ToString()));
-								if (usr->nameInUse == 0) {
+								//auto usr = OnlineUsers->Find(packet->systemAddress);
+								//SystemAddress addr = packet->systemAddress;
+
+								//Logger::log("CHAR", "", std::string(addr.ToString()));
+								//if (usr->nameInUse == 0) {
 									Logger::log("CHAR", "", "Sending char packet...");
-									SendCharPacket(rakServer, packet->systemAddress, usr->GetID());
-								}
-								break;
+									SendCharPacket(rakServer, packet->systemAddress, s.accountid);
+								//}
+								
 							}
-
+								break;
 							case CLIENT_CHARACTER_CREATE_REQUEST:
 							{
 								// Find online user by systemAddress
-								auto usr = OnlineUsers->Find(packet->systemAddress);
+								//auto usr = OnlineUsers->Find(packet->systemAddress);
 								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
 
 								bool success = false;
 								
-								// Make SURE user is not null!!!!!!
-								if (usr != NULL) {
+								if (s.phase > SessionPhase::PHASE_CONNECTED) {
 									success = Characters::CreateCharacter(data, packet->systemAddress, s.accountid);
 								}else {
-									Logger::logError("CHAR", "", "saving user", "user is NULL");
+									Logger::logError("CHAR", "", "saving user", "not authentified");
 								}
 								
 								// If the username is in use, do NOT send the char packet. Otherwise, send it
@@ -170,17 +170,18 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 							case CLIENT_LOGIN_REQUEST:
 							{
 								// Find online user using systemAddress
-								auto usr = OnlineUsers->Find(packet->systemAddress);
+								//auto usr = OnlineUsers->Find(packet->systemAddress);
+								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
 
 								// If user exists, continue
-								if (usr != NULL) {
-									usr->numredir++; // Add to the number of redirects that the character has
+								if (s.phase > SessionPhase::PHASE_CONNECTED) {
+									//usr->numredir++; // Add to the number of redirects that the character has
 									// Get Character ID
 									long long charobjid;
 									data->Read(charobjid);
 
-									usr->SetCharacter(charobjid);
-									Session::play(usr->GetID(), charobjid);
+									//usr->SetCharacter(charobjid);
+									Session::play(s.accountid, charobjid);
 								}
 
 								std::vector<char> str;
@@ -226,9 +227,11 @@ void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossT
 			// User disconnected from the char server
 			case ID_DISCONNECTION_NOTIFICATION:
 			{
-				auto usr = OnlineUsers->Find(packet->systemAddress);
-				if (OnlineUsers->Remove(packet->systemAddress))
-					Logger::log("CHAR", "", "disconnected " + usr->GetUsername());
+				SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
+				std::string name = AccountsTable::getAccountName(s.accountid);
+				//auto usr = OnlineUsers->Find(packet->systemAddress);
+				//OnlineUsers->Remove(packet->systemAddress);
+				Logger::log("CHAR", "", "disconnected " + name);
 				Session::disconnect(packet->systemAddress, SessionPhase::PHASE_AUTHENTIFIED);
 			}
 				break;

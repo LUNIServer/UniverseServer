@@ -113,6 +113,24 @@ long long AccountsTable::getFrontChar(unsigned int accountid){
 	}
 }
 
+std::string AccountsTable::getAccountName(unsigned int accountid){
+	std::stringstream str;
+	str << "SELECT `name` FROM `accounts` WHERE `id` = '" << accountid << "';";
+	auto qr = Database::Query(str.str());
+	if (qr == NULL){
+		Logger::logError("ACDB", "MYSQL", "searching account " + std::to_string(accountid), mysql_error(Database::getConnection()));
+		return "";
+	}
+	if (mysql_num_rows(qr) == 0){
+		Logger::logError("ACDB", "MYSQL", "searching account " + std::to_string(accountid), "Account not found");
+		return "";
+	}
+	else{
+		auto row = mysql_fetch_row(qr);
+		return row[0];
+	}
+}
+
 unsigned char AccountsTable::getRank(unsigned int accountid){
 	std::stringstream str;
 	str << "SELECT `rank` FROM `accounts` WHERE `id` = '" << accountid << "';";

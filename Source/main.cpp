@@ -20,11 +20,6 @@
 #include "Database.h"
 #include "AccountsDB.h"
 
-#ifdef DEBUG
-	#include "User.h"
-	#include "Character.h"
-#endif
-
 #include "SUtil\IniReader.h"
 #include "SUtil\Kbhit.h"
 #include <thread>
@@ -126,9 +121,6 @@ int main() {
 	}
 	#endif
 
-	// Create the UserPool to store all users by their systemAddress (shared by threads)
-	Ref< UsersPool > OnlineUsers = new UsersPool();
-
 	// Create a new CrossThreadQueue for writing output to the console from a thread
 	Ref< CrossThreadQueue< std::string > > OutputQueue = new CrossThreadQueue< std::string >();
 
@@ -137,9 +129,9 @@ int main() {
 	//LUNI_WRLD = false;
 
 	// Start the three new threads (Auth, Char, and World servers)
-	std::thread thauth(AuthLoop, &auth, OnlineUsers, OutputQueue);
-	std::thread thchar(CharactersLoop, &character, OnlineUsers, OutputQueue);
-	std::thread thworld(WorldLoop, &world, OnlineUsers, OutputQueue);
+	std::thread thauth(AuthLoop, &auth, OutputQueue);
+	std::thread thchar(CharactersLoop, &character, OutputQueue);
+	std::thread thworld(WorldLoop, &world, OutputQueue);
 
 	// If quit is ever equal to true, quit the server
 	bool quit = false;
@@ -171,11 +163,6 @@ int main() {
 			else if (command == "character_log_disable") character.logFile = false;
 			else if (command == "world_log_enable") world.logFile = true;
 			else if (command == "world_log_disable") world.logFile = false;
-			else if (command == "user_online") {
-				std::stringstream str;
-				str << "\n Online user: " << OnlineUsers->Count() << std::endl;
-				std::cout << str.str();
-			}
 			else if (command == "register") {
 				std::string username, password;
 				std::cout << "Username: ";

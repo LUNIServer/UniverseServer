@@ -1,7 +1,6 @@
 #include "serverLoop.h"
 
 #include "Database.h"
-#include "User.h"
 #include "legoPackets.h"
 #include "AuthPackets.h"
 
@@ -26,7 +25,7 @@ using namespace RakNet;
 		- Sending the response to the client
 		- Register the client in SessionsTable and UsersPool
 */
-void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers) {
+void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* cfg) {
 	//Make the packet data accessible via a bit stream
 	RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
 	unsigned char packetID;
@@ -94,7 +93,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		//Validating the input
 		//Set default values
 		UserSuccess currentLoginStatus = UserSuccess::SUCCESS;
-		Ref<User> user = NULL;
+		//Ref<User> user = NULL;
 		
 		//query the account id of the associated with the username from the database
 		unsigned int accountid = AccountsTable::getAccountID(usernameA);
@@ -201,17 +200,17 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		if (currentLoginStatus == UserSuccess::SUCCESS){
 			// Login the user to the server
 			// TODO: Here is the last place in AuthLoop wher the User class is necessary
-			auto usr = Ref<User>(new User(accountid, usernameA, packet->systemAddress));
-			OnlineUsers->Insert(usr, packet->systemAddress);
+			//auto usr = Ref<User>(new User(accountid, usernameA, packet->systemAddress));
+			//OnlineUsers->Insert(usr, packet->systemAddress);
 			Session::login(packet->systemAddress, accountid, keyhash);
-			Logger::log("AUTH", "LOGIN", usr->GetUsername() + " Logged-in");
+			Logger::log("AUTH", "LOGIN", usernameA + " Logged-in");
 			return;
 		}
 	}
 	Logger::log("AUTH", "LOGIN", "Login failed", LOG_WARNING);
 }
 
-void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< std::string > > OutputQueue) {
+void AuthLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< std::string > > OutputQueue) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
 
@@ -279,7 +278,7 @@ void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQ
 					case AUTH: //user logging into server
 						{
 							// Handle the user login using the above method
-							HandleUserLogin(rakServer, packet, cfg, OnlineUsers);
+							HandleUserLogin(rakServer, packet, cfg);
 						}
 						break;
 

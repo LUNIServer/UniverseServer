@@ -74,7 +74,6 @@
   <ItemGroup>
     <ClInclude Include="Account.h" />
     <ClInclude Include="AccountsDB.h" />
-    <ClInclude Include="Character.h" />
     <ClInclude Include="Characters.h" />
     <ClInclude Include="CharactersDB.h" />
     <ClInclude Include="ChatCommands.h" />
@@ -103,8 +102,6 @@
     <ClInclude Include="serverLoop.h" />
     <ClInclude Include="Social.h" />
     <ClInclude Include="TimeUtil.h" />
-    <ClInclude Include="User.h" />
-    <ClInclude Include="UsersPool.h" />
     <ClInclude Include="UtfConverter.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="WorldConnection.h" />
@@ -115,7 +112,6 @@
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="AccountsDB.cpp" />
     <ClCompile Include="AuthLoop.cpp" />
-    <ClCompile Include="Character.cpp" />
     <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="CharactersLoop.cpp" />
@@ -139,7 +135,6 @@
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="CharPackets.cpp" />
     <ClCompile Include="Social.cpp" />
-    <ClCompile Include="User.cpp" />
     <ClCompile Include="UtfConverter.cpp" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldConnection.cpp" />

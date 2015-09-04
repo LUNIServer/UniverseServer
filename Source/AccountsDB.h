@@ -68,6 +68,7 @@ public:
 	static bool setFrontChar(long long charid);
 	static void unsetFrontChar(unsigned int accountid);
 	static long long getFrontChar(unsigned int accountid);
+	static std::string getAccountName(unsigned int accountid);
 
 	static unsigned char getRank(unsigned int accountid);
 };
