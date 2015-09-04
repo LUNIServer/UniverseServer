@@ -114,7 +114,6 @@
     <ClCompile Include="AuthLoop.cpp" />
     <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
-    <ClCompile Include="CharactersLoop.cpp" />
     <ClCompile Include="ChatCommands.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Database.cpp" />

@@ -33,28 +33,24 @@
 #endif
 
 // Load the config file (config.ini)
-void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& character, CONNECT_INFO& world) {
+void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& world) {
 	CIniReader iniReader(".\\config.ini"); // Load config.ini
 	
 	strcpy(auth.redirectIp, iniReader.ReadString("Settings", "redirect_ip", "127.0.0.1")); // Copy the auth redirect IP from the file
-	strcpy(character.redirectIp, auth.redirectIp); // Copy the char redirect IP from the file
 	strcpy(world.redirectIp, auth.redirectIp); // Copy the world redirect IP
 
 	Logger::log("MAIN", "CONFIG", "Server on IP " + std::string(auth.redirectIp));
 
 	// Get whether to use encryption
-	auth.useEncryption = character.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
+	auth.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
 
 	// Get whether to use log file
-	auth.logFile = character.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
+	auth.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
 
 	// NOTE: The default ports are the ports LU listens on / redirects on
 	// Changing these may result in the game not running properly!
-	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2002); // Get auth redirect port (default: 2002)
+	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2003); // Get auth redirect port (default: 2002)
 	auth.listenPort = iniReader.ReadInteger("Auth", "listen_port", 1001); // Get auth listen port (default: 1001)
-
-	character.redirectPort = iniReader.ReadInteger("Char", "redirect_port", 2003); // Get char redirect port (default: 2003)
-	character.listenPort = iniReader.ReadInteger("Char", "listen_port", 2002); // Get char listen port (default: 2002)
 
 	world.redirectPort = iniReader.ReadInteger("World", "redirect_port", 2004); // Get world redirect port (default: 2004)
 	world.listenPort = iniReader.ReadInteger("World", "listen_port", 2003); // Get world listen port (default: 2003)
@@ -104,10 +100,10 @@ int main() {
 	Logger::log("MAIN", "", "Initializing LUNI test server...");
 
 	// Initialize the auth, character, and world CONNECT_INFO structs
-	CONNECT_INFO auth, character, world;
+	CONNECT_INFO auth, world;
 
 	// Load the values for them and store them into their structs
-	LoadConfig(auth, character, world);
+	LoadConfig(auth, world);
 
 	// Create the directory .//logs// if it does not exist
 	_mkdir("logs");
@@ -130,7 +126,7 @@ int main() {
 
 	// Start the three new threads (Auth, Char, and World servers)
 	std::thread thauth(AuthLoop, &auth, OutputQueue);
-	std::thread thchar(CharactersLoop, &character, OutputQueue);
+	//std::thread thchar(CharactersLoop, &character, OutputQueue);
 	std::thread thworld(WorldLoop, &world, OutputQueue);
 
 	// If quit is ever equal to true, quit the server
@@ -159,8 +155,6 @@ int main() {
 				std::cout << str.str();
 			}
 			else if (command == "quit") quit = LUNIterminate = true;
-			else if (command == "character_log_enable") character.logFile = true;
-			else if (command == "character_log_disable") character.logFile = false;
 			else if (command == "world_log_enable") world.logFile = true;
 			else if (command == "world_log_disable") world.logFile = false;
 			else if (command == "register") {
@@ -190,8 +184,8 @@ int main() {
 	// No longer in use...
 	thauth.join();
 	std::cout << "[MAIN] AUTH ended" << std::endl;
-	thchar.join();
-	std::cout << "[MAIN] CHAR ended" << std::endl;
+	//thchar.join();
+	//std::cout << "[MAIN] CHAR ended" << std::endl;
 	thworld.join();
 	std::cout << "[MAIN] WRLD ended" << std::endl;
 

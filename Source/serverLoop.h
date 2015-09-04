@@ -43,7 +43,6 @@ void SavePacketOverwrite(const std::string& filename, char* data, uint size);
 
 // Thse are the threads of the Authentication, Character, and World servers
 void AuthLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< std::string > > OutputQueue);
-void CharactersLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< std::string > > OutputQueue);
 void WorldLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< std::string > > OutputQueue);
 
 void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakNet::BitStream *data, ulong bytelength);

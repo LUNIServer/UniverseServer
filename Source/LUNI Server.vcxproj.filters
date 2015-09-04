@@ -173,9 +173,6 @@
     <ClCompile Include="AuthLoop.cpp">
       <Filter>Source Files\Service</Filter>
     </ClCompile>
-    <ClCompile Include="CharactersLoop.cpp">
-      <Filter>Source Files\Service</Filter>
-    </ClCompile>
     <ClCompile Include="WorldLoop.cpp">
       <Filter>Source Files\Service</Filter>
     </ClCompile>

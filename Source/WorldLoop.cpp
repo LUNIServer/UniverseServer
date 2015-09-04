@@ -23,6 +23,7 @@
 
 #include "Account.h"
 #include "Social.h"
+#include "Characters.h"
 #include "Worlds.h"
 #include "WorldServer.h"
 #include "WorldConnection.h"
@@ -156,254 +157,16 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< string > > OutputQueue)
 		// Create and send packets back here according to the one we got
 		switch (packetId) {
 			case ID_USER_PACKET_ENUM:
+			{
 				//This is a normal packet, that should be parsed and responded to accordingly.
-				
-				//This flag is temporary and should be used to while transfering all logic from here to the parser function
-				bool flagUseParser;
-				flagUseParser = false;
-				//-------------------------
-				
-				ushort networkType;
-				pdata->Read(networkType);
-				ulong packetType;
-				pdata->Read(packetType);
-				uchar pad;
-				pdata->Read(pad);
-
-				switch (networkType) {
-					case SERVER:
-						switch (packetType) {
-							case CLIENT_VALIDATION:
-							{
-								//When the world server recieves a validation packet, check it and continue
-								bool flag = ClientWorldPackets::HandleValidation(pdata, packet->systemAddress);
-								if (flag){
-									//When the client is validated, send him to the right world.
-									//Actually, this should finally not be done here, but as a response to the char packet that sends the client to this server
-									SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
-									ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(s.activeCharId);
-									COMPONENT1_POSITION pos = COMPONENT1_POSITION(cinfo.lastPlace.x, cinfo.lastPlace.y, cinfo.lastPlace.z);
-									ZoneId zone = static_cast<ZoneId>(cinfo.lastPlace.zoneID);
-									Worlds::loadWorld(packet->systemAddress, zone, pos, cinfo.lastPlace.mapInstance, cinfo.lastPlace.mapClone);
-								}else{
-									rakServer->CloseConnection(packet->systemAddress, true);
-								}
-							}
-								break;
-							case CLIENT_LEVEL_LOAD_COMPLETE:
-							{
-								ZoneAddress za = ClientWorldPackets::HandleLevelLoadComplete(pdata, packet->systemAddress);
-								
-								//------
-								//auto usr = OnlineUsers->Find(packet->systemAddress);
-								//std::pair<std::map<SystemAddress, ZoneId>::iterator, bool> ret;
-								//ret = Player.insert(std::pair<SystemAddress, ZoneId>(packet->systemAddress, usr->getWorld()));
-								//if (ret.second == false) {
-								//	Player.at(packet->systemAddress) = usr->getWorld();
-								//}
-								//------
-
-								Logger::log("WRLD", "LEVEL", "Client loading complete");
-								Logger::log("WRLD", "LEVEL", "Replying to Character");
-
-								SessionInfo s = SessionsTable::getClientSession(packet->systemAddress);
-								if (s.activeCharId > 0){
-									long long objid = s.activeCharId;
-									ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(objid);
-
-									COMPONENT1_POSITION pos;
-									ZoneId zid = static_cast<ZoneId>(za.zoneid);
-									if (za.zoneid == cinfo.lastPlace.zoneID){
-										pos = COMPONENT1_POSITION(cinfo.lastPlace.x, cinfo.lastPlace.y, cinfo.lastPlace.z);
-										if (pos.isNull()) pos = getZoneSpawnPoint(zid);
-									}
-									else{
-										pos = getZoneSpawnPoint(zid);
-									}
-
-									WorldServerPackets::CreateCharacter(packet->systemAddress, objid);
-
-									PlayerObject * player = new PlayerObject(objid, UtfConverter::FromUtf8(cinfo.info.name));
-									
-									//Temporarily ?
-									player->gmlevel = AccountsTable::getRank(s.accountid);
-									player->world.zone = zid;
-
-									Component1 * c1 = player->getComponent1();
-									c1->setPosition(pos);
-
-									Component4 * c4 = player->getComponent4();
-									c4->setLevel(6);
-									PLAYER_INFO pi;
-									pi.accountID = s.accountid;
-									pi.isFreeToPlay = cinfo.info.isFreeToPlay;
-									pi.legoScore = 600;
-									c4->setInfo(pi);
-									PLAYER_STYLE ps;
-									ps.eyebrowsStyle = cinfo.style.eyebrows;
-									ps.eyesStyle = cinfo.style.eyes;
-									ps.hairColor = cinfo.style.hairColor;
-									ps.hairStyle = cinfo.style.hairStyle;
-									ps.mouthStyle = cinfo.style.mouth;
-									ps.pantsColor = cinfo.style.pantsColor;
-									ps.shirtColor = cinfo.style.shirtColor;
-									c4->setStyle(ps);
-
-									Component7 * c7 = player->getComponent7();
-									COMPONENT7_DATA4 d4 = c7->getData4();
-									d4.health = 5;
-									d4.maxHealthN = 5.0F;
-									d4.maxHealth = 5.0F;
-									c7->setData4(d4);
-
-									Component17 * c17 = player->getComponent17();
-									std::vector<long long> equip = EquipmentTable::getItems(objid);
-									for (unsigned int k = 0; k < equip.size(); k++){
-										c17->equipItem(equip.at(k));
-									}
-
-									//usr->SetPlayer(player);
-									
-									ObjectsManager::clientJoinWorld(player, packet->systemAddress);
-									//player->doCreation(packet->systemAddress, zid);
-
-									WorldServerPackets::SendGameMessage(packet->systemAddress, objid, 1642);
-									WorldServerPackets::SendGameMessage(packet->systemAddress, objid, 509);
-
-									RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(objid, 472);
-									pc->Write((unsigned long)185);
-									pc->Write((unsigned char)0);
-									WorldServer::sendPacket(pc, packet->systemAddress);
-								}
-								flagUseParser = true;
-							}
-								break;
-
-							case CLIENT_STRING_CHECK:
-							{
-								unsigned char superChatLevel;
-								pdata->Read(superChatLevel);
-								unsigned char requestID;
-								pdata->Read(requestID);
-								std::wstring reciever = PacketTools::ReadFromPacket(pdata, 42);
-								unsigned short length;
-								pdata->Read(length);
-								std::wstring text = PacketTools::ReadFromPacket(pdata, length);
-								
-								std::stringstream str;
-								str << "Moderation Request #" << std::to_string(requestID);
-								if (reciever != L""){
-									str << " for " << UtfConverter::ToUtf8(reciever);
-								}
-								str << ": '";
-								if (text.size() > 20){
-									str << UtfConverter::ToUtf8(text.substr(0, 17)) << "...";
-								}
-								else{
-									str << UtfConverter::ToUtf8(text);
-								}
-								str << "'";
-								Logger::log("WRLD", "MODR", str.str(), LOG_DEBUG);
-
-								RakNet::BitStream  * bs = WorldServer::initPacket(RemoteConnection::CLIENT, 59);
-								bs->Write((uchar)1);
-								bs->Write((ushort)0);
-								bs->Write(requestID);
-								WorldServer::sendPacket(bs, packet->systemAddress);
-							}
-								break;
-
-							case CLIENT_POSITION_UPDATE: //user moving / update request?
-							{
-								SessionInfo i = SessionsTable::getClientSession(packet->systemAddress);
-								if (i.phase > SessionPhase::PHASE_PLAYING){
-									PlayerObject * player = (PlayerObject *) ObjectsManager::getObjectByID(i.activeCharId);
-									
-									//auto usr = OnlineUsers->Find(packet->systemAddress);
-									//PlayerObject *player = usr->GetPlayer();
-									if (player != NULL){
-										Component1 *c1 = player->getComponent1();
-										
-										float x, y, z;
-										pdata->Read(x);
-										pdata->Read(y);
-										pdata->Read(z);
-										c1->setPosition(COMPONENT1_POSITION(x, y, z));
-
-										float rx, ry, rz, rw;
-										pdata->Read(rx);
-										pdata->Read(ry);
-										pdata->Read(rz);
-										pdata->Read(rw);
-										c1->setRotation(COMPONENT1_ROTATION(rx, ry, rz, rw));
-
-										bool onGround;
-										pdata->Read(onGround);
-										c1->setOnGround(onGround);
-
-
-										bool unknownBit;
-										pdata->Read(unknownBit);
-										c1->setData6_d4(unknownBit);
-										bool hasVelocityInfo;
-										pdata->Read(hasVelocityInfo);
-
-										if (hasVelocityInfo){
-											float vx, vy, vz;
-											pdata->Read(vx);
-											pdata->Read(vy);
-											pdata->Read(vz);
-											c1->setVelocity(COMPONENT1_VELOCITY(vx, vy, vz));
-										}
-										else{
-											c1->setVelocity(COMPONENT1_VELOCITY(0, 0, 0));
-										}
-
-										bool hasAngularVelocityInfo;
-										pdata->Read(hasAngularVelocityInfo);
-
-										if (hasAngularVelocityInfo){
-											float avx, avy, avz;
-											pdata->Read(avx);
-											pdata->Read(avy);
-											pdata->Read(avz);
-											c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(avx, avy, avz));
-										}
-										else{
-											c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(0, 0, 0));
-										}
-										ObjectsManager::serialize(player); //player->serialize();
-									}else{
-										//Player is null????
-									}
-								}
-							}
-								break;
-							default:
-								flagUseParser = true;
-						}
-						break;
-					default:
-						flagUseParser = true;
+				SessionInfo session = SessionsTable::getClientSession(packet->systemAddress);
+				if (session.phase > SessionPhase::PHASE_NONE){
+					parsePacket(rakServer, packet->systemAddress, pdata, (unsigned long)(packet->length - 1));
 				}
-				
-				//End of the normal packet parsing.
-				if (flagUseParser){
-					SessionInfo session = SessionsTable::getClientSession(packet->systemAddress);
-					RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
-					unsigned char packetId;
-					data->Read(packetId);
-					if (packetId == ID_USER_PACKET_ENUM){
-						//auto usr = OnlineUsers->Find(packet->systemAddress);
-						if (session.phase > SessionPhase::PHASE_NONE){
-							parsePacket(rakServer, packet->systemAddress, data, (unsigned long)(packet->length - 1));
-						}
-						else{
-							Logger::log("WRLD", "CLIENT", "Recieved packet from unconnected user " + std::string(packet->systemAddress.ToString()));
-						}
-					}
+				else{
+					Logger::log("WRLD", "CLIENT", "Recieved packet from unconnected user " + std::string(packet->systemAddress.ToString()));
 				}
-				
+			}				
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
 			#ifdef DEBUG
@@ -618,17 +381,61 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 	case RemoteConnection::SERVER:
 		//Message to server
 		switch (packetId){
+		// 1
+		case WorldPacketID::CLIENT_VALIDATION:
+		{
+			//When the world server recieves a validation packet, check it and continue
+			bool flag = ClientWorldPackets::HandleValidation(data, systemAddress);
+			if (!flag){
+				rakServer->CloseConnection(systemAddress, true);
+			}
+
+			//When the client is validated, send him to the right world.
+			//Actually, this should finally not be done here, but as a response to the char packet that sends the client to this server
+
+			//ONLY USE WORLD FROM NOW ON
+			//SessionInfo s = SessionsTable::getClientSession(systemAddress);
+			//ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(s.activeCharId);
+			//COMPONENT1_POSITION pos = COMPONENT1_POSITION(cinfo.lastPlace.x, cinfo.lastPlace.y, cinfo.lastPlace.z);
+			//ZoneId zone = static_cast<ZoneId>(cinfo.lastPlace.zoneID);
+			//Worlds::loadWorld(systemAddress, zone, pos, cinfo.lastPlace.mapInstance, cinfo.lastPlace.mapClone);
+		}
+			break;
+		// 2
 		case WorldPacketID::CLIENT_CHARACTER_LIST_REQUEST:
 		{
 			//Only happens when getting charlist ingame
 			Logger::log("WORLD", "CHARS", "CLIENT_CHARACTER_LIST_REQUEST");
 			Logger::log("WORLD", "CHARS", "Sending char packet...");
 			SessionInfo s = SessionsTable::getClientSession(systemAddress);
-			ObjectsManager::clientLeaveWorld(s.activeCharId, systemAddress);
-			Session::quit(s.activeCharId);
+			if (s.phase > SessionPhase::PHASE_PLAYING){
+				ObjectsManager::clientLeaveWorld(s.activeCharId, systemAddress);
+				Session::quit(s.activeCharId);
+			}
 			SendCharPacket(rakServer, systemAddress, s.accountid);
-			break;
 		}
+			break;
+		// 3
+		case WorldPacketID::CLIENT_CHARACTER_CREATE_REQUEST:
+		{
+			// Find online user by systemAddress
+			//auto usr = OnlineUsers->Find(packet->systemAddress);
+			SessionInfo s = SessionsTable::getClientSession(systemAddress);
+			bool success = false;
+			if (s.phase > SessionPhase::PHASE_CONNECTED) {
+				success = Characters::CreateCharacter(data, systemAddress, s.accountid);
+			}
+			else {
+				Logger::logError("CHAR", "", "saving user", "not authentified");
+			}
+
+			// If the username is in use, do NOT send the char packet. Otherwise, send it
+			if (success) {
+				SendCharPacket(rakServer, systemAddress, s.accountid);
+			}
+		}
+			break;
+		// 4
 		case WorldPacketID::CLIENT_LOGIN_REQUEST:
 		{
 			SessionInfo s = SessionsTable::getClientSession(systemAddress);
@@ -651,12 +458,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			}
 		}
 			break;
-		case WorldPacketID::CLIENT_ROUTE_PACKET:
-			unsigned long subPacketLength;
-			data->Read(subPacketLength);
-			Logger::log("WRLD", "PARSER", "Recieved routing packet; Length: " + std::to_string(subPacketLength));
-			parsePacket(rakServer, systemAddress, data, subPacketLength);
-			break;
+		// 5
 		case WorldPacketID::CLIENT_GAME_MSG:
 		{
 			long long objid;
@@ -675,13 +477,13 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 			unsigned short msgid;
 			data->Read(msgid);
-#ifdef DEBUG
+
 			//We ignore what was here, because bitstream seems way better to use in this case.
 			//The code gave a hint that the "objid" could be the character using the object
 			//Actually it is mostly the charcter, but in some cases it is not
-			Logger::log("WRLD", "PARSER", "Game Message, ID: " + std::to_string(msgid));
-			Logger::log("WRLD", "PARSER", "OBJECT-ID: " + std::to_string(objid));
-#endif
+			Logger::log("WRLD", "PARSER", "Game Message, ID: " + std::to_string(msgid), LOG_DEBUG);
+			Logger::log("WRLD", "PARSER", "OBJECT-ID: " + std::to_string(objid), LOG_DEBUG);
+
 			switch (msgid){
 			case 41:
 				unsigned short speedchatid;
@@ -1175,9 +977,22 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				break;
 			}
 			printData = true;
-			break;
 		}
-		case CLIENT_GENERAL_CHAT_MESSAGE:
+			break;
+		// 6
+		case WorldPacketID::CLIENT_CHARACTER_DELETE_REQUEST:
+		{
+			SessionInfo s = SessionsTable::getClientSession(systemAddress);
+			long long charid;
+			data->Read(charid);
+			Characters::DeleteCharacter(s.accountid, charid);
+			RakNet::BitStream * bitStream = WorldServer::initPacket(RemoteConnection::CLIENT, 12);
+			bitStream->Write((uchar)1); // Success?
+			WorldServer::sendPacket(bitStream, systemAddress);
+		}
+			break;
+		// 14
+		case WorldPacketID::CLIENT_GENERAL_CHAT_MESSAGE:
 		{
 			data->SetReadOffset(data->GetReadOffset() + 24); //3 bytes channel?
 			unsigned long length;
@@ -1199,6 +1014,164 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			Chat::broadcastChatMessage(s.zone, message, UtfConverter::FromUtf8(cinfo.info.name));
 		}
 			break;
+		// 19
+		case WorldPacketID::CLIENT_LEVEL_LOAD_COMPLETE:
+		{
+			ZoneAddress za = ClientWorldPackets::HandleLevelLoadComplete(data, systemAddress);
+
+			Logger::log("WRLD", "LEVEL", "Client loading complete");
+			Logger::log("WRLD", "LEVEL", "Replying to Character");
+
+			SessionInfo s = SessionsTable::getClientSession(systemAddress);
+			if (s.activeCharId > 0){
+				long long objid = s.activeCharId;
+				ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(objid);
+
+				COMPONENT1_POSITION pos;
+				ZoneId zid = static_cast<ZoneId>(za.zoneid);
+				if (za.zoneid == cinfo.lastPlace.zoneID){
+					pos = COMPONENT1_POSITION(cinfo.lastPlace.x, cinfo.lastPlace.y, cinfo.lastPlace.z);
+					if (pos.isNull()) pos = getZoneSpawnPoint(zid);
+				}
+				else{
+					pos = getZoneSpawnPoint(zid);
+				}
+
+				WorldServerPackets::CreateCharacter(systemAddress, objid);
+
+				PlayerObject * player = new PlayerObject(objid, UtfConverter::FromUtf8(cinfo.info.name));
+
+				//Temporarily ?
+				player->gmlevel = AccountsTable::getRank(s.accountid);
+				player->world.zone = zid;
+
+				Component1 * c1 = player->getComponent1();
+				c1->setPosition(pos);
+
+				Component4 * c4 = player->getComponent4();
+				c4->setLevel(6);
+				PLAYER_INFO pi;
+				pi.accountID = s.accountid;
+				pi.isFreeToPlay = cinfo.info.isFreeToPlay;
+				pi.legoScore = 600;
+				c4->setInfo(pi);
+				PLAYER_STYLE ps;
+				ps.eyebrowsStyle = cinfo.style.eyebrows;
+				ps.eyesStyle = cinfo.style.eyes;
+				ps.hairColor = cinfo.style.hairColor;
+				ps.hairStyle = cinfo.style.hairStyle;
+				ps.mouthStyle = cinfo.style.mouth;
+				ps.pantsColor = cinfo.style.pantsColor;
+				ps.shirtColor = cinfo.style.shirtColor;
+				c4->setStyle(ps);
+
+				Component7 * c7 = player->getComponent7();
+				COMPONENT7_DATA4 d4 = c7->getData4();
+				d4.health = 5;
+				d4.maxHealthN = 5.0F;
+				d4.maxHealth = 5.0F;
+				c7->setData4(d4);
+
+				Component17 * c17 = player->getComponent17();
+				std::vector<long long> equip = EquipmentTable::getItems(objid);
+				for (unsigned int k = 0; k < equip.size(); k++){
+					c17->equipItem(equip.at(k));
+				}
+
+				//usr->SetPlayer(player);
+
+				ObjectsManager::clientJoinWorld(player, systemAddress);
+				//player->doCreation(packet->systemAddress, zid);
+
+				WorldServerPackets::SendGameMessage(systemAddress, objid, 1642);
+				WorldServerPackets::SendGameMessage(systemAddress, objid, 509);
+
+				RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(objid, 472);
+				pc->Write((unsigned long)185);
+				pc->Write((unsigned char)0);
+				WorldServer::sendPacket(pc, systemAddress);
+
+				Session::enter(s.activeCharId, zid);
+				Logger::log("WRLD", "PARSER", "Client: Level loading complete " + zid);
+			}			
+		}
+			break;
+		// 21
+		case WorldPacketID::CLIENT_ROUTE_PACKET:
+		{
+			unsigned long subPacketLength;
+			data->Read(subPacketLength);
+			Logger::log("WRLD", "PARSER", "Recieved routing packet; Length: " + std::to_string(subPacketLength));
+			parsePacket(rakServer, systemAddress, data, subPacketLength);
+		}
+			break;
+		// 22
+		case WorldPacketID::CLIENT_POSITION_UPDATE: //user moving / update request?
+		{
+			SessionInfo i = SessionsTable::getClientSession(systemAddress);
+			if (i.phase > SessionPhase::PHASE_PLAYING){
+				PlayerObject * player = (PlayerObject *)ObjectsManager::getObjectByID(i.activeCharId);
+
+				if (player != NULL){
+					Component1 *c1 = player->getComponent1();
+
+					float x, y, z;
+					data->Read(x);
+					data->Read(y);
+					data->Read(z);
+					c1->setPosition(COMPONENT1_POSITION(x, y, z));
+
+					float rx, ry, rz, rw;
+					data->Read(rx);
+					data->Read(ry);
+					data->Read(rz);
+					data->Read(rw);
+					c1->setRotation(COMPONENT1_ROTATION(rx, ry, rz, rw));
+
+					bool onGround;
+					data->Read(onGround);
+					c1->setOnGround(onGround);
+
+
+					bool unknownBit;
+					data->Read(unknownBit);
+					c1->setData6_d4(unknownBit);
+					bool hasVelocityInfo;
+					data->Read(hasVelocityInfo);
+
+					if (hasVelocityInfo){
+						float vx, vy, vz;
+						data->Read(vx);
+						data->Read(vy);
+						data->Read(vz);
+						c1->setVelocity(COMPONENT1_VELOCITY(vx, vy, vz));
+					}
+					else{
+						c1->setVelocity(COMPONENT1_VELOCITY(0, 0, 0));
+					}
+
+					bool hasAngularVelocityInfo;
+					data->Read(hasAngularVelocityInfo);
+
+					if (hasAngularVelocityInfo){
+						float avx, avy, avz;
+						data->Read(avx);
+						data->Read(avy);
+						data->Read(avz);
+						c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(avx, avy, avz));
+					}
+					else{
+						c1->setAngularVelocity(COMPONENT1_VELOCITY_ANGULAR(0, 0, 0));
+					}
+					ObjectsManager::serialize(player); //player->serialize();
+				}
+				else{
+					//Player is null????
+				}
+			}
+		}
+			break;
+		// 23
 		case WorldPacketID::CLIENT_MAIL:
 		{
 			long mailid;
@@ -1243,7 +1216,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			{
 				unsigned long ua;
 				data->Read(ua);
-				
+
 				long long mid;
 				data->Read(mid);
 				long long objid;
@@ -1280,17 +1253,41 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			}
 		}
 			break;
-		
-		case WorldPacketID::CLIENT_LEVEL_LOAD_COMPLETE:
+		// 25
+		case WorldPacketID::CLIENT_STRING_CHECK:
 		{
-			ZoneId z;
-			data->Read(z);
+			unsigned char superChatLevel;
+			data->Read(superChatLevel);
+			unsigned char requestID;
+			data->Read(requestID);
+			std::wstring reciever = PacketTools::ReadFromPacket(data, 42);
+			unsigned short length;
+			data->Read(length);
+			std::wstring text = PacketTools::ReadFromPacket(data, length);
 
-			SessionInfo s = SessionsTable::getClientSession(systemAddress);
-			Session::enter(s.activeCharId, z);
-			Logger::log("WRLD", "PARSER", "Client: Level loading complete " + z);
-			break;
+			std::stringstream str;
+			str << "Moderation Request #" << std::to_string(requestID);
+			if (reciever != L""){
+				str << " for " << UtfConverter::ToUtf8(reciever);
+			}
+			str << ": '";
+			if (text.size() > 20){
+				str << UtfConverter::ToUtf8(text.substr(0, 17)) << "...";
+			}
+			else{
+				str << UtfConverter::ToUtf8(text);
+			}
+			str << "'";
+			Logger::log("WRLD", "MODR", str.str(), LOG_DEBUG);
+
+			RakNet::BitStream  * bs = WorldServer::initPacket(RemoteConnection::CLIENT, 59);
+			bs->Write((uchar)1);
+			bs->Write((ushort)0);
+			bs->Write(requestID);
+			WorldServer::sendPacket(bs, systemAddress);
 		}
+			break;
+		// 120
 		case WorldPacketID::UGC_DOWNLOAD_FAILED:
 		{
 			long d1;
