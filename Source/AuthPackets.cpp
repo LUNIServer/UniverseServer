@@ -2,6 +2,7 @@
 #include "serverLoop.h"
 #include "Packet.h"
 #include "md5.h"
+#include "UtfConverter.h"
 
 #include "RakNet\BitStream.h"
 
@@ -54,10 +55,10 @@ void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAd
 	bitStream.Write(loginStatusPacket.firstLoginSubscription);
 	bitStream.Write(loginStatusPacket.subscribed);
 	bitStream.Write(loginStatusPacket.zeroLongLong);
-	bitStream.Write(loginStatusPacket.errorMsgLength);
+	bitStream.Write((unsigned short) loginStatusPacket.errorMsg.length());
 	
 	// Write the error msg string to the bitStream
-	WriteStringToBitStream(loginStatusPacket.errorMsg.c_str(), loginStatusPacket.errorMsgLength, 0, &bitStream);
+	writeWString(UtfConverter::FromUtf8(loginStatusPacket.errorMsg), &bitStream, false);
 	
 	// Create extra packet data (even if not success, creates stamps in the client)
 	CreateAllExtraPacketData(&bitStream);

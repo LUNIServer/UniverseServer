@@ -243,11 +243,23 @@ void SwitchCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstrin
 	if (params->size() > 1){
 		std::string ip = UtfConverter::ToUtf8(params->at(0));
 		short port = (short)std::stoi(params->at(1));
-		RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
-		PacketTools::WriteToPacket(redirect, ip, 33);
-		redirect->Write(port);
-		redirect->Write((unsigned char)1);
-		WorldServer::sendPacket(redirect, s->addr);
+
+		SystemAddress target;
+		target.SetBinaryAddress(ip.data());
+		target.port = port;
+
+		bool flag = Session::sendToInstance(s->addr, target);
+
+		if (flag){
+			RakNet::BitStream * redirect = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_REDIRECT);
+			PacketTools::WriteToPacket(redirect, ip, 33);
+			redirect->Write(port);
+			redirect->Write((unsigned char)1);
+			WorldServer::sendPacket(redirect, s->addr);
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Could not switch instance");
+		}
 	}
 }
 

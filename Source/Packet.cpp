@@ -200,6 +200,7 @@ void PacketTools::printBytes(RakNet::BitStream *bs, unsigned long number){
 		buffer << " ";
 		if ((k + 1) % 16 == 0){
 			Logger::log("DATA", "", buffer.str(), LOG_DEBUG);
+			buffer.str("");
 			buffer.clear();
 		}
 	}

@@ -25,7 +25,7 @@ namespace Session{
 	void connect(SystemAddress address);
 	void disconnect(SystemAddress address, SessionPhase source);
 
-	void login(SystemAddress address, unsigned int accountid, std::string key);
+	void login(SystemAddress address, unsigned int accountid, std::string key, int instanceid);
 	
 	void play(unsigned int accountid, long long charid);
 	void quit(long long charid);
@@ -34,4 +34,5 @@ namespace Session{
 	void leave(long long charid);
 
 	void clearForInstance(int sessionid);
+	bool sendToInstance(SystemAddress client, SystemAddress addr);
 }

@@ -3,14 +3,20 @@
 
 RakPeerInterface * WorldServer::rakServer = NULL;
 ReplicaManager * WorldServer::replicaManager = NULL;
+SystemAddress WorldServer::addr = UNASSIGNED_SYSTEM_ADDRESS;
 
-void WorldServer::publishWorldServer(RakPeerInterface* peer, ReplicaManager * rm){
+void WorldServer::publishWorldServer(RakPeerInterface* peer, ReplicaManager * rm, SystemAddress addr){
 	WorldServer::rakServer = peer;
 	WorldServer::replicaManager = rm;
+	WorldServer::addr = addr;
 }
 
 ReplicaManager * WorldServer::getRM(){
 	return WorldServer::replicaManager;
+}
+
+SystemAddress WorldServer::getServerAddress(){
+	return WorldServer::addr;
 }
 
 RakNet::BitStream *WorldServer::initPacket(RemoteConnection conntype, unsigned long packetid){

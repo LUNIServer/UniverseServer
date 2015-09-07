@@ -183,7 +183,7 @@ bool SessionsTable::disconnect(SystemAddress address){
 SessionInfo SessionsTable::getClientSession(SystemAddress address){
 	SessionInfo sinfo;
 	std::stringstream str;
-	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `ipaddress` = '" << address.ToString() << "'";
+	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `instanceid`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `ipaddress` = '" << address.ToString() << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
 		Logger::logError("ACDB", "MYSQL", "getting session", mysql_error(Database::getConnection()));
@@ -199,13 +199,16 @@ SessionInfo SessionsTable::getClientSession(SystemAddress address){
 		}
 		sinfo.phase = static_cast<SessionPhase>(std::stoi(row[2]));
 		if (row[3] != NULL){
-			sinfo.accountid = std::stoi(row[3]);
+			sinfo.instanceid = std::stoi(row[3]);
 		}
 		if (row[4] != NULL){
-			sinfo.activeCharId = std::stoll(row[4]);
+			sinfo.accountid = std::stoi(row[4]);
 		}
 		if (row[5] != NULL){
-			sinfo.zone = std::stoi(row[5]);
+			sinfo.activeCharId = std::stoll(row[5]);
+		}
+		if (row[6] != NULL){
+			sinfo.zone = std::stoi(row[6]);
 		}
 		return sinfo;
 	}
@@ -216,13 +219,13 @@ SessionInfo SessionsTable::getClientSession(SystemAddress address){
 }
 
 //Authentification
-SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid, std::string key){
+SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid, std::string key, int instanceid){
 	SessionInfo s = SessionsTable::getClientSession(address);
 	if (s.phase != SessionPhase::PHASE_NONE){
 		s.phase = SessionPhase::PHASE_AUTHENTIFIED;
 		s.accountid = accountid;
 		std::stringstream str;
-		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "', `sessionkey` = '" << key << "' WHERE `ipaddress` = '" << address.ToString() << "'";
+		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `instanceid` = '" << std::to_string(instanceid) << "', `accountid` = '" << std::to_string(s.accountid) << "', `sessionkey` = '" << key << "' WHERE `ipaddress` = '" << address.ToString() << "'";
 		auto qr = Database::Query(str.str());
 		if (qr == NULL){
 			Logger::logError("ACDB", "MYSQL", "logging in", mysql_error(Database::getConnection()));
@@ -398,7 +401,7 @@ SystemAddress SessionsTable::findCharacter(long long charid){
 std::vector<SessionInfo> SessionsTable::getClientsInWorld(unsigned short zoneid){
 	std::vector<SessionInfo> query;
 	std::stringstream str;
-	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `zoneid` = '" << std::to_string(zoneid) << "'";
+	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `instanceid`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `zoneid` = '" << std::to_string(zoneid) << "'";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
 		Logger::logError("ACDB", "MYSQL", "getting clients in " + (ZoneId)zoneid, mysql_error(Database::getConnection()));
@@ -415,13 +418,16 @@ std::vector<SessionInfo> SessionsTable::getClientsInWorld(unsigned short zoneid)
 			sinfo.addr.SetBinaryAddress(row[0]);
 			sinfo.phase = static_cast<SessionPhase>(std::stoi(row[2]));
 			if (row[3] != NULL){
-				sinfo.accountid = std::stoi(row[3]);
-			}
+				sinfo.instanceid = std::stoi(row[3]);
+			}			
 			if (row[4] != NULL){
-				sinfo.activeCharId = std::stoll(row[4]);
+				sinfo.accountid = std::stoi(row[4]);
 			}
 			if (row[5] != NULL){
-				sinfo.zone = std::stoi(row[5]);
+				sinfo.activeCharId = std::stoll(row[5]);
+			}
+			if (row[6] != NULL){
+				sinfo.zone = std::stoi(row[6]);
 			}
 			query.push_back(sinfo);
 		}
@@ -446,7 +452,7 @@ std::vector<SessionInfo> SessionsTable::getClientsInInstance(int instanceid){
 	//TODO: implement instances into database
 	std::vector<SessionInfo> query;
 	std::stringstream str;
-	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions`;";
+	str << "SELECT `ipaddress`, `sessionkey`, `phase`, `accountid`, `charid`, `zoneid` FROM `sessions` WHERE `instanceid` = '" << std::to_string(instanceid) << "';";
 	auto qr = Database::Query(str.str());
 	if (qr == NULL){
 		Logger::logError("ACDB", "MYSQL", "getting clients in instance #" + std::to_string(instanceid), mysql_error(Database::getConnection()));
@@ -474,6 +480,15 @@ std::vector<SessionInfo> SessionsTable::getClientsInInstance(int instanceid){
 			query.push_back(sinfo);
 		}
 		return query;
+	}
+}
+
+void SessionsTable::setInstanceId(unsigned int accountid, int instanceid){
+	SystemAddress addr = SessionsTable::findAccount(accountid);
+	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
+		std::stringstream str;
+		str << "UPDATE `sessions` SET `instanceid` = '" << std::to_string(instanceid) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+		auto qr = Database::Query(str.str());
 	}
 }
 

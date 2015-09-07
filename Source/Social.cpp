@@ -212,7 +212,7 @@ void Friends::sendFriendsList(long long charid){
 			else bs->Write((unsigned char)0);
 			bs->Write((unsigned char)0);
 		}
-		std::cout << "[GAME] [SOCIAL] Friend: " << l.info.name << std::endl;
+		Logger::log("GAME", "SOCIAL", "Friend: " + l.info.name, LOG_DEBUG);
 		bs->Write((unsigned char)0); //???
 		bs->Write((unsigned char)0);
 		bs->Write((unsigned char)0);

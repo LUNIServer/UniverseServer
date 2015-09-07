@@ -46,7 +46,7 @@ NetworkIDManager networkIdManager;
 
 //std::map<SystemAddress, ZoneId> Player;
 
-void WorldLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< string > > OutputQueue) {
+void WorldLoop(CONNECT_INFO* cfg) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
 
@@ -63,10 +63,9 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< string > > OutputQueue)
 	// Initialize the SocketDescriptor
 	SocketDescriptor socketDescriptor(cfg->listenPort, 0);
 
-	std::stringstream straddr;
-	straddr << cfg->redirectIp << ":" << cfg->listenPort;
 	SystemAddress ServerAddress;
-	ServerAddress.SetBinaryAddress(straddr.str().data());
+	ServerAddress.SetBinaryAddress(cfg->redirectIp);
+	ServerAddress.port = cfg->listenPort;
 	
 	// If the startup of the server is successful, print it to the console
 	// Otherwise, quit the server (as the char server is REQUIRED for the
@@ -113,7 +112,7 @@ void WorldLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< string > > OutputQueue)
 	//replicaManager.SetDownloadCompleteCB(&sendDownloadCompleteCB, &receiveDownloadCompleteCB);
 
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
-	WorldServer::publishWorldServer(rakServer, &replicaManager);
+	WorldServer::publishWorldServer(rakServer, &replicaManager, ServerAddress);
 
 	ChatCommandManager::registerCommands(new FlightCommandHandler());
 	ChatCommandManager::registerCommands(new TeleportCommandHandler());

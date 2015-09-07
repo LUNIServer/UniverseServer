@@ -5,6 +5,7 @@
 #include "AuthPackets.h"
 
 #include "Account.h"
+#include "ServerDB.h"
 
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
@@ -196,21 +197,33 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		loginStatusPacket.errorMsg = "";
 		loginStatusPacket.errorMsgLength = loginStatusPacket.errorMsg.length();
 
-		SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
+		std::string world_server_address;
+		
+		SystemAddress serverAddr;
+		serverAddr.SetBinaryAddress(cfg->redirectIp);
+		serverAddr.port = cfg->redirectPort;
+
+		int instanceid = InstancesTable::getInstanceId(serverAddr);
+		if (instanceid == -1){
+			loginStatusPacket.loginStatus = UserSuccess::UNKNOWN2;
+			loginStatusPacket.errorMsg = "Universe not available";
+			currentLoginStatus = UserSuccess::UNKNOWN2;
+			Logger::log("AUTH", "LOGIN", "INSTANCE UNAVAILABLE", LOG_ERROR);
+		}
+		
 		if (currentLoginStatus == UserSuccess::SUCCESS){
 			// Login the user to the server
-			// TODO: Here is the last place in AuthLoop wher the User class is necessary
-			//auto usr = Ref<User>(new User(accountid, usernameA, packet->systemAddress));
-			//OnlineUsers->Insert(usr, packet->systemAddress);
-			Session::login(packet->systemAddress, accountid, keyhash);
+			Session::login(packet->systemAddress, accountid, keyhash, instanceid);
 			Logger::log("AUTH", "LOGIN", usernameA + " Logged-in");
+			SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
 			return;
 		}
+		SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
 	}
 	Logger::log("AUTH", "LOGIN", "Login failed", LOG_WARNING);
 }
 
-void AuthLoop(CONNECT_INFO* cfg, Ref< CrossThreadQueue< std::string > > OutputQueue) {
+void AuthLoop(CONNECT_INFO* cfg) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
 

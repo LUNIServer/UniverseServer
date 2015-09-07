@@ -32,6 +32,7 @@ struct SessionInfo{
 	long long activeCharId = -1;
 	unsigned int worldJoin = 0;
 	unsigned short zone = 0;
+	int instanceid = -1;
 	
 	SessionInfo(){}
 	SessionInfo(SystemAddress addr){
@@ -42,6 +43,7 @@ struct SessionInfo{
 		this->worldJoin = 0;
 		this->zone = 0;
 		this->sessionkey = "";
+		this->instanceid = -1;
 	}
 };
 
@@ -90,7 +92,7 @@ public:
 	static SessionInfo getClientSession(SystemAddress address);
 
 	//Authentification
-	static SessionInfo login(SystemAddress address, unsigned int accountid, std::string key);
+	static SessionInfo login(SystemAddress address, unsigned int accountid, std::string key, int instanceid);
 	static SessionInfo logout(unsigned int accountid);
 
 	static SystemAddress findAccount(unsigned int accountid);
@@ -102,6 +104,7 @@ public:
 	static SystemAddress findCharacter(long long charid);
 	static std::vector<SessionInfo> getClientsInWorld(unsigned short zoneid);
 	static std::vector<SessionInfo> getClientsInInstance(int instanceid);
+	static void setInstanceId(unsigned int accountid, int instanceid);
 
 	//Worlds
 	static SessionInfo enter(long long charid, unsigned short zoneId);
