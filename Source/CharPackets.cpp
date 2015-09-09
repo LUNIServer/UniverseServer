@@ -5,7 +5,6 @@
 #include "InventoryDB.h"
 #include "CharactersDB.h"
 #include "AccountsDB.h"
-#include "User.h"
 
 #include "UtfConverter.h"
 #include "Logger.h"

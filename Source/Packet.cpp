@@ -193,16 +193,18 @@ void PacketTools::printRest(RakNet::BitStream *bs){
 
 void PacketTools::printBytes(RakNet::BitStream *bs, unsigned long number){
 	ostringstream buffer;
-	buffer << "Data:   ";
 	for (unsigned long k = 0; k < number; k++){
 		unsigned char chr;
 		bs->Read(chr);
 		buffer << setw(2) << hex << setfill('0') << (int)chr;
 		buffer << " ";
-		if ((k + 1) % 16 == 0) buffer << std::endl << "\t";
+		if ((k + 1) % 16 == 0){
+			Logger::log("DATA", "", buffer.str(), LOG_DEBUG);
+			buffer.str("");
+			buffer.clear();
+		}
 	}
-	std::cout << buffer.str();
-	if ((number % 16) != 0) std::cout << std::endl;
+	if ((number % 16) != 0) Logger::log("DATA", "", buffer.str(), LOG_DEBUG);
 }
 
 // ----- NOTE: THESE SHOULD NOT BE USED RIGHT NOW AS WINDOWS ALREADY WRITES IN LITTLE ENDIAN ----- //

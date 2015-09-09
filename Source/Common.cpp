@@ -1,3 +1,5 @@
+#include "Logger.h"
+
 #include "Common.h"
 #include "SUtil\Kbhit.h"
 #include <iomanip>
@@ -27,7 +29,8 @@ string RawDataToString(uchar* data, uint size, bool onlyraw, ulong start) {
 
 // Server QuitError
 void QuitError(const string& msg) {
-	cout << "Terminated " << msg << endl << "PRESS ENTER TO QUIT" << endl;
+	Logger::log("ERROR", "TERMINATED", msg, LOG_ERROR);
+	Logger::log("ERROR", "TERMINATED", "PRESS ENTER TO QUIT", LOG_ERROR);
 	while (!_kbhit());
 	exit(1);
 }
@@ -36,8 +39,8 @@ void writeWString(std::wstring str, RakNet::BitStream *stream, bool writeSize, b
 	if (nullChar){
 		str.append(L"\0");
 	}
-	if (writeSize) stream->Write((uchar) (str.size()*2));
-	for (uint k = 0; k < str.size(); k++){
+	if (writeSize) stream->Write((unsigned char) (str.size()*2));
+	for (unsigned int k = 0; k < str.size(); k++){
 		stream->Write(str.at(k));
 	}
 }

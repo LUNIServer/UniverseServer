@@ -7,8 +7,6 @@
 #include "Logger.h"
 #include "PlayerObject.h"
 
-//extern ReplicaManager replicaManager;
-
 bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION pos, unsigned short instance, unsigned long clone){
 	RakNet::BitStream * stream = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MSG_CLIENT_LOAD_STATIC_ZONE);
 
@@ -133,12 +131,15 @@ void ObjectsManager::clientLeaveWorld(long long objid, SystemAddress addr){
 		2) destruct every object for him
 	*/
 	ReplicaObject * object = ObjectsManager::getObjectByID(objid);
-	ObjectsManager::destruct(object);
-	ObjectsManager::unregisterObject(object);
-	for (std::unordered_map<long long, ReplicaObject *>::iterator it = objects.begin(); it != objects.end(); ++it){
-		if (it->second->world == object->world){
-			WorldServer::getRM()->Destruct(it->second, addr, false);
+	if (object != NULL){
+		ObjectsManager::destruct(object);
+		ObjectsManager::unregisterObject(object);
+		for (std::unordered_map<long long, ReplicaObject *>::iterator it = objects.begin(); it != objects.end(); ++it){
+			if (it->second->world == object->world){
+				WorldServer::getRM()->Destruct(it->second, addr, false);
+			}
 		}
+		delete object;
 	}
 }
 

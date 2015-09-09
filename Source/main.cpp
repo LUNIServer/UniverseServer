@@ -20,14 +20,10 @@
 #include "Database.h"
 #include "AccountsDB.h"
 
-#ifdef DEBUG
-	#include "User.h"
-	#include "Character.h"
-#endif
-
 #include "SUtil\IniReader.h"
 #include "SUtil\Kbhit.h"
 #include <thread>
+#include <sys/stat.h>
 #include "Logger.h"
 
 #ifdef _WIN32
@@ -37,49 +33,133 @@
 	#include <sys/stat.h>
 #endif
 
+enum ServerRole : unsigned char{
+	ROLE_CONSOLE = 0,
+	ROLE_AUTH,
+	ROLE_WORLD,
+};
+
+//Test for file existence
+inline bool exists(const std::string& name) {
+	struct stat buffer;
+	return (stat(name.c_str(), &buffer) == 0);
+}
+
 // Load the config file (config.ini)
-void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& character, CONNECT_INFO& world) {
-	CIniReader iniReader(".\\config.ini"); // Load config.ini
+void LoadConfig(std::string configFile, CONNECT_INFO& auth, CONNECT_INFO& world) {
+	bool plain = exists(configFile);
+	std::string locals = configFile.insert(0, ".\\");
+	bool local = exists(locals);
+	bool config = exists(".\\config.ini");	
+	
+	char *cfile;
+
+	if (local){
+		configFile = locals;
+	}
+	else{
+		if (!plain){
+			if (config){
+				configFile = ".\\config.ini";
+			}else{
+				configFile = "";
+			}
+		}
+	}
+
+	cfile = new char[configFile.length() + 1];
+	strcpy(cfile, configFile.c_str());
+
+	Logger::log("MAIN", "CONFIG", "File: '" + std::string(cfile) + "'");
+	CIniReader iniReader(cfile); // Load config.ini
 	
 	strcpy(auth.redirectIp, iniReader.ReadString("Settings", "redirect_ip", "127.0.0.1")); // Copy the auth redirect IP from the file
-	strcpy(character.redirectIp, auth.redirectIp); // Copy the char redirect IP from the file
 	strcpy(world.redirectIp, auth.redirectIp); // Copy the world redirect IP
 
 	Logger::log("MAIN", "CONFIG", "Server on IP " + std::string(auth.redirectIp));
 
 	// Get whether to use encryption
-	auth.useEncryption = character.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
+	auth.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
 
 	// Get whether to use log file
-	auth.logFile = character.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
+	auth.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
 
 	// NOTE: The default ports are the ports LU listens on / redirects on
 	// Changing these may result in the game not running properly!
-	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2002); // Get auth redirect port (default: 2002)
+	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2003); // Get auth redirect port (default: 2002)
 	auth.listenPort = iniReader.ReadInteger("Auth", "listen_port", 1001); // Get auth listen port (default: 1001)
-
-	character.redirectPort = iniReader.ReadInteger("Char", "redirect_port", 2003); // Get char redirect port (default: 2003)
-	character.listenPort = iniReader.ReadInteger("Char", "listen_port", 2002); // Get char listen port (default: 2002)
 
 	world.redirectPort = iniReader.ReadInteger("World", "redirect_port", 2004); // Get world redirect port (default: 2004)
 	world.listenPort = iniReader.ReadInteger("World", "listen_port", 2003); // Get world listen port (default: 2003)
 
 	// Try to connect to the database...
 	try {
-		Database::Connect(iniReader.ReadString("MYSQL", "host", "localhost"), iniReader.ReadString("MYSQL", "database", "luni"), iniReader.ReadString("MYSQL", "username", "root"), iniReader.ReadString("MYSQL", "password", ""));
+		char * db_host = iniReader.ReadString("MYSQL", "host", "localhost");
+		char * db_database = iniReader.ReadString("MYSQL", "database", "luni");
+		char * db_username = iniReader.ReadString("MYSQL", "username", "root");
+		char * db_password = iniReader.ReadString("MYSQL", "password", "");
+		Database::Connect(db_host, db_database, db_username, db_password);
 	}
 	// Otherwise, exit the server
 	catch (MySqlException& ex) {
 		QuitError(ex.what());
 	}
+	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
 
 	// Print that the server loaded the config file!
 	Logger::log("MAIN", "CONFIG", "Loaded config!");
-	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
+	
+	delete [] cfile;
+}
+
+void ConsoleLoop(){
+	// If quit is ever equal to true, quit the server
+	bool quit = false;
+
+	// Keep the server from quitting by using a infinite loop
+	while (!quit) {
+		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
+			std::string command; // Initialize command string...
+			std::cout << "> "; // Print "> " to show user where to type
+			std::cin >> command; // Get the command
+
+			// Match command to a pre-specified command here...
+			if (command == "help") {
+				std::stringstream str;
+				str << "Available commands:" << std::endl <<
+					"quit        = Quit the Server" << std::endl <<
+					"register    = Register New User" << std::endl <<
+					"sessions    = Show Number of sessions" << std::endl;
+				std::cout << str.str();
+			}
+			else if (command == "quit") quit = LUNIterminate = true;
+			else if (command == "register") {
+				std::string username, password;
+				std::cout << "Username: ";
+				std::cin >> username; // Get the username
+				if (AccountsTable::getAccountID(username) == 0) { // Check to see if username already exists... If not, continue
+					std::cout << "Password: ";
+					std::cin >> password; // Get the password
+					// Create the new user into the database
+					ulonglong acid = AccountsTable::addAccount(username, password);
+					if (acid > 0){
+						std::stringstream str;
+						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
+						std::cout << str.str();
+					}
+				}
+				else std::cout << "Username already exist!\n";
+			}
+			else if (command == "sessions"){
+				std::cout << "Current session count: " << std::to_string(SessionsTable::count()) << std::endl;
+			}
+			else std::cout << "Invalid Command: " << command << "!" << std::endl;
+		}
+	}
 }
 
 // This is the entry point into the server (the main() function)
-int main() {
+int main(int argc, char* argv[]) {
 	// Print starting info to the console
 	std::cout << std::endl;
 	std::cout << "  LL       EE    EE   GG     GG   OO" << std::endl;
@@ -107,12 +187,36 @@ int main() {
 	std::cout << "Server Log" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
 	Logger::log("MAIN", "", "Initializing LUNI test server...");
+	
+	// Args parser
+	int state = 0;
+	char * configFile = "";
+	ServerRole Role = ROLE_CONSOLE;
+
+	for (int argi = 0; argi < argc; argi++){
+		std::string arg = std::string(argv[argi]);
+		Logger::log("MAIN", "ARGS", arg, LOG_ALL);
+		switch (state){
+		case 0:
+			if (arg == "--config"){
+				state = 1;
+				Logger::log("WRLD", "ARGS", "config");
+			}
+			if (arg == "--world") Role = ROLE_WORLD;
+			if (arg == "--auth") Role = ROLE_AUTH;
+			break;
+		case 1:
+			configFile = argv[argi];
+			state = 0;
+			break;
+		}
+	}
 
 	// Initialize the auth, character, and world CONNECT_INFO structs
-	CONNECT_INFO auth, character, world;
+	CONNECT_INFO auth, world;
 
 	// Load the values for them and store them into their structs
-	LoadConfig(auth, character, world);
+	LoadConfig(configFile, auth, world);
 
 	// Create the directory .//logs// if it does not exist
 	_mkdir("logs");
@@ -122,104 +226,14 @@ int main() {
 	{
 		// Setting this to LOG_NORMAL is done on purpose to avoid confusion
 		// when activeLogLevel is below DEBUG but DEBUG is actually on
-		Logger::log("MAIN", "", "DEBUG is ON!", LOG_NORMAL);
+		Logger::log("MAIN", "DEBUG", "is ON!", LOG_NORMAL);
 	}
 	#endif
 
-	// Create the UserPool to store all users by their systemAddress (shared by threads)
-	Ref< UsersPool > OnlineUsers = new UsersPool();
-
-	// Create a new CrossThreadQueue for writing output to the console from a thread
-	Ref< CrossThreadQueue< std::string > > OutputQueue = new CrossThreadQueue< std::string >();
-
-	//LUNI_AUTH = false;
-	//LUNI_CHAR = false;
-	//LUNI_WRLD = false;
-
-	// Start the three new threads (Auth, Char, and World servers)
-	std::thread thauth(AuthLoop, &auth, OnlineUsers, OutputQueue);
-	std::thread thchar(CharactersLoop, &character, OnlineUsers, OutputQueue);
-	std::thread thworld(WorldLoop, &world, OnlineUsers, OutputQueue);
-
-	// If quit is ever equal to true, quit the server
-	bool quit = false;
-
-	// Keep the server from quitting by using a infinite loop
-	while (!quit) {
-		if (OutputQueue->Count() > 0) { // Pop the thread messages
-			std::cout << OutputQueue->Pop();
-		}
-
-		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
-			std::string command; // Initialize command string...
-			std::cout << "> "; // Print "> " to show user where to type
-			std::cin >> command; // Get the command
-
-
-			// Match command to a pre-specified command here...
-			if (command == "help") {
-				std::stringstream str;
-				str << "Available commands:" << std::endl <<
-					"quit        = Quit the Server" << std::endl <<
-					"register    = Register New User" << std::endl <<
-					"user_online = Show Number of Online Users" << std::endl <<
-					"sessions    = Show Number of sessions" << std::endl;
-				std::cout << str.str();
-			}
-			else if (command == "quit") quit = LUNIterminate = true;
-			else if (command == "character_log_enable") character.logFile = true;
-			else if (command == "character_log_disable") character.logFile = false;
-			else if (command == "world_log_enable") world.logFile = true;
-			else if (command == "world_log_disable") world.logFile = false;
-			else if (command == "user_online") {
-				std::stringstream str;
-				str << "\n Online user: " << OnlineUsers->Count() << std::endl;
-				std::cout << str.str();
-			}
-			else if (command == "register") {
-				std::string username, password;
-				std::cout << "Username: ";
-				std::cin >> username; // Get the username
-				if (AccountsTable::getAccountID( username ) == 0) { // Check to see if username already exists... If not, continue
-					std::cout << "Password: ";
-					std::cin >> password; // Get the password
-					// Create the new user into the database
-					ulonglong acid = AccountsTable::addAccount(username, password);
-					if (acid > 0){
-						std::stringstream str;
-						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
-						std::cout << str.str();
-					}
-				}
-				else std::cout << "Username already exist!\n";
-			}
-			else if (command == "sessions"){
-				std::cout << "Current session count: " << std::to_string(SessionsTable::count()) << std::endl;
-			}
-			else std::cout << "Invalid Command: " << command << "!" << std::endl;
-		}
-	}
-
-	// No longer in use...
-	thauth.join();
-	std::cout << "[MAIN] AUTH ended" << std::endl;
-	thchar.join();
-	std::cout << "[MAIN] CHAR ended" << std::endl;
-	thworld.join();
-	std::cout << "[MAIN] WRLD ended" << std::endl;
-
-	// If the loop was terminated, quit the server
-
-	/*LUNIterminate = true;
-	std::cout << "[MAIN] Waiting on Threads to exit" << std::endl;
-	int i = 0;
-	while (LUNI_AUTH || LUNI_CHAR || LUNI_WRLD){
-		i++;
-		//DO Nothing
-		if (_kbhit()) {
-			exit(0);
-		}
-	}*/
+	// Start the two new threads (Auth and World servers)
+	if (Role == ROLE_AUTH) AuthLoop(&auth);
+	if (Role == ROLE_WORLD) WorldLoop(&world);
+	if (Role == ROLE_CONSOLE) ConsoleLoop();
 
 	exit(0);
 }

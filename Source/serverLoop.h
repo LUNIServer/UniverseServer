@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Common.h"
-#include "User.h"
-#include "UsersPool.h"
 #include "GameMessages.h"
 
 #include "RakNet\RakNetTypes.h"
@@ -44,9 +42,8 @@ void SavePacketOverwrite(const std::string& filename, const std::vector<uchar>& 
 void SavePacketOverwrite(const std::string& filename, char* data, uint size);
 
 // Thse are the threads of the Authentication, Character, and World servers
-void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< std::string > > OutputQueue);
-void CharactersLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< std::string > > OutputQueue);
-void WorldLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< std::string > > OutputQueue);
+void AuthLoop(CONNECT_INFO* cfg);
+void WorldLoop(CONNECT_INFO* cfg);
 
-void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakNet::BitStream *data, ulong bytelength, Ref<User> usr);
-bool handleObject(ObjectInformation obj, RakPeerInterface* rakServer, SystemAddress &systemAddress, Ref<User> usr);
+void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakNet::BitStream *data, ulong bytelength);
+bool handleObject(ObjectInformation obj, RakPeerInterface* rakServer, SystemAddress &systemAddress);
