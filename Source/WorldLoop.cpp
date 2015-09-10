@@ -1,50 +1,56 @@
 #pragma once
 #include "serverLoop.h"
 
-#include "legoPackets.h"
-#include "CharPackets.h"
+// - Common - 
+#include "Color.h"
+#include "GameMessages.h"
+// -- Utility --
+#include "UtfConverter.h"
+#include "Logger.h"
+
+// - Database - 
 #include "Database.h"
+#include "CharactersDB.h"
+#include "InventoryDB.h"
+#include "ServerDB.h"
+
+// - Mechanics -
+#include "Account.h"
+#include "Characters.h"
+#include "ChatCommands.h"
+#include "Social.h"
+#include "Worlds.h"
+
+// - Network -
+#include "CharPackets.h"
+#include "legoPackets.h"
+#include "Packet.h"
+#include "WorldServer.h"
+// -- Connections --
+#include "WorldConnection.h"
+
+// - Replica -
+#include "PlayerObject.h"
+#include "Replica.h"
+#include "ReplicaComponents.h"
+
+// - Libraries -
+// -- RakNet --
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
 #include "RakNet\RakNetworkFactory.h"
 #include "RakNet\PacketFileLogger.h"
 #include "RakNet\BitStream.h"
 #include "RakNet\ReplicaManager.h"
-
-#include "Packet.h"
-#include "Replica.h"
-#include "GameMessages.h"
-#include "Color.h"
-#include "ReplicaComponents.h"
-#include "PlayerObject.h"
-#include "InventoryDB.h"
-#include "CharactersDB.h"
-#include "ServerDB.h"
-
-#include "Account.h"
-#include "Social.h"
-#include "Characters.h"
-#include "Worlds.h"
-#include "WorldServer.h"
-#include "WorldConnection.h"
-
-#include "ChatCommands.h"
-
+// -- zlib (unused) --
 #include "zlib.h"
-
-#include "UtfConverter.h"
-#include "Logger.h"
-
+// -- c++ --
+#include <conio.h>
 #include <cstdlib>
 #include <map>
 #include <iomanip>
 #include <algorithm>
-using namespace std;
 
-ReplicaManager replicaManager;
-NetworkIDManager networkIdManager;
-
-//std::map<SystemAddress, ZoneId> Player;
 
 void WorldLoop(CONNECT_INFO* cfg) {
 	// Initialize the RakPeerInterface used throughout the entire server
@@ -89,8 +95,8 @@ void WorldLoop(CONNECT_INFO* cfg) {
 	// This will be used in the saving of packets below
 	int i = 0;
 
-	//ZoneId zone = NIMBUS_ISLE;
-
+	ReplicaManager replicaManager;
+	NetworkIDManager networkIdManager;
 	// -- REPLICA MANAGER -- //
 	rakServer->AttachPlugin(&replicaManager);
 	rakServer->SetNetworkIDManager(&networkIdManager);
@@ -127,12 +133,66 @@ void WorldLoop(CONNECT_INFO* cfg) {
 	ChatCommandManager::registerCommands(new PacketCommandHandler());
 	ChatCommandManager::registerCommands(new AnnouncementCommandHandler());
 
-	//LUNI_WRLD = true;
+	bool LUNI_WRLD = true;
+	std::vector<unsigned char> buffer;
+	bool buffer_started = false;
 
 	// This will be used in the saving of packets below...
-	while (!getTerminate()) {
-		if (getTerminate()){
-			std::cout << "W";
+	while (LUNI_WRLD) {
+		while (_kbhit()){
+			unsigned char key = (unsigned  char) _getch();
+			switch (key){
+			case 8:
+				//Backspace
+				if (buffer.size() > 0){
+					buffer.pop_back();
+					std::cout << "\b";
+					std::cout << " ";
+					std::cout << "\b";
+				}
+				break;
+			case 13:
+			{
+				//Enter
+				std::string str(buffer.begin(), buffer.end());
+				buffer.clear();
+				//std::cout << "String: " << str << std::endl;
+
+				if (str != ""){
+					std::cout << std::endl;
+					if (str == "quit"){
+						LUNI_WRLD = false;
+					}
+					else{
+						std::cout << "Command '" << str << "' not found!" << std::endl;
+					}
+				}
+
+				buffer_started = false;
+				Logger::unmute();
+			}
+				break;
+			case 27:
+				//ESC
+				break;
+			default:
+				if (!buffer_started){
+					std::cout << "> ";
+					buffer_started = true;
+					Logger::mute();
+				}
+
+				//Whitelist for chars
+				if ((48 <= key && key <= 57) || (97 <= key && key <= 122) || (65 <= key && key <= 90) || key == 32){
+					buffer.push_back(key);
+					std::cout << key;
+				}
+			}
+			//ESC - 27
+			//ENTER - 13
+			//48 - 57 0-9
+			//97 - 122 a-z
+			//65 - 90 A-Z
 		}
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Recieve the packets from the server
@@ -210,17 +270,31 @@ void WorldLoop(CONNECT_INFO* cfg) {
 		rakServer->DeallocatePacket(packet);
 	}
 
-	//InstancesTable::unregisterInstance(ServerAddress);
+	int instanceid = InstancesTable::getInstanceId(ServerAddress);
+	std::vector<SessionInfo> sessions_logout = SessionsTable::getClientsInInstance(instanceid);
+
+	RakNet::BitStream * disconnectNote = WorldServer::initPacket(RemoteConnection::GENERAL, 1);
+	disconnectNote->Write((int) 5); //Server Shutdown
+	disconnectNote->Write((int) 0); //???
+	for (unsigned int k = 0; k < sessions_logout.size(); k++){
+		SessionsTable::disconnect(sessions_logout.at(k).addr);
+		WorldServer::sendPacket(disconnectNote, sessions_logout.at(k).addr);
+		//rakServer->CloseConnection(sessions_logout.at(k).addr, true);
+		Logger::log("WRLD", "SERVER", "Close connection to " + std::string(sessions_logout.at(k).addr.ToString()), LOG_DEBUG);
+	}
+
+	InstancesTable::unregisterInstance(ServerAddress);
 
 	Logger::log("WRLD", "", "Quitting");
 	rakServer->Shutdown(0);
 	RakNetworkFactory::DestroyRakPeerInterface(rakServer);
 
+
+	while (!_kbhit()){
+
+	}
 	//LUNI_WRLD = false;
 }
-
-//TODO: temporary
-ulong counter = 0;
 
 //This function should get the packet WITHOUT the leading 0x53. bytelength should account for that
 //Please note that it CAN be caused recursively, so the read offset should never be set to a static length

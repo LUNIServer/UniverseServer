@@ -49,7 +49,7 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 
 		if (ci.info.objid == 0){
 			//Should never happen, old message, means nothing basically
-			std::cout << "[CHAR] Char " << std::to_string(i) << " doesn't exist yet." << std::endl;
+			Logger::log("CHAR", "PACKETS", "Char " + std::to_string(i) + " doesn't exist yet." , LOG_DEBUG);
 		}else{
 			Logger::log("CHAR", "PACKETS", "Fetching character '" + ci.info.name + "'", LOG_DEBUG);
 			Logger::log("CHAR", "PACKETS", "Unapproved Name is: " + ci.info.unapprovedName, LOG_ALL);

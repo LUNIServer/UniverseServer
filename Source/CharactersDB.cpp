@@ -352,7 +352,7 @@ std::vector<MISSION_DATA> MissionsTable::getMissions(long long charid){
 	auto qr2 = Database::Query(qr);
 	std::vector<MISSION_DATA> missions;
 	if (qr2 == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "getting mission", mysql_error(Database::getConnection()));
 	}
 	if (qr2 == NULL || mysql_num_rows(qr2) == 0)
 		return missions;
@@ -378,7 +378,7 @@ void MailsTable::addMail(MailData data){
 	query2 << data.subject << "', '" << data.text << "', '" << std::to_string(data.attachment) << "', '" << std::to_string(data.attachment_count) << "'); ";
 	auto a = Database::Query(query2.str());
 	if (a == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "adding mail", mysql_error(Database::getConnection()));
 	}
 }
 
@@ -394,7 +394,7 @@ std::vector<MailData> MailsTable::getMails(long long charid){
 	auto qr2 = Database::Query(qr);
 	std::vector<MailData> mails;
 	if (qr2 == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "getting mails", mysql_error(Database::getConnection()));
 		return mails;
 	}
 	if (mysql_num_rows(qr2) == 0 || mysql_num_rows(qr2) == NULL)

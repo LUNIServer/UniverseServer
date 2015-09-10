@@ -5,6 +5,9 @@
 #include <iostream>
 #include <iomanip>
 
+bool Logger::muted = false;
+std::vector<std::string> Logger::logBuffer;
+
 void Logger::log(const std::string& source, const std::string& role, const std::string& message, LogLevels logLevel){
 	if (logLevel <= activeLogLevel){
 		std::stringstream out;
@@ -20,7 +23,8 @@ void Logger::log(const std::string& source, const std::string& role, const std::
 			out << "[" << role << "] ";
 		}
 		out << message << std::endl;
-		std::cout << out.str();
+		std::string msg = out.str();
+		if (!Logger::muted)	std::cout << msg; else Logger::logBuffer.push_back(msg);
 	}
 }
 
@@ -29,4 +33,20 @@ void Logger::logError(const std::string& source, const std::string&role, const s
 		Logger::log(source, role, "Error " + action, LOG_ERROR);
 		Logger::log(source, role, error, LOG_ERROR);
 	}
+}
+
+void Logger::mute(){
+	Logger::muted = true;
+}
+
+void Logger::unmute(bool printLog){
+	if (Logger::muted){
+		if (printLog){
+			for (unsigned int k = 0; k < Logger::logBuffer.size(); k++){
+				std::cout << Logger::logBuffer.at(k);
+			}
+		}
+		Logger::logBuffer.clear();
+	}
+	Logger::muted = false;
 }

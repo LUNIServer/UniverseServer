@@ -11,7 +11,7 @@
 
 #include <map>
 
-extern ReplicaManager replicaManager;
+//extern ReplicaManager replicaManager;
 //extern std::map<SystemAddress, ZoneId> Player;
 
 PlayerObject::PlayerObject(long long objid, std::wstring name){

@@ -13,17 +13,14 @@
 	The source is open and free under the GPL License, Version 3 for use on a non-commercial basis
 */
 
-#include "TimeUtil.h"
-
 #include "Common.h"
 #include "serverLoop.h"
 #include "Database.h"
 #include "AccountsDB.h"
 
 #include "SUtil\IniReader.h"
-#include "SUtil\Kbhit.h"
-#include <thread>
 #include <sys/stat.h>
+#include <conio.h>
 #include "Logger.h"
 
 #ifdef _WIN32
@@ -120,6 +117,7 @@ void ConsoleLoop(){
 	while (!quit) {
 		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
 			std::string command; // Initialize command string...
+			
 			std::cout << "> "; // Print "> " to show user where to type
 			std::cin >> command; // Get the command
 
