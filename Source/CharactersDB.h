@@ -30,6 +30,7 @@ struct CharacterStyle{
 struct CharacterInfo{
 	unsigned int accountid = 0;
 	long long objid = 0;
+	unsigned short gmlevel = 0;
 	std::string name;
 	std::string unapprovedName;
 	bool nameRejected = false;
@@ -57,6 +58,7 @@ public:
 	static std::vector<unsigned char> getCharacterIndices(unsigned int accountid);
 	static long long add(CharacterStyle style, unsigned int accountid, CharacterInfo names);
 	static bool unapprovedNameExists(std::string unapprovedname);
+	static void setGMlevel(long long objid, unsigned short newLevel);
 };
 
 class FriendsTable{

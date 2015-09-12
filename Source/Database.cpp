@@ -10,6 +10,8 @@ void Database::Connect(const string& host, const string& database, const string&
 
 	_con = mysql_real_connect(_con, host.c_str(), username.c_str(), password.c_str(), database.c_str(), 0, NULL, 0); //connection to luni database
 	if (!_con) throw MySqlException("Unable to connect to database!\n");
+
+	mysql_query(_con, "SET NAMES 'utf8';");
 }
 
 // Query the MySQL database for a specific string

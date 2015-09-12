@@ -23,6 +23,8 @@
 #include <conio.h>
 #include "Logger.h"
 
+#include <sstream>
+
 #ifdef _WIN32
 	// For mkdir command
 	#include <direct.h>
@@ -34,6 +36,10 @@ enum ServerRole : unsigned char{
 	ROLE_CONSOLE = 0,
 	ROLE_AUTH,
 	ROLE_WORLD,
+};
+
+struct ConfigInfo{
+
 };
 
 //Test for file existence
@@ -139,7 +145,7 @@ void ConsoleLoop(){
 					std::cout << "Password: ";
 					std::cin >> password; // Get the password
 					// Create the new user into the database
-					ulonglong acid = AccountsTable::addAccount(username, password);
+					unsigned long long acid = AccountsTable::addAccount(username, password);
 					if (acid > 0){
 						std::stringstream str;
 						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
@@ -168,9 +174,10 @@ int main(int argc, char* argv[]) {
 	std::cout << "  LL       EE    EE   GG   GGGG   OO" << std::endl;
 	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO" << std::endl;
 	std::cout << std::endl;
-	std::cout << "  Custom  LEGO (c)  Universe  Server" << std::endl;
+	std::cout << "  Custom   LEGO    Universe   Server" << std::endl;
 	std::cout << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Originally created by raffa505" << std::endl;
 	std::cout << "Original project: luniserver.sf.net" << std::endl;
 	std::cout << "Github (main LUNI repo):" << std::endl << "github.com/jaller200/LUNIServerProject" << std::endl;
 	std::cout << "Github (this version only):" << std::endl << "github.com/dsuser97/LUNI-Latest-Dev" << std::endl;
@@ -180,7 +187,13 @@ int main(int argc, char* argv[]) {
 	std::cout << "Don't be surprised if the server crashes!" << std::endl;
 	std::cout << "Please report any unreported issues on Github" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
-	std::cout << "Press enter type \"help\" and enter again for commands" << std::endl;
+	std::cout << "The  LEGO Group  has not  endorsed  or" << std::endl;
+	std::cout << "authorized the  operation of this game " << std::endl;
+	std::cout << "and  is  not  liable  for  any  safety" << std::endl;
+	std::cout << "issues in relation to the operation of" << std::endl;
+	std::cout << "this game." << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << " Type \"help\", then ENTER for commands" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Server Log" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;

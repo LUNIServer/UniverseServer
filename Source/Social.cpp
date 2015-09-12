@@ -345,20 +345,20 @@ void Friends::handleFriendRequestResponse(long long responder, std::wstring name
 
 void Chat::sendChatMessage(SystemAddress addr, std::wstring message, std::wstring sender, bool isMythran){
 	RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CHAT, ChatPacketID::GENERAL_CHAT_MESSAGE);
-	uchar u8 = 0;
-	ushort u16 = 0;
-	ulong u32 = 0;
-	ulonglong u64 = 0;
+	unsigned char u8 = 0;
+	unsigned short u16 = 0;
+	unsigned long u32 = 0;
+	unsigned long long u64 = 0;
 
 	aw->Write(u64);
-	aw->Write((uchar)0x01);
+	aw->Write((unsigned char)0x01);
 	int len = message.size();
-	aw->Write((uchar)(len + 1));
+	aw->Write((unsigned char)(len + 1));
 	aw->Write(u16);
 	aw->Write(u8);
 
 	//Static size of sender name (66 bytes), gets cropped if too long
-	for (uint k = 0; k < 33; k++){
+	for (unsigned int k = 0; k < 33; k++){
 		if (k < sender.size()){
 			aw->Write(sender.at(k));
 		}
@@ -370,9 +370,9 @@ void Chat::sendChatMessage(SystemAddress addr, std::wstring message, std::wstrin
 	aw->Write((int)1); //sender Object id
 	aw->Write(u32);
 	aw->Write(u16); //??
-	aw->Write((uchar)isMythran); //isMythran
+	aw->Write((unsigned char)isMythran); //isMythran
 
-	for (uint k = 0; k < message.size(); k++){
+	for (unsigned int k = 0; k < message.size(); k++){
 		aw->Write(message.at(k));
 	}
 	aw->Write(u16);

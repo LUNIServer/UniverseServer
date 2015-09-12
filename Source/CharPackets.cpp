@@ -9,8 +9,6 @@
 #include "UtfConverter.h"
 #include "Logger.h"
 
-#include "SUtil\Ref.h"
-
 #include "RakNet\BitStream.h"
 
 #include <algorithm>
@@ -43,7 +41,7 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	Logger::log("CHAR", "PACKETS", "1characters: " + std::to_string(frontChar), LOG_ALL);
 
 	// This loop used to go through 4 chars but doesn't anymore
-	for (uint i = 0; i < charactersLength; i++) {
+	for (unsigned int i = 0; i < charactersLength; i++) {
 		CharactersPacket charData = CharactersPacket();
 		ListCharacterInfo ci = CharactersTable::getCharacterInfo(chars.at(i));
 
@@ -89,8 +87,8 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	//SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
-ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {
-	ulong shirtID = 0;
+unsigned long FindCharShirtID(unsigned long shirtColor, unsigned long shirtStyle) {
+	unsigned long shirtID = 0;
 
 	// This is a switch case to determine the base shirt color (IDs from CDClient.xml)
 	switch (shirtColor) {
@@ -193,10 +191,10 @@ ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {
 	}
 
 	// Initialize another variable for the shirt color
-	ulong editedShirtColor = shirtID;
+	unsigned long editedShirtColor = shirtID;
 	
 	// This will be the final shirt ID
-	ulong shirtIDFinal;
+	unsigned long shirtIDFinal;
 
 	// For some reason, if the shirt color is 35 - 40,
 	// The ID is different than the original... Was this because
@@ -215,8 +213,8 @@ ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {
 	return shirtIDFinal;
 }
 
-ulong FindCharPantsID(ulong pantsColor) {
-	ulong pantsID = 2508;
+unsigned long FindCharPantsID(unsigned long pantsColor) {
+	unsigned long pantsID = 2508;
 
 	// This is a switch case to determine 
 	// the pants color (IDs from CDClient.xml)
@@ -326,9 +324,9 @@ ulong FindCharPantsID(ulong pantsColor) {
 
 void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 	std::vector<long long> items = EquipmentTable::getItems(objectID);
-	ushort numrows = items.size();
+	unsigned short numrows = items.size();
 	bitStream->Write(numrows);
-	for (ushort k = 0; k < numrows; k++){
+	for (unsigned short k = 0; k < numrows; k++){
 		long lot = ObjectsTable::getTemplateOfItem(items.at(k));
 		if (lot == -1) lot = 0;
 		bitStream->Write(lot);
@@ -337,7 +335,7 @@ void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 	Logger::log("CHAR", "PACKETS", "Character has " + std::to_string(numrows) + " items equipped", LOG_ALL);
 }
 
-string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine) {
+string GetUnapprovedUsername(unsigned long firstLine, unsigned long middleLine, unsigned long lastLine) {
 	// First name
 	fstream firstNameFile(".//names//minifigname_first.txt");
 	GoToLine(firstNameFile, firstLine + 1);
@@ -379,9 +377,9 @@ string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine) 
 #define _restore_max_
 #endif
 
-fstream& GoToLine(fstream& file, ulong num) {
+fstream& GoToLine(fstream& file, unsigned long num) {
 	file.seekg(std::ios::beg);
-	for (uint i = 0; i < num - 1; ++i) {
+	for (unsigned int i = 0; i < num - 1; ++i) {
 		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
 	return file;

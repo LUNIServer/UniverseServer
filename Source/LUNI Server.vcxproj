@@ -112,6 +112,7 @@
     <ClInclude Include="AuthPackets.h" />
     <ClInclude Include="CharPackets.h" />
     <ClInclude Include="GameMessages.h" />
+    <ClInclude Include="IniReader.h" />
     <ClInclude Include="InventoryDB.h" />
     <ClInclude Include="LDF.h" />
     <ClInclude Include="Logger.h" />
@@ -146,6 +147,7 @@
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="GameMessages.cpp" />
+    <ClCompile Include="IniReader.cpp" />
     <ClCompile Include="InventoryDB.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />

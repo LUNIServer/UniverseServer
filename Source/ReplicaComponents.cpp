@@ -206,7 +206,7 @@ void Component4::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 		packet->Write(flag8a);
 		packet->Write(flag8b);
 		if (flag8b && !flag8a){
-			ushort size = data8.size();
+			unsigned short size = data8.size();
 			packet->Write(size);
 			for (int i = 0; i < size; i++){
 				packet->Write((wchar_t) data8.at(i));
@@ -241,36 +241,36 @@ void Component4::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 
 unsigned int Component4::getComponentID(){ return 4; }
 
-void Component4::setData1_1(ulonglong d1_1){ this->data1_1 = d1_1; this->flag1 = true; this->flag1_1 = true; }
-void Component4::setData1_2(uchar d1_2){ data1_2 = d1_2; flag1 = true; }
-void Component4::setLevel(ulong lvl){ level = lvl, hasLevel = true; }
+void Component4::setData1_1(unsigned long long d1_1){ this->data1_1 = d1_1; this->flag1 = true; this->flag1_1 = true; }
+void Component4::setData1_2(unsigned char d1_2){ data1_2 = d1_2; flag1 = true; }
+void Component4::setLevel(unsigned long lvl){ level = lvl, hasLevel = true; }
 void Component4::setData3(COMPONENT4_DATA3 d3){ data3 = d3; flag3 = true; }
-void Component4::setData4(ulonglong d4){ data4 = d4; flag4 = true; }
-void Component4::setData5(ulonglong d5){ data5 = d5; flag5 = true; }
-void Component4::setData6(ulonglong d6){ data6 = d6; flag6 = true; }
-void Component4::setData7(ulonglong d7){ data7 = d7; flag7 = true; }
+void Component4::setData4(unsigned long long d4){ data4 = d4; flag4 = true; }
+void Component4::setData5(unsigned long long d5){ data5 = d5; flag5 = true; }
+void Component4::setData6(unsigned long long d6){ data6 = d6; flag6 = true; }
+void Component4::setData7(unsigned long long d7){ data7 = d7; flag7 = true; }
 void Component4::setStyle(PLAYER_STYLE style){ this->style = style; }
 void Component4::setInfo(PLAYER_INFO info){ this->info = info; }
 void Component4::setStats(PLAYER_STATS stats){ this->stats = stats; }
 void Component4::setData8(std::wstring d8){ this->data8 = d8; flag8b = true; }
 void Component4::setData9(COMPONENT4_DATA9 d9){ this->data9 = d9; flag9 = true; }
-void Component4::setData10(ulong d10){ data10 = d10; flag10 = true; }
+void Component4::setData10(unsigned long d10){ data10 = d10; flag10 = true; }
 void Component4::setData11(COMPONENT4_DATA11 d11){ data11 = d11; flag11 = true; }
 
-ulonglong Component4::getData1_1(){ return data1_1; }
-uchar Component4::getData1_2(){ return data1_2; }
-ulong Component4::getLevel(){ return level; }
+unsigned long long Component4::getData1_1(){ return data1_1; }
+unsigned char Component4::getData1_2(){ return data1_2; }
+unsigned long Component4::getLevel(){ return level; }
 COMPONENT4_DATA3 Component4::getData3(){ return data3; }
-ulonglong Component4::getData4(){ return data4; }
-ulonglong Component4::getData5(){ return data5; }
-ulonglong Component4::getData6(){ return data6; }
-ulonglong Component4::getData7(){ return data7; }
+unsigned long long Component4::getData4(){ return data4; }
+unsigned long long Component4::getData5(){ return data5; }
+unsigned long long Component4::getData6(){ return data6; }
+unsigned long long Component4::getData7(){ return data7; }
 PLAYER_STYLE Component4::getStyle(){ return style; }
 PLAYER_INFO Component4::getInfo(){ return info; }
 PLAYER_STATS Component4::getStats(){ return stats; }
 std::wstring Component4::getData8(){ return data8;  }
 COMPONENT4_DATA9 Component4::getData9(){ return data9; }
-ulong Component4::getData10(){ return data10; }
+unsigned long Component4::getData10(){ return data10; }
 COMPONENT4_DATA11 Component4::getData11(){ return data11; }
 
 #pragma endregion
@@ -281,9 +281,9 @@ void Component7::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 	if (packetType == REPLICA_CONSTRUCTION_PACKET){
 		packet->Write(flag1);
 		if (flag1){
-			ulong data1C = data1.size();
+			unsigned long data1C = data1.size();
 			packet->Write(data1C);
-			for (ulong k = 0; k < data1C; k++){
+			for (unsigned long k = 0; k < data1C; k++){
 				packet->Write(data1.at(k).d1);
 				packet->Write(data1.at(k).d2f);
 				if (data1.at(k).d2f){
@@ -308,9 +308,9 @@ void Component7::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 		}
 		packet->Write(flag2);
 		if (flag2){
-			ulong data2C = data2.size();
+			unsigned long data2C = data2.size();
 			packet->Write(data2C);
-			for (ulong k = 0; k < data2C; k++){
+			for (unsigned long k = 0; k < data2C; k++){
 				packet->Write(data2.at(k).d1);
 				packet->Write(data2.at(k).d2f);
 				if (data2.at(k).d2f){
@@ -366,9 +366,9 @@ void Component7::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE pa
 		packet->Write(data4.maxHealth);
 		packet->Write(data4.maxArmor);
 		packet->Write(data4.maxImagination);
-		ulong t = data4_1.size();
+		unsigned long t = data4_1.size();
 		packet->Write(t);
-		for (ulong k = 0; k < t; k++){
+		for (unsigned long k = 0; k < t; k++){
 			packet->Write(data4_1.at(k));
 		}
 		packet->Write(trigger);
@@ -415,12 +415,12 @@ std::vector<COMPONENT7_DATA1> *Component7::getData1Ref(){ this->flag1 = true; re
 std::vector<COMPONENT7_DATA2> *Component7::getData2Ref(){ this->flag2 = true; return &this->data2; } // Replace by a setUpdateData2();
 COMPONENT7_DATA3 Component7::getData3(){ return this->data3; }
 COMPONENT7_DATA4 Component7::getData4(){ return this->data4; }
-std::vector<ulong> *Component7::getData4_1Ref(){ this->flag4 = true; return &this->data4_1; }
+std::vector<unsigned long> *Component7::getData4_1Ref(){ this->flag4 = true; return &this->data4_1; }
 bool Component7::getTrigger(){ return this->trigger; }
 bool Component7::getData4_2(){ return this->data4_2; }
 bool Component7::getData4_3(){ return this->data4_3; }
 bool Component7::getData4_4_1(){ return this->data4_4_1; }
-ulong Component7::getData4_4_2(){ return this->data4_4_2; }
+unsigned long Component7::getData4_4_2(){ return this->data4_4_2; }
 bool Component7::getData5(){ return this->data5; }
 void Component7::setData3(COMPONENT7_DATA3 data3){ this->data3 = data3; this->flag3 = true;  }
 void Component7::setData4(COMPONENT7_DATA4 data4){ this->data4 = data4; this->flag4 = true;  }
@@ -428,7 +428,7 @@ void Component7::setTrigger(bool trigger){ this->trigger = trigger; this->flag4 
 void Component7::setData4_2(bool data4_2){ this->data4_2 = data4_2; this->flag4 = true; }
 void Component7::setData4_3(bool data4_3){ this->data4_3 = data4_3; this->flag4 = true;}
 void Component7::setData4_4_1(bool data4_4_1){ this->data4_4_1 = data4_4_1; this->flag4 = true; }
-void Component7::setData4_4_2(ulong data4_4_2){ this->data4_4_2 = data4_4_2; this->flag4 = true; this->flag4_4_2 = true; }
+void Component7::setData4_4_2(unsigned long data4_4_2){ this->data4_4_2 = data4_4_2; this->flag4 = true; this->flag4_4_2 = true; }
 void Component7::setData5(bool data5){ this->data5 = data5; this->flag5 = true; }
 #pragma endregion
 
@@ -441,13 +441,13 @@ Component17::~Component17(){
 
 }
 void Component17::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType){
-	ulong size = this->equipment.size();
+	unsigned long size = this->equipment.size();
 	bool hasEquipment = true; //(size > 0);
 	packet->Write(hasEquipment);
 	if (hasEquipment){
 		packet->Write(size);
 		//std::cout << "[WORLD] EQUIPMENT COUNT: " << size << std::endl;
-		for (ulong k = 0; k < size; k++){
+		for (unsigned long k = 0; k < size; k++){
 			COMPONENT17_EQUIPMENT eq = equipment.at(k);
 			packet->Write(eq.objid);
 			packet->Write(eq.lot);
@@ -467,12 +467,12 @@ void Component17::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE p
 			if (eq.d6 > 0){
 				packet->Write(eq.d6);
 			}
-			ulong s = eq.d7.size();
+			unsigned long s = eq.d7.size();
 			bool s0 = (s > 0);
 			packet->Write(s0);
 			if (s0){
 				packet->Write(s);
-				for (ulong i = 0; i < s; i++){
+				for (unsigned long i = 0; i < s; i++){
 					packet->Write(eq.d7.at(i));
 				}
 			}
@@ -492,15 +492,15 @@ std::vector<COMPONENT17_EQUIPMENT> *Component17::getEquipment(){
 	return &this->equipment;
 }
 
-ulong Component17::getData2(){
+unsigned long Component17::getData2(){
 	return this->data2;
 }
 
-void Component17::setData2(ulong d2){
+void Component17::setData2(unsigned long d2){
 	this->data2 = d2;
 }
 
-long Component17::equipItem(long long objid, ushort slot){
+long Component17::equipItem(long long objid, unsigned short slot){
 	long lot = ObjectsTable::getTemplateOfItem(objid);
 	if (lot > -1){
 		COMPONENT17_EQUIPMENT eqi;

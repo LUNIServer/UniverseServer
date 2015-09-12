@@ -15,11 +15,11 @@ bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION p
 		zone = ZoneId::NIMBUS_STATION;
 	}
 
-	stream->Write((ushort)zone);
+	stream->Write((unsigned short)zone);
 	stream->Write(instance); //Instance
 	stream->Write(clone); //Clone
 
-	std::vector<uchar> worldTarget = getWorldTarget(zone); //TODO: Replace this with actual numbers
+	std::vector<unsigned char> worldTarget = getWorldTarget(zone); //TODO: Replace this with actual numbers
 	if (worldTarget.size() == 0) return false;
 	stream->Write(worldTarget[2]); //Checksum
 	stream->Write(worldTarget[3]);
@@ -32,7 +32,7 @@ bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION p
 	stream->Write(pos.x);
 	stream->Write(pos.y);
 	stream->Write(pos.z);
-	stream->Write((ulong)0);
+	stream->Write((unsigned long)0);
 
 	WorldServer::sendPacket(stream, address);
 	return true;

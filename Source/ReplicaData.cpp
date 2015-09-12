@@ -5,8 +5,8 @@
 #include <vector>
 #include <map>
 
-std::map<ushort, std::vector<uchar>> zonePacketData;
-std::map<ushort, COMPONENT1_POSITION> zoneDefaultSpawn;
+std::map<unsigned short, std::vector<unsigned char>> zonePacketData;
+std::map<unsigned short, COMPONENT1_POSITION> zoneDefaultSpawn;
 bool zoneDataInitialized = false;
 
 /* -- NEXUS TOWER: Teleportation -- 
@@ -125,16 +125,16 @@ void InitZoneData(){
 	zoneDataInitialized = true;
 }
 
-std::vector<uchar> getWorldTarget(ZoneId zone_id){
+std::vector<unsigned char> getWorldTarget(ZoneId zone_id){
 	if (!zoneDataInitialized){
 		InitZoneData();
 	}
 	try{
-		std::vector<uchar> zpd = zonePacketData.at(zone_id);
+		std::vector<unsigned char> zpd = zonePacketData.at(zone_id);
 		return zpd;
 	}
 	catch (...){
-		return std::vector<uchar>();
+		return std::vector<unsigned char>();
 	}
 }
 

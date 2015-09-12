@@ -10,7 +10,7 @@
 #include "WorldServer.h"
 
 bool Characters::CreateCharacter(RakNet::BitStream *packet, SystemAddress address, unsigned int accountid){
-	uchar creationStatus = 0;
+	unsigned char creationStatus = 0;
 	
 	std::string customName = UtfConverter::ToUtf8(PacketTools::ReadFromPacket(packet, 33));
 

@@ -14,7 +14,7 @@ unsigned int AccountsTable::getAccountID(std::string username){
 	if (mysql_num_rows(qr) == 0) return 0;
 	auto ftc = mysql_fetch_row(qr);
 	std::istringstream o(ftc[0]);
-	uint r;
+	unsigned int r;
 	o >> r;
 	return r;
 }
@@ -225,7 +225,7 @@ SessionInfo SessionsTable::login(SystemAddress address, unsigned int accountid, 
 		s.phase = SessionPhase::PHASE_AUTHENTIFIED;
 		s.accountid = accountid;
 		std::stringstream str;
-		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `instanceid` = '" << std::to_string(instanceid) << "', `accountid` = '" << std::to_string(s.accountid) << "', `sessionkey` = '" << key << "' WHERE `ipaddress` = '" << address.ToString() << "'";
+		str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `instanceid` = '" << std::to_string(instanceid) << "', `accountid` = '" << std::to_string(s.accountid) << "', `sessionkey` = '" << key << "' WHERE `ipaddress` = '" << address.ToString() << "'";
 		auto qr = Database::Query(str.str());
 		if (qr == NULL){
 			Logger::logError("ACDB", "MYSQL", "logging in", mysql_error(Database::getConnection()));
@@ -252,7 +252,7 @@ SessionInfo SessionsTable::logout(unsigned int accountid){
 			s.phase = SessionPhase::PHASE_CONNECTED;
 			s.accountid = 0;
 			std::stringstream str;
-			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `accountid` = '" << std::to_string(s.accountid) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
 				Logger::logError("ACDB", "MYSQL", "logging out", mysql_error(Database::getConnection()));
@@ -314,7 +314,7 @@ SessionInfo SessionsTable::play(unsigned int accountid, long long charid){
 			s.phase = SessionPhase::PHASE_PLAYING;
 			s.activeCharId = charid;
 			std::stringstream str;
-			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
 				Logger::logError("ACDB", "MYSQL", "playing character", mysql_error(Database::getConnection()));
@@ -345,7 +345,7 @@ SessionInfo SessionsTable::quit(long long charid){
 			s.worldJoin = 0;
 			s.activeCharId = -1;
 			std::stringstream str;
-			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `charid` = '" << std::to_string(s.activeCharId) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
 				Logger::logError("ACDB", "MYSQL", "quitting character", mysql_error(Database::getConnection()));
@@ -501,7 +501,7 @@ SessionInfo SessionsTable::enter(long long charid, unsigned short zoneId){
 			s.phase = SessionPhase::PHASE_INWORLD;
 			s.zone = zoneId;
 			std::stringstream str;
-			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
 				Logger::logError("ACDB", "MYSQL", "entering world", mysql_error(Database::getConnection()));
@@ -532,7 +532,7 @@ SessionInfo SessionsTable::leave(long long charid){
 			s.phase = SessionPhase::PHASE_PLAYING;
 			s.zone = 0;
 			std::stringstream str;
-			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((uchar)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
+			str << "UPDATE `sessions` SET `phase` = '" << std::to_string((unsigned char)s.phase) << "', `zoneid` = '" << std::to_string(s.zone) << "' WHERE `ipaddress` = '" << addr.ToString() << "'";
 			auto qr = Database::Query(str.str());
 			if (qr == NULL){
 				Logger::logError("ACDB", "MYSQL", "leaving world", mysql_error(Database::getConnection()));

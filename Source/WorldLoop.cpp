@@ -79,8 +79,6 @@ void WorldLoop(CONNECT_INFO* cfg) {
 	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
 		Logger::log("WRLD", "", "started! Listening on port " + std::to_string(cfg->listenPort));
 		Instances::registerInstance(ServerAddress);
-		//int serverinstanceid = InstancesTable::registerInstance(ServerAddress);
-		//s << "WORLD SERVER STARTED ON " << ServerAddress.ToString() << " AS INSTANCE " << std::to_string(serverinstanceid) << std::endl;
 	} else exit(2);
 
 	// Set max incoming connections to 8
@@ -132,6 +130,7 @@ void WorldLoop(CONNECT_INFO* cfg) {
 	ChatCommandManager::registerCommands(new AttributeCommandHandler());
 	ChatCommandManager::registerCommands(new PacketCommandHandler());
 	ChatCommandManager::registerCommands(new AnnouncementCommandHandler());
+	ChatCommandManager::registerCommands(new AdminCommandHandler());
 
 	bool LUNI_WRLD = true;
 	std::vector<unsigned char> buffer;
@@ -210,7 +209,7 @@ void WorldLoop(CONNECT_INFO* cfg) {
 		#endif
 
 		RakNet::BitStream *pdata = new RakNet::BitStream(packet->data, packet->length, false);
-		uchar packetId;
+		unsigned char packetId;
 		pdata->Read(packetId);
 
 		// Create and send packets back here according to the one we got
@@ -235,6 +234,7 @@ void WorldLoop(CONNECT_INFO* cfg) {
 
 			case ID_DISCONNECTION_NOTIFICATION:
 			{
+				PacketTools::printRest(pdata);
 				SessionInfo session = SessionsTable::getClientSession(packet->systemAddress);
 				std::string name = AccountsTable::getAccountName(session.accountid);
 				//auto usr = OnlineUsers->Find(packet->systemAddress);
@@ -298,8 +298,8 @@ void WorldLoop(CONNECT_INFO* cfg) {
 
 //This function should get the packet WITHOUT the leading 0x53. bytelength should account for that
 //Please note that it CAN be caused recursively, so the read offset should never be set to a static length
-void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakNet::BitStream *data, ulong bytelength){
-	//ulong packetLength = data->GetNumberOfUnreadBits() >> 3;
+void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakNet::BitStream *data, unsigned long bytelength){
+	//unsigned long packetLength = data->GetNumberOfUnreadBits() >> 3;
 	unsigned short connectionType;
 	data->Read(connectionType);
 	unsigned long packetId;
@@ -727,7 +727,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 				//std::stringstream oss;
 				//data->SetReadOffset(data->GetReadOffset() - 32);
-				//for (uint k = 0; k < 32; k++){
+				//for (unsigned int k = 0; k < 32; k++){
 					//bool flag;
 					//data->Read(flag);
 					//if (flag){
@@ -736,7 +736,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				//}
 				//std::string objectTypes = oss.str();
 
-				//uchar something4; -- With the flag up there, this has to be just padding
+				//unsigned char something4; -- With the flag up there, this has to be just padding
 				//data->Read(something4);
 				
 				ObjectInformation o = getObjectInformation(object);
@@ -1060,7 +1060,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			data->Read(charid);
 			Characters::DeleteCharacter(s.accountid, charid);
 			RakNet::BitStream * bitStream = WorldServer::initPacket(RemoteConnection::CLIENT, 12);
-			bitStream->Write((uchar)1); // Success?
+			bitStream->Write((unsigned char)1); // Success?
 			WorldServer::sendPacket(bitStream, systemAddress);
 		}
 			break;
@@ -1115,7 +1115,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				PlayerObject * player = new PlayerObject(objid, UtfConverter::FromUtf8(cinfo.info.name));
 
 				//Temporarily ?
-				player->gmlevel = AccountsTable::getRank(s.accountid);
+				player->gmlevel = (unsigned char) cinfo.info.gmlevel;
 				player->world.zone = zid;
 
 				Component1 * c1 = player->getComponent1();
@@ -1354,8 +1354,8 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			Logger::log("WRLD", "MODR", str.str(), LOG_DEBUG);
 
 			RakNet::BitStream  * bs = WorldServer::initPacket(RemoteConnection::CLIENT, 59);
-			bs->Write((uchar)1);
-			bs->Write((ushort)0);
+			bs->Write((unsigned char)1);
+			bs->Write((unsigned short)0);
 			bs->Write(requestID);
 			WorldServer::sendPacket(bs, systemAddress);
 		}

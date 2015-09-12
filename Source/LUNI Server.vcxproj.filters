@@ -165,6 +165,9 @@
     <ClInclude Include="ChatCommands.h">
       <Filter>Header Files\Mechanics</Filter>
     </ClInclude>
+    <ClInclude Include="IniReader.h">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -259,6 +262,9 @@
     </ClCompile>
     <ClCompile Include="ChatCommands.cpp">
       <Filter>Source Files\Mechanics</Filter>
+    </ClCompile>
+    <ClCompile Include="IniReader.cpp">
+      <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

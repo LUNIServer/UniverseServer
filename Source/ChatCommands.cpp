@@ -93,18 +93,18 @@ void FlightCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstrin
 	}
 	if (f2){
 		RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(s->activeCharId, 561);
-		pc->Write((ulong)0x70ba);
-		pc->Write((ushort)0x8);
-		pc->Write((uchar)0x5);
-		pc->Write((uchar)0x2);
-		pc->Write((ushort)0xc);
-		pc->Write((uchar)0x3);
-		pc->Write((ushort)0x6c1);
-		pc->Write((uchar)0x0);
-		pc->Write((uchar)0x1);
-		pc->Write((uchar)0x80);
-		pc->Write((uchar)0x7f);
-		pc->Write((ulong)0xa7);
+		pc->Write((unsigned long)0x70ba);
+		pc->Write((unsigned short)0x8);
+		pc->Write((unsigned char)0x5);
+		pc->Write((unsigned char)0x2);
+		pc->Write((unsigned short)0xc);
+		pc->Write((unsigned char)0x3);
+		pc->Write((unsigned short)0x6c1);
+		pc->Write((unsigned char)0x0);
+		pc->Write((unsigned char)0x1);
+		pc->Write((unsigned char)0x80);
+		pc->Write((unsigned char)0x7f);
+		pc->Write((unsigned long)0xa7);
 		WorldServer::sendPacket(pc, s->addr);
 	}
 }
@@ -290,7 +290,7 @@ void ItemsCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring
 			PlayerObject *player = (PlayerObject *) ObjectsManager::getObjectByID(s->activeCharId);
 			if (player != NULL){
 				if (params->size() > 2){
-					ushort slot = std::stoi(params->at(2));
+					unsigned short slot = std::stoi(params->at(2));
 					player->getComponent17()->equipItem(objid, slot);
 				}
 				else{
@@ -412,7 +412,7 @@ void AddItemCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstri
 		}
 	}
 	else{
-		Chat::sendChatMessage(s->addr, L"Syntac: /gmadditem " + this->getSyntax());
+		Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
 	}
 }
 
@@ -616,4 +616,49 @@ std::wstring AnnouncementCommandHandler::getShortDescription(){
 
 std::wstring AnnouncementCommandHandler::getSyntax(){
 	return L"(<playername>|*|#) <message> [<title>]";
+}
+
+void AdminCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
+	if (params->size() == 1){
+		ListCharacterInfo cinfo = CharactersTable::getCharacterInfo(s->activeCharId);
+
+		unsigned short maxLevel = AccountsTable::getRank(s->accountid);
+		unsigned short oldLevel = cinfo.info.gmlevel;
+		unsigned short newLevel = (unsigned char)std::stoi(params->at(0));
+		unsigned char success = 0;
+		if (newLevel <= maxLevel){
+			success = 1;
+		}
+		else{
+			newLevel = oldLevel;
+		}
+
+		if (success == 1) CharactersTable::setGMlevel(s->activeCharId, newLevel);
+		
+		RakNet::BitStream * packet = WorldServer::initPacket(RemoteConnection::CLIENT, 16);
+		packet->Write(success);
+		packet->Write(maxLevel);
+		packet->Write(oldLevel);
+		packet->Write(newLevel);
+		WorldServer::sendPacket(packet, s->addr);
+	}
+	else{
+		Chat::sendChatMessage(s->addr, L"Syntax: " + AdminCommandHandler::getSyntax());
+	}
+}
+
+std::vector<std::wstring> AdminCommandHandler::getCommandNames(){
+	return{ L"gmlevel" };
+}
+
+std::wstring AdminCommandHandler::getDescription(){
+	return L"Set Moderator Level";
+}
+
+std::wstring AdminCommandHandler::getShortDescription(){
+	return L"Set GM-Level";
+}
+
+std::wstring AdminCommandHandler::getSyntax(){
+	return L"<level>";
 }

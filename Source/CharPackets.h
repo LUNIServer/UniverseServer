@@ -14,7 +14,7 @@
 using namespace std;
 
 // Struct that puts names to each pants ID (for easy use)
-enum CharCreatePantsColor : ulong {
+enum CharCreatePantsColor : unsigned long {
 	PANTS_BRIGHT_RED = 2508,
 	PANTS_BRIGHT_ORANGE = 2509,
 	PANTS_BRICK_YELLOW = 2511,
@@ -34,7 +34,7 @@ enum CharCreatePantsColor : ulong {
 };
 
 // Struct that puts names to each base shirt ID (for easy use)
-enum CharCreateShirtColor : ulong {
+enum CharCreateShirtColor : unsigned long {
 	SHIRT_BRIGHT_RED = 4049,
 	SHIRT_BRIGHT_BLUE = 4083,
 	SHIRT_BRIGHT_YELLOW = 4117,
@@ -56,40 +56,40 @@ enum CharCreateShirtColor : ulong {
 
 // Struct to hold all char data
 struct CharactersPacket {
-	uchar charactersLength; // This is the number of characters the user has from 1 - 4
-	uchar frontChar; // This is the character in front
+	unsigned char charactersLength; // This is the number of characters the user has from 1 - 4
+	unsigned char frontChar; // This is the character in front
 
 	// -- BEGIN CHAR DATA -- //
 	long long int objectID; // This is the Character ID - For now, we assign it 0 - 3 (linked to acct ID)
-	ushort unknown1;
-	wstring charName; // This is the name of the char (null terminated)... Should be wstring (so you can only use 65 bytes)
-	wstring unapprovedName; // Similar to above... null-terminated and should be wstring
-	uchar nameRejected; // 0 if approved, 1 if rejected
-	uchar freeToPlay; // 0 if premium, 1 if free to play
-	string unknown2; // This should be 10 bytes long
-	ulong shirtColor; // The shirt color
-	ulong shirtStyle; // Could this be something to do with the shirt? - Possibly shirt style...
-	ulong pantsColor; // Pants color
-	ulong hairStyle; // Hair style
-	ulong hairColor; // Hair color
-	ulong lh; // Dunno what this is...
-	ulong rh; // Dunno what this is...
-	ulong eyebrows; // Eyebrows
-	ulong eyes; // Eyes
-	ulong mouth; // Mouth
-	ulong unknown4; // Dunno what this is either...
-	ushort lastZoneId; // Last Zone ID
-	ushort mapInstance; // Most likely the map instance, so I am naming it that here
-	ulong mapClone; // The map clone (from the "53 05 00 02" packet structure)
-	ulonglong lastLogout; // Last logout in seconds
+	unsigned short unknown1;
+	std::wstring charName; // This is the name of the char (null terminated)... Should be wstring (so you can only use 65 bytes)
+	std::wstring unapprovedName; // Similar to above... null-terminated and should be wstring
+	unsigned char nameRejected; // 0 if approved, 1 if rejected
+	unsigned char freeToPlay; // 0 if premium, 1 if free to play
+	std::string unknown2; // This should be 10 bytes long
+	unsigned long shirtColor; // The shirt color
+	unsigned long shirtStyle; // Could this be something to do with the shirt? - Possibly shirt style...
+	unsigned long pantsColor; // Pants color
+	unsigned long hairStyle; // Hair style
+	unsigned long hairColor; // Hair color
+	unsigned long lh; // Dunno what this is...
+	unsigned long rh; // Dunno what this is...
+	unsigned long eyebrows; // Eyebrows
+	unsigned long eyes; // Eyes
+	unsigned long mouth; // Mouth
+	unsigned long unknown4; // Dunno what this is either...
+	unsigned short lastZoneId; // Last Zone ID
+	unsigned short mapInstance; // Most likely the map instance, so I am naming it that here
+	unsigned long mapClone; // The map clone (from the "53 05 00 02" packet structure)
+	unsigned long long lastLogout; // Last logout in seconds
 
-	ushort equippedItemsLength; // The number of items to follow
+	unsigned short equippedItemsLength; // The number of items to follow
 
 	CharactersPacket() { } // Initalizer does nothing right now
 
 	// Function to write the data to bitstream.
-	void WriteDataToBitstream(RakNet::BitStream *bitStream, uint charId) {
-		ushort z = 0;
+	void WriteDataToBitstream(RakNet::BitStream *bitStream, unsigned int charId) {
+		unsigned short z = 0;
 
 		bitStream->Write(objectID);
 		bitStream->Write(unknown1);
@@ -101,8 +101,8 @@ struct CharactersPacket {
 		bitStream->Write(nameRejected);
 		bitStream->Write(freeToPlay);
 		
-		uchar zeroChar = 0;
-		uchar oneChar = 1;
+		unsigned char zeroChar = 0;
+		unsigned char oneChar = 1;
 		for (int i = 0; i < 10; i++) {
 			if (i == 1 && charId == 0) {
 				bitStream->Write(oneChar);
@@ -134,17 +134,17 @@ struct CharactersPacket {
 void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid);
 
 // Sends the deletion packet to the client
-//void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid, uchar *packetData, uint length);
+//void SendDeletePacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, unsigned int accountid, unsigned char *packetData, unsigned int length);
 
 // This will get the unapproved name and return it as a std::string
-string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine);
+std::string GetUnapprovedUsername(unsigned long firstLine, unsigned long middleLine, unsigned long lastLine);
 
 // Go to and read the line in a txt file
-fstream& GoToLine(fstream& file, ulong num);
+std::fstream& GoToLine(std::fstream& file, unsigned long num);
 
 // Figure out the items the character is wearing / was created with
-ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle);
-ulong FindCharPantsID(ulong pantsColor);
+unsigned long FindCharShirtID(unsigned long shirtColor, unsigned long shirtStyle);
+unsigned long FindCharPantsID(unsigned long pantsColor);
 
 // Figure out how many special items the user has and equip any
 // that need to be equipped
