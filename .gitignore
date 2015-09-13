@@ -53,3 +53,4 @@ Release/
 Auth/
 config.ini
 *.lnk
+*.log

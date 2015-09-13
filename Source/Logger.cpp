@@ -4,9 +4,12 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 bool Logger::muted = false;
 std::vector<std::string> Logger::logBuffer;
+bool Logger::tofile = false;
+std::string Logger::logfile = "";
 
 void Logger::log(const std::string& source, const std::string& role, const std::string& message, LogLevels logLevel){
 	if (logLevel <= activeLogLevel){
@@ -25,6 +28,12 @@ void Logger::log(const std::string& source, const std::string& role, const std::
 		out << message << std::endl;
 		std::string msg = out.str();
 		if (!Logger::muted)	std::cout << msg; else Logger::logBuffer.push_back(msg);
+		if (Logger::tofile){
+			std::ofstream file(Logger::logfile, std::ios::app);
+			if (!file.is_open()) return;
+			file.write(msg.data(), msg.length());
+			file.close();
+		}
 	}
 }
 
@@ -49,4 +58,13 @@ void Logger::unmute(bool printLog){
 		Logger::logBuffer.clear();
 	}
 	Logger::muted = false;
+}
+
+bool Logger::setLogFile(std::string logFile){
+	std::ofstream file(logFile, std::ios::out);
+	if (!file.is_open()) return false;
+	Logger::logfile = logFile;
+	Logger::tofile = true;
+	file.close();
+	return true;
 }

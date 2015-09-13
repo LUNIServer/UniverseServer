@@ -9,11 +9,13 @@ public:
 	const bool getBoolValue(std::string key, bool defaultValue);
 	const int getIntValue(std::string key, int defaultValue);
 	const std::string getStringValue(std::string key, std::string defaultValue);
+	void addPair(std::string key, std::string value);
+	IniSection();
 };
 
 class IniFile{
 	bool valid;
-	IniSection baseSection;
+	IniSection * baseSection;
 	std::unordered_map<std::string, IniSection *> sections;
 public:
 	IniSection * getSection(std::string section);

@@ -40,6 +40,14 @@ const std::string IniSection::getStringValue(std::string key, std::string defaul
 	}
 }
 
+void IniSection::addPair(std::string key, std::string value){
+	this->values.insert(std::make_pair(key, value));
+}
+
+IniSection::IniSection(){
+
+}
+
 IniFile::IniFile(std::string filename){
 	this->valid = false;
 	std::ifstream file(filename, std::ios::in | std::ios::binary | std::ios::ate); // ios::ate sets inital position at end of file
@@ -65,13 +73,23 @@ IniFile::IniFile(std::string filename){
 		this->valid = true;
 
 		unsigned char mode = 0;
-		IniSection * section = NULL;
+		this->baseSection = new IniSection();
+		IniSection * section = this->baseSection;
 		unsigned int sstart = 0;
+		unsigned int lasts = 0;
 		std::string section_name = "";
+		std::string key = "";
 
 		for (unsigned int k = 0; k < r.size(); k++){
+			int n = r.at(k);
 			switch (mode){
+			case 3:
+				if (r.at(k) == 10 && r.at(k) == 13){
+					break;
+				}
+				mode = 0;
 			case 0:
+				//Start of Line
 				//91 - [
 				//93 - ]
 				//35 - #
@@ -81,26 +99,73 @@ IniFile::IniFile(std::string filename){
 						sstart = k + 1;
 						mode = 1;
 					}
-					if (r.at(k) == 35){
-						//Comment
+					else {
+						if (r.at(k) == 35){
+							//Comment
+						}else{
+							sstart = k;
+							lasts = k;
+							mode = 4;
+						}
 					}
 				}
 				break;
 			case 1:
 				if (r.at(k) == 93){
 					//End of section name
-					section_name = std::string(r.begin() + sstart, r.begin() + k - 1);
+					section_name = std::string(r.begin() + sstart, r.begin() + k);
 					section = new IniSection();
 					this->sections.insert(std::make_pair(section_name, section));
+					mode = 2;
 				}
-				if (r.at(k) == 10 || r.at(k) == 13){
+				if (n == 10 || n == 13){
 					//section name has no end, ignoring
 				}
 				break;
 			case 2:
-
+				if (n == 10 || n == 13){
+					mode = 3;
+				}
 				break;
+			case 4:
+				if (r.at(k) > 32 && r.at(k) < 127){
+					if (r.at(k) == 61){
+						key = std::string(r.begin() + sstart, r.begin() + lasts + 1);
+						sstart = 0;
+						mode = 5;
+					}else{
+						lasts = k;
+					}
+				}
+				if (r.at(k) == 10 || r.at(k) == 13){
+					sstart = 0;
+					lasts = 0;
+					mode = 3;
+				}
+				break;
+			case 5:
+				if (r.at(k) == 10 || r.at(k) == 13){
+					if (sstart > 0){
+						std::string value = std::string(r.begin() + sstart, r.begin() + lasts + 1);
+						section->addPair(key, value);
+					}
+					mode = 3;
+				}
+				if (r.at(k) > 32 && r.at(k) < 127){
+					if (sstart == 0) sstart = k;
+					lasts = k;
+				}
 			}
 		}
+	}
+}
+
+IniSection * IniFile::getSection(std::string section){
+	std::unordered_map<std::string, IniSection *>::iterator it = this->sections.find(section);
+	if (it != this->sections.end()){
+		return it->second;
+	}
+	else{
+		return NULL;
 	}
 }

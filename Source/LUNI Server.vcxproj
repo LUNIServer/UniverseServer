@@ -180,9 +180,6 @@
     <ProjectReference Include="RakNet\RakNet.vcxproj">
       <Project>{767ceb9f-4c3d-46fc-a225-e0f3800dc29c}</Project>
     </ProjectReference>
-    <ProjectReference Include="SUtil\SUtil.vcxproj">
-      <Project>{c434487d-648f-4f94-9d66-6a9577b6c1cc}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

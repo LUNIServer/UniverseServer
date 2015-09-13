@@ -12,6 +12,11 @@ class MySqlException : public std::exception {
 	MySqlException(const std::string& msg) : std::exception(msg.c_str()) {}
 };
 
+enum MYSQL_STATUS : unsigned int{
+	SUCESS = 0,
+	NOT_ENOUGH_MEMORY = 1,
+};
+
 // This is the declaration for methods that will be used to connect to
 // MySQL database
 class Database {
@@ -22,7 +27,7 @@ class Database {
 		// Initialize connection.
 		// This takes the host, the database, the DB username, and the DB password as strings and connects the server to
 		// the MySQL database
-		static void Connect(const std::string& host, const std::string& database, const std::string& username, const std::string& password);
+		static unsigned int Connect(const std::string& host, const std::string& database, const std::string& username, const std::string& password);
 
 		// Query the MySQL database and return results
 		static MYSQL_RES * Query(const std::string & query); 
