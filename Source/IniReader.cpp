@@ -157,6 +157,14 @@ IniFile::IniFile(std::string filename){
 				}
 			}
 		}
+
+		if (mode == 5){
+			//If there is no line break at the end of the file, we might need to still write the value
+			if (sstart > 0){
+				std::string value = std::string(r.begin() + sstart, r.begin() + lasts + 1);
+				section->addPair(key, value);
+			}
+		}
 	}
 }
 
@@ -167,5 +175,18 @@ IniSection * IniFile::getSection(std::string section){
 	}
 	else{
 		return NULL;
+	}
+}
+
+IniFile::~IniFile(){
+	for (auto it : this->sections){
+		if (it.second != NULL){
+			delete it.second;
+			it.second = NULL;
+		}
+	}
+	if (this->baseSection != NULL){
+		delete this->baseSection;
+		this->baseSection = NULL;
 	}
 }

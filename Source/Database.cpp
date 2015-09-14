@@ -82,22 +82,40 @@ unsigned int Database::Connect(const string& host, const string& database, const
 			}
 			std::cout << std::endl;
 			break;
-		case 2005:
+		case 2003:
 			std::cout << std::endl;
 			std::cout << "  == [ERROR HELP] ==" << std::endl;
 			std::cout << std::endl;
-			std::cout << "  No MYSQL server found at host '" << host << "'" << std::endl;
+			std::cout << "  No MYSQL Database found at '" << host << "'" << std::endl;
 			std::cout << "  Possible reasons for this are:" << std::endl;
-			std::cout << "  - There is a typo in the host name" << std::endl;
+			std::cout << "  - The host name points to the wrong server" << std::endl;
 			std::cout << "  - The wrong config file has been loaded" << std::endl;
-			std::cout << "  - The MYSQL Server is not running" << std::endl;
+			std::cout << "  - The MYSQL server is not running" << std::endl;
 			std::cout << std::endl;
 			if (!(host == "localhost" || host == "127.0.0.1")){
 				std::cout << "  The default host is 'localhost' or '127.0.0.1'" << std::endl;
 				std::cout << "  If you have not expicitly chosen something different," << std::endl;
 				std::cout << "  try this as host" << std::endl;
+				std::cout << std::endl;
 			}
+			
+			break;
+		case 2005:
 			std::cout << std::endl;
+			std::cout << "  == [ERROR HELP] ==" << std::endl;
+			std::cout << std::endl;
+			std::cout << "  The server host '" << host << "' could not be found" << std::endl;
+			std::cout << "  Possible reasons for this are:" << std::endl;
+			std::cout << "  - There is a typo in the host name" << std::endl;
+			std::cout << "  - The wrong config file has been loaded" << std::endl;
+			std::cout << std::endl;
+			if (!(host == "localhost" || host == "127.0.0.1")){
+				std::cout << "  The default host is 'localhost' or '127.0.0.1'" << std::endl;
+				std::cout << "  If you have not expicitly chosen something different," << std::endl;
+				std::cout << "  try this as host" << std::endl;
+				std::cout << std::endl;
+			}
+			
 			break;
 		}
 		return state;

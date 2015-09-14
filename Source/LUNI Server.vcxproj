@@ -106,6 +106,7 @@
     <ClInclude Include="ChatCommands.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Common\Utility\Config.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Faction.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="ChatCommands.cpp" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Common\Utility\Config.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="GameMessages.cpp" />

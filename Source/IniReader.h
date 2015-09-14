@@ -21,4 +21,5 @@ public:
 	IniSection * getSection(std::string section);
 	const std::vector<std::string> getSections();
 	IniFile(std::string filename);
+	~IniFile();
 };

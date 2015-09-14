@@ -168,6 +168,9 @@
     <ClInclude Include="IniReader.h">
       <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Common\Utility\Config.h">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -264,6 +267,9 @@
       <Filter>Source Files\Mechanics</Filter>
     </ClCompile>
     <ClCompile Include="IniReader.cpp">
+      <Filter>Source Files\Common\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\Utility\Config.cpp">
       <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
   </ItemGroup>

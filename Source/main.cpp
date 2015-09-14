@@ -18,6 +18,7 @@
 #include "Database.h"
 #include "AccountsDB.h"
 #include "IniReader.h"
+#include "Common\Utility\Config.h"
 
 #include <sys/stat.h>
 #include <conio.h>
@@ -37,111 +38,6 @@ enum ServerRole : unsigned char{
 	ROLE_AUTH,
 	ROLE_WORLD,
 };
-
-struct ConfigInfo{
-
-};
-
-//Test for file existence
-inline bool exists(const std::string& name) {
-	struct stat buffer;
-	return (stat(name.c_str(), &buffer) == 0);
-}
-
-std::string boolToString(bool value){
-	if (value) return "TRUE"; else return "FALSE";
-}
-
-// Load the config file (config.ini)
-void LoadConfig(std::string configFile, CONNECT_INFO& auth, CONNECT_INFO& world) {
-	bool plain = exists(configFile);
-	std::string locals = configFile.insert(0, ".\\");
-	bool local = exists(locals);
-	bool cfg = exists(".\\config.ini");	
-	
-	//char *cfile;
-
-	if (local){
-		configFile = locals;
-	}
-	else{
-		if (!plain){
-			if (cfg){
-				configFile = ".\\config.ini";
-			}else{
-				configFile = "";
-			}
-		}
-	}
-
-	Logger::log("MAIN", "CONFIG", "Using Config-File: '" + configFile + "'", LOG_DEBUG);
-
-	IniFile * config = new IniFile(configFile);
-
-	IniSection * Settings = config->getSection("Settings");
-	std::string redirect_ip = Settings->getStringValue("redirect_ip", "127.0.0.1");
-	bool use_encryption = Settings->getBoolValue("use_encryption", false);
-	bool log_file = Settings->getBoolValue("log_file", false);
-
-	Logger::log("MAIN", "CONFIG", "Settings/redirect_ip: " + redirect_ip, LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "Settings/use_encryption: " + boolToString(use_encryption), LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "Settings/log_file: " + boolToString(log_file), LOG_ALL);
-
-	IniSection * MySQL = config->getSection("MYSQL");
-
-	std::string mysql_host = MySQL->getStringValue("host", "localhost");
-	std::string mysql_db = MySQL->getStringValue("database", "luni");
-	std::string mysql_user = MySQL->getStringValue("username", "root");
-	std::string mysql_pass = MySQL->getStringValue("password", "");
-
-	Logger::log("MAIN", "CONFIG", "MYSQL/host: " + mysql_host, LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "MYSQL/database: " + mysql_db, LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "MYSQL/username: " + mysql_user, LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "MYSQL/password: " + mysql_pass, LOG_ALL);
-
-	IniSection * AuthConfig = config->getSection("Auth");
-
-	//This config option is actually useless, since the client ALWAYS connects to port 1001 initially
-	int auth_listen_port = AuthConfig->getIntValue("listen_port", 1001);
-	int auth_redirect_port = AuthConfig->getIntValue("redirect_port", 2002);
-
-	Logger::log("MAIN", "CONFIG", "AUTH/listen_port: " + std::to_string(auth_listen_port), LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "AUTH/redirect_port: " + std::to_string(auth_redirect_port), LOG_ALL);
-
-	IniSection * WorldConfig = config->getSection("World");
-
-	int wrld_listen_port = WorldConfig->getIntValue("listen_port", 1001);
-	int wrld_redirect_port = WorldConfig->getIntValue("redirect_port", 2002);
-
-	Logger::log("MAIN", "CONFIG", "WRLD/listen_port: " + std::to_string(wrld_listen_port), LOG_ALL);
-	Logger::log("MAIN", "CONFIG", "WRLD/redirect_port: " + std::to_string(wrld_redirect_port), LOG_ALL);
-
-	auth.listenPort = auth_listen_port;
-	auth.redirectPort = auth_redirect_port;
-	strcpy(auth.redirectIp, redirect_ip.c_str());
-	auth.useEncryption = use_encryption;
-	auth.logFile = log_file;
-
-	world.listenPort = wrld_listen_port;
-	world.redirectPort = wrld_redirect_port;
-	strcpy(world.redirectIp, redirect_ip.c_str());
-	world.useEncryption = use_encryption;
-	world.logFile = log_file;
-	
-	unsigned int state = Database::Connect(mysql_host, mysql_db, mysql_user, mysql_pass);
-	if (state > 0){
-		QuitError("Could not connect to MYSQL database");
-	}
-	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
-
-	if (redirect_ip == "127.0.0.1" || redirect_ip == "localhost"){
-		Logger::log("MAIN", "WARNING", "AUTH will redirect to localhost, meaning MULTIPLAYER will NOT WORK", LOG_WARNING);
-		Logger::log("MAIN", "WARNING", "To fix this, set 'redirect_ip' to the public IP of this computer", LOG_WARNING);
-	}
-	
-	// Print that the server loaded the config file!
-	Logger::log("MAIN", "CONFIG", "Loaded config!");
-}
 
 void ConsoleLoop(){
 	// If quit is ever equal to true, quit the server
@@ -230,7 +126,7 @@ int main(int argc, char* argv[]) {
 	
 	// Args parser
 	int state = 0;
-	char * configFile = "";
+	std::string configFile = "";
 	ServerRole Role = ROLE_CONSOLE;
 
 	for (int argi = 0; argi < argc; argi++){
@@ -252,11 +148,21 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	// Initialize the auth, character, and world CONNECT_INFO structs
-	CONNECT_INFO auth, world;
+	Configuration * config = new Configuration(configFile);
 
-	// Load the values for them and store them into their structs
-	LoadConfig(configFile, auth, world);
+	Settings settings = config->getSettings();
+	MySQLSettings mysql = config->getMySQLSettings();
+
+	unsigned int db_connect_result = Database::Connect(mysql.host, mysql.database, mysql.username, mysql.password);
+	if (db_connect_result > 0){
+		QuitError("Could not connect to MYSQL database");
+	}
+	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
+
+	if (settings.redirect_ip == "127.0.0.1" || settings.redirect_ip == "localhost"){
+		Logger::log("MAIN", "WARNING", "AUTH will redirect to localhost, meaning MULTIPLAYER will NOT WORK", LOG_WARNING);
+		Logger::log("MAIN", "WARNING", "To fix this, set 'redirect_ip' to the public IP of this computer", LOG_WARNING);
+	}
 
 	// Create the directory .//logs// if it does not exist
 	_mkdir("logs");
@@ -271,8 +177,16 @@ int main(int argc, char* argv[]) {
 	#endif
 
 	// Start the two new threads (Auth and World servers)
-	if (Role == ROLE_AUTH) AuthLoop(&auth);
-	if (Role == ROLE_WORLD) WorldLoop(&world);
+	if (Role == ROLE_AUTH){
+		CONNECT_INFO auth;
+		config->setServerSettings(auth, settings, std::string("Auth"));
+		AuthLoop(&auth);
+	}
+	if (Role == ROLE_WORLD){
+		CONNECT_INFO world;
+		config->setServerSettings(world, settings, std::string("World"));
+		WorldLoop(&world);
+	}
 	if (Role == ROLE_CONSOLE) ConsoleLoop();
 
 	exit(0);
