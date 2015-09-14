@@ -43,4 +43,4 @@ There are different kinds of "crashes" that can happen, so please pay attention 
 - The server displays an error in the log
 - The server does not recieve anything/shows nothing in the log
 
-> The LEGO® Group has not endorsed or authorized the operation of this game and is not liable for any safety issues in relation to the operation of this game. All files are under the General Public License, version 3, and are only for use on a non-commercial basis.
+> The LEGO® Group has not endorsed or authorized the operation of this game and is not liable for any safety issues in relation to the operation of this game.
