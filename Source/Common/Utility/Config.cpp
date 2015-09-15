@@ -38,6 +38,10 @@ Configuration::~Configuration(){
 	delete this->ini;
 }
 
+bool Configuration::isValid(){
+	return this->ini->isValid();
+}
+
 IniFile * Configuration::getConfigFile(){
 	return this->ini;
 }

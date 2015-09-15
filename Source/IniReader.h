@@ -20,6 +20,7 @@ class IniFile{
 public:
 	IniSection * getSection(std::string section);
 	const std::vector<std::string> getSections();
+	bool isValid();
 	IniFile(std::string filename);
 	~IniFile();
 };

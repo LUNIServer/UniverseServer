@@ -21,6 +21,7 @@ class Configuration{
 public:
 	Configuration(std::string configFile);
 	~Configuration();
+	bool isValid();
 	IniFile * getConfigFile();
 	Settings getSettings();
 	MySQLSettings getMySQLSettings();

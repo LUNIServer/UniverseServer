@@ -5,6 +5,7 @@
 #include <sstream>
 
 const bool IniSection::getBoolValue(std::string key, bool defaultValue){
+	if (this == NULL) return defaultValue;
 	std::unordered_map<std::string, std::string>::iterator it = this->values.find(key);
 	if (it != this->values.end()){
 		std::string data = it->second;
@@ -16,6 +17,7 @@ const bool IniSection::getBoolValue(std::string key, bool defaultValue){
 }
 
 const int IniSection::getIntValue(std::string key, int defaultValue){
+	if (this == NULL) return defaultValue;
 	std::unordered_map<std::string, std::string>::iterator it = this->values.find(key);
 	if (it != this->values.end()){
 		try {
@@ -31,6 +33,7 @@ const int IniSection::getIntValue(std::string key, int defaultValue){
 }
 
 const std::string IniSection::getStringValue(std::string key, std::string defaultValue){
+	if (this == NULL) return defaultValue;
 	std::unordered_map<std::string, std::string>::iterator it = this->values.find(key);
 	if (it != this->values.end()){
 		return it->second;
@@ -176,6 +179,10 @@ IniSection * IniFile::getSection(std::string section){
 	else{
 		return NULL;
 	}
+}
+
+bool IniFile::isValid(){
+	return this->valid;
 }
 
 IniFile::~IniFile(){

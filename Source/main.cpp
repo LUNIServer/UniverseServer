@@ -127,19 +127,41 @@ int main(int argc, char* argv[]) {
 	// Args parser
 	int state = 0;
 	std::string configFile = "";
+	std::string setting = "";
 	ServerRole Role = ROLE_CONSOLE;
 
 	for (int argi = 0; argi < argc; argi++){
 		std::string arg = std::string(argv[argi]);
 		Logger::log("MAIN", "ARGS", arg, LOG_ALL);
 		switch (state){
+		case 2:
+			{
+				bool f = true;
+				if (arg.size() > 1){
+					if (arg.substr(0, 2) == "--"){
+						f = false;
+					}
+				}
+				if (f){
+					setting = arg;
+					break;
+				}
+			}
 		case 0:
 			if (arg == "--config"){
 				state = 1;
 				Logger::log("WRLD", "ARGS", "config", LOG_ALL);
 			}
-			if (arg == "--world") Role = ROLE_WORLD;
-			if (arg == "--auth") Role = ROLE_AUTH;
+			if (arg == "--world"){
+				Role = ROLE_WORLD;
+				setting = "World";
+				state = 2;
+			}
+			if (arg == "--auth"){
+				Role = ROLE_AUTH;
+				setting = "Auth";
+				state = 2;
+			}
 			break;
 		case 1:
 			configFile = argv[argi];
@@ -149,6 +171,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	Configuration * config = new Configuration(configFile);
+
+	if (!config->isValid()){
+		Logger::log("MAIN", "CONFIG", "No config file has been loaded!", LOG_WARNING);
+		Logger::log("MAIN", "CONFIG", "Using default values.", LOG_WARNING);
+	}
 
 	Settings settings = config->getSettings();
 	MySQLSettings mysql = config->getMySQLSettings();
@@ -179,12 +206,12 @@ int main(int argc, char* argv[]) {
 	// Start the two new threads (Auth and World servers)
 	if (Role == ROLE_AUTH){
 		CONNECT_INFO auth;
-		config->setServerSettings(auth, settings, std::string("Auth"));
+		config->setServerSettings(auth, settings, setting);
 		AuthLoop(&auth);
 	}
 	if (Role == ROLE_WORLD){
 		CONNECT_INFO world;
-		config->setServerSettings(world, settings, std::string("World"));
+		config->setServerSettings(world, settings, setting);
 		WorldLoop(&world);
 	}
 	if (Role == ROLE_CONSOLE) ConsoleLoop();
