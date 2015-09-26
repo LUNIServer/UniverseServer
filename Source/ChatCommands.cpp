@@ -13,6 +13,9 @@
 #include "InventoryDB.h"
 #include "PlayerObject.h"
 #include "serverLoop.h"
+#include "time.h"
+
+#include <ctype.h>
 
 std::vector<ChatCommandHandler *> ChatCommandManager::ChatCommandHandlers;
 std::unordered_map<std::wstring, ChatCommandHandler *> ChatCommandManager::ChatCommands;
@@ -190,36 +193,47 @@ std::wstring WhisperCommandHandler::getSyntax(){
 
 void TestmapCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
 	if (params->size() > 0){
-		unsigned short argumentValue = std::stoi(params->at(0));
-		ZoneId zone = static_cast<ZoneId>(argumentValue);
-		Logger::log("WRLD", "CHAT", "Requesting teleport to " + std::to_string(argumentValue));
-		bool f = false;
-		if (getWorldTarget(zone).size() > 0){
-			if (zone != ZoneId::NO_ZONE && zone != ZoneId::KEELHAUL_CANYON){
-				COMPONENT1_POSITION pos = getZoneSpawnPoint(zone, static_cast<ZoneId>(s->zone));
-				f = Worlds::loadWorld(s->addr, zone, pos, 0, 0);
-				if (f){
-					Session::leave(s->activeCharId);
+		std::string checkZoneID = UtfConverter::ToUtf8(params->at(0));
+		bool flag = true;
+		for (unsigned int i = 0; i < checkZoneID.length(); i++){
+			if (!isdigit(checkZoneID.at(i)))
+				flag = false;
+		}
+		if (flag){
+			unsigned short argumentValue = std::stoi(params->at(0));
+			ZoneId zone = static_cast<ZoneId>(argumentValue);
+			Logger::log("WRLD", "CHAT", "Requesting teleport to " + std::to_string(argumentValue));
+			bool f = false;
+			if (getWorldTarget(zone).size() > 0){
+				if (zone != ZoneId::NO_ZONE && zone != ZoneId::KEELHAUL_CANYON){
+					COMPONENT1_POSITION pos = getZoneSpawnPoint(zone, static_cast<ZoneId>(s->zone));
+					f = Worlds::loadWorld(s->addr, zone, pos, 0, 0);
+					if (f){
+						Session::leave(s->activeCharId);
 
-					WorldPlace place;
-					place.zoneID = zone;
-					place.mapClone = 0;
-					place.mapInstance = 0;
-					place.x = pos.x;
-					place.y = pos.y;
-					place.z = pos.z;
-					CharactersTable::setCharactersPlace(s->activeCharId, place);
-					ObjectsManager::clientLeaveWorld(s->activeCharId, s->addr);
+						WorldPlace place;
+						place.zoneID = zone;
+						place.mapClone = 0;
+						place.mapInstance = 0;
+						place.x = pos.x;
+						place.y = pos.y;
+						place.z = pos.z;
+						CharactersTable::setCharactersPlace(s->activeCharId, place);
+						ObjectsManager::clientLeaveWorld(s->activeCharId, s->addr);
+					}
+					else{
+						Chat::sendChatMessage(s->addr, L"Cannot teleport to this zone");
+					}
 				}
 				else{
 					Chat::sendChatMessage(s->addr, L"Cannot teleport to this zone");
 				}
 			}
-			else{
-				Chat::sendChatMessage(s->addr, L"Cannot teleport to this zone");
+			if (!f){
+				Chat::sendChatMessage(s->addr, L"Cannot teleport to WorldID " + params->at(0));
 			}
 		}
-		if (!f){
+		else{
 			Chat::sendChatMessage(s->addr, L"Cannot teleport to WorldID " + params->at(0));
 		}
 	}
@@ -333,82 +347,114 @@ std::wstring ItemsCommandHandler::getSyntax(){
 
 void AddItemCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
 	if (params->size() == 2){
-		long lot = std::stoi(params->at(0));
-		unsigned long amount = std::stoi(params->at(1));
-
-		unsigned long slot = -1;
-		for (int i = 0; (slot == -1) && (i != 24); i++){
-			if (InventoryTable::getItemFromSlot(s->activeCharId, i) == -1)
-				slot = i;
+		std::string checkLOT = UtfConverter::ToUtf8(params->at(0));
+		std::string checkAmount = UtfConverter::ToUtf8(params->at(1));
+		bool flag = true;
+		for (unsigned int i = 0; i < checkLOT.length(); i++){
+			if (!isdigit(checkLOT.at(i)))
+				flag = false;
 		}
+		for (unsigned int i = 0; i < checkAmount.length(); i++){
+			if (!isdigit(checkAmount.at(i)))
+				flag = false;
+		}
+		if (flag){
+			long lot = std::stoi(params->at(0));
+			unsigned long amount = std::stoi(params->at(1));
 
-		if (slot == -1){
-			Chat::sendChatMessage(s->addr, L"Can't add requested item to your inventory. There aren't any free slots!");
+			unsigned long slot = -1;
+			for (int i = 0; (slot == -1) && (i != 24); i++){
+				if (InventoryTable::getItemFromSlot(s->activeCharId, i) == -1)
+					slot = i;
+			}
+
+			if (slot == -1){
+				Chat::sendChatMessage(s->addr, L"Can't add requested item to your inventory. There aren't any free slots!");
+			}
+			else{
+				long long objid = ObjectsTable::createObject(lot);
+				InventoryTable::insertItem(s->activeCharId, objid, amount, slot, false);
+				Chat::sendChatMessage(s->addr, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+			}
 		}
 		else{
-			long long objid = ObjectsTable::createObject(lot);
-			InventoryTable::insertItem(s->activeCharId, objid, amount, slot, false);
-			Chat::sendChatMessage(s->addr, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+			Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
 		}
 	}
 	else if (params->size() == 3){
-		long lot = std::stoi(params->at(0));
-		unsigned long amount = std::stoi(params->at(1));
-		std::string name = UtfConverter::ToUtf8(params->at(2));
+		std::string checkLOT = UtfConverter::ToUtf8(params->at(0));
+		std::string checkAmount = UtfConverter::ToUtf8(params->at(1));
+		bool flag = true;
+		for (unsigned int i = 0; i < checkLOT.length(); i++){
+			if (!isdigit(checkLOT.at(i)))
+				flag = false;
+		}
+		for (unsigned int i = 0; i < checkAmount.length(); i++){
+			if (!isdigit(checkAmount.at(i)))
+				flag = false;
+		}
+		if (flag){
+			long lot = std::stoi(params->at(0));
+			unsigned long amount = std::stoi(params->at(1));
+			std::string name = UtfConverter::ToUtf8(params->at(2));
 
-		bool found = false;
-		long long charid = CharactersTable::getObjidFromCharacter(name);
-		if (charid > 0){
-			SystemAddress addr = SessionsTable::findCharacter(charid);
-			if (addr != UNASSIGNED_SYSTEM_ADDRESS){
-				found = true;
+			bool found = false;
+			long long charid = CharactersTable::getObjidFromCharacter(name);
+			if (charid > 0){
+				SystemAddress addr = SessionsTable::findCharacter(charid);
+				if (addr != UNASSIGNED_SYSTEM_ADDRESS){
+					found = true;
 
-				unsigned long slot = -1;
-				for (int i = 0; (slot == -1) && (i != 24); i++){
-					if (InventoryTable::getItemFromSlot(charid, i) == -1)
-						slot = i;
-				}
-
-				if (slot == -1){
-					std::stringstream ss;
-					ss << "Can't add requested item to ";
-					ss << name;
-					ss << "'s inventory. There aren't any free slots!";
-
-					Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
-				}
-				else{
-					long long objid = ObjectsTable::createObject(lot);
-					InventoryTable::insertItem(charid, objid, amount, slot, false);
-
-					std::stringstream ss;
-					ss << "Successfully added the requested item to ";
-					ss << name;
-					ss << "'s inventory!";
-					Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
-
-					std::string source = "UNKNOWN";
-					
-					ListCharacterInfo c = CharactersTable::getCharacterInfo(s->activeCharId);
-					if (c.info.objid > 0){
-						source = c.info.name;
+					unsigned long slot = -1;
+					for (int i = 0; (slot == -1) && (i != 24); i++){
+						if (InventoryTable::getItemFromSlot(charid, i) == -1)
+							slot = i;
 					}
-					std::stringstream ss2;
-					ss2 << source;
-					ss2 << " added an item with LOT ";
-					ss2 << std::to_string(lot);
-					ss2 << " to your inventory. Please travel to another world or relog to reload your inventory.";
-					Chat::sendChatMessage(addr, UtfConverter::FromUtf8(ss2.str()));
+
+					if (slot == -1){
+						std::stringstream ss;
+						ss << "Can't add requested item to ";
+						ss << name;
+						ss << "'s inventory. There aren't any free slots!";
+
+						Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+					}
+					else{
+						long long objid = ObjectsTable::createObject(lot);
+						InventoryTable::insertItem(charid, objid, amount, slot, false);
+
+						std::stringstream ss;
+						ss << "Successfully added the requested item to ";
+						ss << name;
+						ss << "'s inventory!";
+						Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+
+						std::string source = "UNKNOWN";
+
+						ListCharacterInfo c = CharactersTable::getCharacterInfo(s->activeCharId);
+						if (c.info.objid > 0){
+							source = c.info.name;
+						}
+						std::stringstream ss2;
+						ss2 << source;
+						ss2 << " added an item with LOT ";
+						ss2 << std::to_string(lot);
+						ss2 << " to your inventory. Please travel to another world or relog to reload your inventory.";
+						Chat::sendChatMessage(addr, UtfConverter::FromUtf8(ss2.str()));
+					}
 				}
 			}
-		}
 
-		if (!found){
-			std::stringstream ss;
-			ss << "Can't add requested item to ";
-			ss << name;
-			ss << "'s inventory. Player not found/online!";
-			Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+			if (!found){
+				std::stringstream ss;
+				ss << "Can't add requested item to ";
+				ss << name;
+				ss << "'s inventory. Player not found/online!";
+				Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
 		}
 	}
 	else{
@@ -624,23 +670,34 @@ void AdminCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring
 
 		unsigned short maxLevel = AccountsTable::getRank(s->accountid);
 		unsigned short oldLevel = cinfo.info.gmlevel;
-		unsigned short newLevel = (unsigned char)std::stoi(params->at(0));
-		unsigned char success = 0;
-		if (newLevel <= maxLevel){
-			success = 1;
+		std::string checkLevel = UtfConverter::ToUtf8(params->at(0));
+		bool flag = true;
+		for (unsigned int i = 0; i < checkLevel.length(); i++){
+			if (!isdigit(checkLevel.at(i)))
+				flag = false;
+		}
+		if (flag){
+			unsigned short newLevel = (unsigned char)std::stoi(params->at(0));
+			unsigned char success = 0;
+			if (newLevel <= maxLevel){
+				success = 1;
+			}
+			else{
+				newLevel = oldLevel;
+			}
+
+			if (success == 1) CharactersTable::setGMlevel(s->activeCharId, newLevel);
+
+			RakNet::BitStream * packet = WorldServer::initPacket(RemoteConnection::CLIENT, 16);
+			packet->Write(success);
+			packet->Write(maxLevel);
+			packet->Write(oldLevel);
+			packet->Write(newLevel);
+			WorldServer::sendPacket(packet, s->addr);
 		}
 		else{
-			newLevel = oldLevel;
+			Chat::sendChatMessage(s->addr, L"Syntax: " + AdminCommandHandler::getSyntax());
 		}
-
-		if (success == 1) CharactersTable::setGMlevel(s->activeCharId, newLevel);
-		
-		RakNet::BitStream * packet = WorldServer::initPacket(RemoteConnection::CLIENT, 16);
-		packet->Write(success);
-		packet->Write(maxLevel);
-		packet->Write(oldLevel);
-		packet->Write(newLevel);
-		WorldServer::sendPacket(packet, s->addr);
 	}
 	else{
 		Chat::sendChatMessage(s->addr, L"Syntax: " + AdminCommandHandler::getSyntax());
