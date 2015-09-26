@@ -1,7 +1,5 @@
 #pragma once
 
-#include "SUtil\Common.h"
-
 enum LOT : long{
 	LOT_NONE = 0,
 	LOT_PLAYER = 1,
@@ -37,79 +35,79 @@ enum REPLICA_PACKET_TYPE{
 
 #pragma pack(push, 1)
 struct PLAYER_STATS{
-	ulonglong CurrencyCollected = 0;
-	ulonglong BricksCollected = 0;
-	ulonglong SmashablesSmashed = 0;
-	ulonglong QuickBuildsCompleted = 0;
-	ulonglong EnemiesSmashed = 0;
-	ulonglong RocketsUsed = 0;
-	ulonglong MissionsCompleted = 0;
-	ulonglong PetsTamed = 22;
-	ulonglong ImaginationPowerupsCollected = 0;
-	ulonglong LifePowerupsCollected = 0;
-	ulonglong ArmorPowerupsCollected = 0;
-	ulonglong DistanceTraveled = 0;
-	ulonglong Smashed = 0;
-	ulonglong DamageTaken = 0;
-	ulonglong DamageHealed = 0;
-	ulonglong ArmorRepaired = 0;
-	ulonglong ImaginationRestored = 0;
-	ulonglong ImaginationUsed = 0;
-	ulonglong DistanceDriven = 0;
-	ulonglong AirborneInRacecar = 0;
-	ulonglong RacingImaginationPowerupsCollected = 0;
-	ulonglong RacingImaginationCratesSmashed = 0;
-	ulonglong RaceCarBoostActivated = 0;
-	ulonglong WrecksInRaceCar = 0;
-	ulonglong RacingSmashablesSmashed = 0;
-	ulonglong RacesFinished = 0;
-	ulonglong Place1RacesFinishes = 0;
+	unsigned long long CurrencyCollected = 0;
+	unsigned long long BricksCollected = 0;
+	unsigned long long SmashablesSmashed = 0;
+	unsigned long long QuickBuildsCompleted = 0;
+	unsigned long long EnemiesSmashed = 0;
+	unsigned long long RocketsUsed = 0;
+	unsigned long long MissionsCompleted = 0;
+	unsigned long long PetsTamed = 22;
+	unsigned long long ImaginationPowerupsCollected = 0;
+	unsigned long long LifePowerupsCollected = 0;
+	unsigned long long ArmorPowerupsCollected = 0;
+	unsigned long long DistanceTraveled = 0;
+	unsigned long long Smashed = 0;
+	unsigned long long DamageTaken = 0;
+	unsigned long long DamageHealed = 0;
+	unsigned long long ArmorRepaired = 0;
+	unsigned long long ImaginationRestored = 0;
+	unsigned long long ImaginationUsed = 0;
+	unsigned long long DistanceDriven = 0;
+	unsigned long long AirborneInRacecar = 0;
+	unsigned long long RacingImaginationPowerupsCollected = 0;
+	unsigned long long RacingImaginationCratesSmashed = 0;
+	unsigned long long RaceCarBoostActivated = 0;
+	unsigned long long WrecksInRaceCar = 0;
+	unsigned long long RacingSmashablesSmashed = 0;
+	unsigned long long RacesFinished = 0;
+	unsigned long long Place1RacesFinishes = 0;
 };
 
 struct PLAYER_STYLE{
-	ulong hairColor = 0;
-	ulong hairStyle = 0;
-	ulong HD_HDC = 0;
-	ulong shirtColor = 0;
-	ulong pantsColor = 0;
-	ulong CD = 0;
-	ulong HDC_HD = 0;
-	ulong eyebrowsStyle = 0;
-	ulong eyesStyle = 0;
-	ulong mouthStyle = 0;
+	unsigned long hairColor = 0;
+	unsigned long hairStyle = 0;
+	unsigned long HD_HDC = 0;
+	unsigned long shirtColor = 0;
+	unsigned long pantsColor = 0;
+	unsigned long CD = 0;
+	unsigned long HDC_HD = 0;
+	unsigned long eyebrowsStyle = 0;
+	unsigned long eyesStyle = 0;
+	unsigned long mouthStyle = 0;
 };
 
 struct PLAYER_INFO{
-	ulonglong accountID = 0;
-	ulonglong llog = 0;
-	ulonglong unknown = 0;
-	ulonglong legoScore = 0;
+	unsigned long long accountID = 0;
+	unsigned long long llog = 0;
+	unsigned long long unknown = 0;
+	unsigned long long legoScore = 0;
 	bool isFreeToPlay = false;
 };
 
 struct REPLICA_INDEX29_6_DATA{
 	bool d29_6_1 = false;
 	bool d29_6_2 = false;
-	uchar d29_6_3 = 0;
+	unsigned char d29_6_3 = 0;
 	bool d29_6_4 = false;
-	uchar d29_6_5 = 0;
+	unsigned char d29_6_5 = 0;
 };
 
 struct REPLICA_INDEX29_8_DATA{
-	ulonglong d29_8_1 = 0;
-	uchar d29_8_2 = 0;
+	unsigned long long d29_8_1 = 0;
+	unsigned char d29_8_2 = 0;
 	bool d29_8_3 = true;
-	ulong d29_8_4 = 0xFFFFFFFF;
+	unsigned long d29_8_4 = 0xFFFFFFFF;
 };
 
 struct REPLICA_OBJECT_BASE{
-	ulonglong objid;
+	unsigned long long objid;
 	LOT LOT;
 };
 
 struct REPLICA_OBJECT_EQUIPMENT{
 	REPLICA_OBJECT_BASE obj;
-	ushort slot;
+	unsigned short slot;
 };
 
 struct REPLICA_OBJECT_POSITION{

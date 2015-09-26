@@ -42,7 +42,7 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 		std::stringstream s(row[1]);
 		long long cid;
 		s >> cid;
-		ushort id = std::stoi(row[0]);
+		unsigned short id = std::stoi(row[0]);
 		chars.push_back(cid);
 	}
 	return chars;
@@ -63,7 +63,7 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
+	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `objectID` = '" << std::to_string(objid) << "';";
@@ -79,7 +79,7 @@ ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 ListCharacterInfo CharactersTable::getCharacterInfo(std::string name){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
+	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `name` = '" << name << "';";
@@ -103,24 +103,25 @@ ListCharacterInfo CharactersTable::getCharacterInfo(MYSQL_RES *res){
 		i.info.unapprovedName = r[3];
 		if (std::stoi(r[4]) == 1) i.info.nameRejected = true;
 		if (std::stoi(r[5]) == 1) i.info.isFreeToPlay = true;
+		i.info.gmlevel = std::stoi(r[6]);
 		//Style
-		i.style.shirtColor = std::stoul(r[6]);
-		i.style.shirtStyle = std::stoul(r[7]);
-		i.style.pantsColor = std::stoul(r[8]);
-		i.style.hairStyle = std::stoul(r[9]);
-		i.style.hairColor = std::stoul(r[10]);
-		i.style.lh = std::stoul(r[11]);
-		i.style.rh = std::stoul(r[12]);
-		i.style.eyebrows = std::stoul(r[13]);
-		i.style.eyes = std::stoul(r[14]);
-		i.style.mouth = std::stoul(r[15]);
+		i.style.shirtColor = std::stoul(r[7]);
+		i.style.shirtStyle = std::stoul(r[8]);
+		i.style.pantsColor = std::stoul(r[9]);
+		i.style.hairStyle = std::stoul(r[10]);
+		i.style.hairColor = std::stoul(r[11]);
+		i.style.lh = std::stoul(r[12]);
+		i.style.rh = std::stoul(r[13]);
+		i.style.eyebrows = std::stoul(r[14]);
+		i.style.eyes = std::stoul(r[15]);
+		i.style.mouth = std::stoul(r[16]);
 		//Place
-		i.lastPlace.zoneID = std::stoi(r[16]);
-		i.lastPlace.mapInstance = std::stoi(r[17]);
-		i.lastPlace.mapClone = std::stoul(r[18]);
-		i.lastPlace.x = std::stof(r[19]);
-		i.lastPlace.y = std::stof(r[20]);
-		i.lastPlace.z = std::stof(r[21]);
+		i.lastPlace.zoneID = std::stoi(r[17]);
+		i.lastPlace.mapInstance = std::stoi(r[18]);
+		i.lastPlace.mapClone = std::stoul(r[19]);
+		i.lastPlace.x = std::stof(r[20]);
+		i.lastPlace.y = std::stof(r[21]);
+		i.lastPlace.z = std::stof(r[22]);
 	}
 	return i;
 }
@@ -154,7 +155,7 @@ std::vector<unsigned char> CharactersTable::getCharacterIndices(unsigned int acc
 	auto qr = Database::Query("SELECT `id`, `objectID` FROM `characters` WHERE `accountID` = " + std::to_string(accountid) + " LIMIT 4"); // Load chars from MySQL DB
 	MYSQL_ROW row;
 	while (row = mysql_fetch_row(qr)) {
-		uchar id = std::stoi(row[0]);
+		unsigned char id = std::stoi(row[0]);
 		chars.push_back(id);
 	}
 	return chars;
@@ -179,6 +180,12 @@ bool CharactersTable::unapprovedNameExists(std::string unapprovedname){
 		return false;
 	else
 		return true;
+}
+
+void CharactersTable::setGMlevel(long long objid, unsigned short newLevel){
+	std::stringstream str;
+	str << "UPDATE `characters` SET `gmlevel` = '" << std::to_string(newLevel) << "' WHERE `objectID` = '" << std::to_string(objid) << "'";
+	Database::Query(str.str());
 }
 
 void FriendsTable::requestFriend(long long sender, long long reciever){
@@ -352,7 +359,7 @@ std::vector<MISSION_DATA> MissionsTable::getMissions(long long charid){
 	auto qr2 = Database::Query(qr);
 	std::vector<MISSION_DATA> missions;
 	if (qr2 == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "getting mission", mysql_error(Database::getConnection()));
 	}
 	if (qr2 == NULL || mysql_num_rows(qr2) == 0)
 		return missions;
@@ -378,7 +385,7 @@ void MailsTable::addMail(MailData data){
 	query2 << data.subject << "', '" << data.text << "', '" << std::to_string(data.attachment) << "', '" << std::to_string(data.attachment_count) << "'); ";
 	auto a = Database::Query(query2.str());
 	if (a == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "adding mail", mysql_error(Database::getConnection()));
 	}
 }
 
@@ -394,7 +401,7 @@ std::vector<MailData> MailsTable::getMails(long long charid){
 	auto qr2 = Database::Query(qr);
 	std::vector<MailData> mails;
 	if (qr2 == NULL){
-		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
+		Logger::logError("CHDB", "MYSQL", "getting mails", mysql_error(Database::getConnection()));
 		return mails;
 	}
 	if (mysql_num_rows(qr2) == 0 || mysql_num_rows(qr2) == NULL)

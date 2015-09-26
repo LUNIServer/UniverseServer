@@ -106,12 +106,14 @@
     <ClInclude Include="ChatCommands.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Common\Utility\Config.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Faction.h" />
     <ClInclude Include="AuthPackets.h" />
     <ClInclude Include="CharPackets.h" />
     <ClInclude Include="GameMessages.h" />
+    <ClInclude Include="IniReader.h" />
     <ClInclude Include="InventoryDB.h" />
     <ClInclude Include="LDF.h" />
     <ClInclude Include="Logger.h" />
@@ -143,9 +145,11 @@
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="ChatCommands.cpp" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Common\Utility\Config.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="GameMessages.cpp" />
+    <ClCompile Include="IniReader.cpp" />
     <ClCompile Include="InventoryDB.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
@@ -177,9 +181,6 @@
   <ItemGroup>
     <ProjectReference Include="RakNet\RakNet.vcxproj">
       <Project>{767ceb9f-4c3d-46fc-a225-e0f3800dc29c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="SUtil\SUtil.vcxproj">
-      <Project>{c434487d-648f-4f94-9d66-6a9577b6c1cc}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

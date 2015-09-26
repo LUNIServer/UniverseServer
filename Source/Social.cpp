@@ -11,15 +11,15 @@
 
 std::pair<bool, std::string> Friends::sendFriendRequest(const std::string &sender, const std::string& reciever, bool bestFriendsRequest){
 	std::pair<bool, std::string> ret(true, "Friends Request posted");
-	std::cout << "[WRLD] [SOCIAL] Requesting Friend '" << sender << "' -> '" << reciever << "'" << std::endl;
-	if (bestFriendsRequest) std::cout << "[WRLD] [SOCIAL] This is a best-friend request" << std::endl;
+	Logger::log("GAME", "SOCIAL", "Requesting Friend '" + sender + "' -> '" + reciever + "'");
+	if (bestFriendsRequest) Logger::log("GAME", "SOCIAL", "This is a best-friend request");
 
 	long long userObjid = CharactersTable::getObjidFromCharacter(sender);
 	long long friendObjid = CharactersTable::getObjidFromCharacter(reciever);
 	
 	if (friendObjid > -1){
 		if (friendObjid != userObjid){
-			std::cout << "[WRLD] [SOCIAL] Friends: " << userObjid << " & " << friendObjid << std::endl;
+			Logger::log("GAME", "SOCIAL", "Friends: " + std::to_string(userObjid) + " & " + std::to_string(friendObjid), LOG_ALL);
 			std::string status1 = FriendsTable::getFriendsStatus(userObjid, friendObjid);
 			if (status1 == "INVALID"){
 				//Not Friends == both have to be invalid
@@ -74,7 +74,7 @@ std::pair<bool, std::string> Friends::sendFriendRequest(const std::string &sende
 		ret.second = "Character " + reciever + " does not exist";
 		ret.first = false;
 	}
-	std::cout << "[WRLD] [SOCIAL] " << ret.second << std::endl;
+	Logger::log("GAME", "SOCIAL", ret.second, LOG_ALL);
 	return ret;
 }
 
@@ -88,11 +88,11 @@ void Friends::sendFriendRequestResponse(long long sender, std::string reciever){
 	bool success = Friends::sendFriendRequestResponse(infoSender, infoReciever, status);
 
 	if (success){
-		std::cout << "[GAME] [SOCIAL] Sent Response packet, status: " << status << std::endl;
-		std::cout << "[GAME] [SOCIAL] Client IP: " << session.addr.ToString() << std::endl;
+		Logger::log("GAME", "SOCIAL", "Sent Response packet, status: " + status, LOG_DEBUG);
+		Logger::log("GAME", "SOCIAL", "Client IP: " + std::string(session.addr.ToString()), LOG_DEBUG);
 	}
 	else{
-		std::cout << "[GAME] [SOCIAL] Could not send Friend Response to player: Player not online" << std::endl;
+		Logger::log("GAME", "SOCIAL", "Could not send Friend Response to player: Player not online", LOG_DEBUG);
 	}
 }
 
@@ -100,7 +100,7 @@ void Friends::sendFriendRequestResponse(long long sender, std::string reciever){
 bool Friends::sendFriendRequestResponse(ListCharacterInfo tell, ListCharacterInfo about, std::string status){
 	SessionInfo infoTell = SessionsTable::getClientSession(SessionsTable::findCharacter(tell.info.objid));
 	if (infoTell.phase > SessionPhase::PHASE_AUTHENTIFIED){
-		std::cout << "[GAME] [SOCIAL] " << status << " for friend request between " << tell.info.name << " and " << about.info.name << std::endl;
+		Logger::log("GAME", "SOCIAL", status + " for friend request between " + tell.info.name + " and " + about.info.name, LOG_DEBUG);
 
 		unsigned char statusid = 3;
 		if (status == "FRIENDS") {
@@ -266,7 +266,7 @@ void Friends::broadcastFriendWorldChange(long long charid){
 void Friends::handleWorldJoin(long long charid){
 	SessionInfo info = SessionsTable::getClientSession(SessionsTable::findCharacter(charid));
 	if (info.worldJoin == 1){
-		std::cout << "[GAME] [SOCIAL] First world join" << std::endl;
+		Logger::log("GAME", "SOCIAL", "First world join");
 		Friends::sendFriendsList(charid);
 		Friends::broadcastFriendLogin(charid);
 	}
@@ -322,25 +322,20 @@ void Friends::handleFriendRequestResponse(long long responder, std::wstring name
 	ListCharacterInfo responderI = CharactersTable::getCharacterInfo(responder);
 	bool flag = false;
 	std::string status;
-	std::cout << "[GAME] [SOCIAL] ";
-	std::cout << "Character " << std::to_string(responder);
 	if (response == FriendRequestResponse::FRIEND_DECLINED){
-		std::cout << " Declined: ";
 		FriendsTable::decline(requesterI.info.objid, responderI.info.objid);
 		status = "DECLINED";
 		flag = true;
 	}
 	else if (response == FriendRequestResponse::FRIEND_ACCEPTED){
-		std::cout << " Accepted: ";
 		FriendsTable::accept(requesterI.info.objid, responderI.info.objid);
 		status = "ACCEPTED";
 		flag = true;
 	}
 	else{
-		std::cout << " Ignored: ";
+		status = "IGNORED";
 	}
-	std::wcout << name;
-	std::cout << std::endl;
+	Logger::log("GAME", "SOCIAL", "Character " + std::to_string(responder) + " " + status + ": " + UtfConverter::ToUtf8(name), LOG_DEBUG);
 
 	if (flag){
 		Friends::sendFriendRequestResponse(responderI, requesterI, status);
@@ -350,20 +345,20 @@ void Friends::handleFriendRequestResponse(long long responder, std::wstring name
 
 void Chat::sendChatMessage(SystemAddress addr, std::wstring message, std::wstring sender, bool isMythran){
 	RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CHAT, ChatPacketID::GENERAL_CHAT_MESSAGE);
-	uchar u8 = 0;
-	ushort u16 = 0;
-	ulong u32 = 0;
-	ulonglong u64 = 0;
+	unsigned char u8 = 0;
+	unsigned short u16 = 0;
+	unsigned long u32 = 0;
+	unsigned long long u64 = 0;
 
 	aw->Write(u64);
-	aw->Write((uchar)0x01);
+	aw->Write((unsigned char)0x01);
 	int len = message.size();
-	aw->Write((uchar)(len + 1));
+	aw->Write((unsigned char)(len + 1));
 	aw->Write(u16);
 	aw->Write(u8);
 
 	//Static size of sender name (66 bytes), gets cropped if too long
-	for (uint k = 0; k < 33; k++){
+	for (unsigned int k = 0; k < 33; k++){
 		if (k < sender.size()){
 			aw->Write(sender.at(k));
 		}
@@ -375,9 +370,9 @@ void Chat::sendChatMessage(SystemAddress addr, std::wstring message, std::wstrin
 	aw->Write((int)1); //sender Object id
 	aw->Write(u32);
 	aw->Write(u16); //??
-	aw->Write((uchar)isMythran); //isMythran
+	aw->Write((unsigned char)isMythran); //isMythran
 
-	for (uint k = 0; k < message.size(); k++){
+	for (unsigned int k = 0; k < message.size(); k++){
 		aw->Write(message.at(k));
 	}
 	aw->Write(u16);
@@ -398,7 +393,7 @@ void Chat::sendChatMessage(long long reciever, std::wstring message, std::wstrin
 void Chat::broadcastChatMessage(unsigned short zone, std::wstring message, std::wstring sender, bool isMythran){
 	std::vector<SessionInfo> sess = SessionsTable::getClientsInWorld(zone);
 	for (unsigned int k = 0; k < sess.size(); k++){
-		std::cout << "[GAME] [CHAT] Broadcast to " << std::to_string(sess.at(k).activeCharId) << std::endl;
+		Logger::log("GAME", "CHAT", "Broadcast to " + std::to_string(sess.at(k).activeCharId), LOG_DEBUG);
 		if (sess.at(k).phase > SessionPhase::PHASE_AUTHENTIFIED){
 			Chat::sendChatMessage(sess.at(k).addr, message, sender, isMythran);
 		}
@@ -429,7 +424,7 @@ void Chat::sendMythranInfo(long long reciever, std::string message, std::string 
 }
 
 void Mail::openMailbox(long long charid){
-	std::cout << "[GAME] [MAIL] Opening Postbox" << std::endl;
+	Logger::log("GAME", "MAIL", "Opening Postbox");
 	SystemAddress addr = SessionsTable::findCharacter(charid);
 	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
 		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
@@ -447,7 +442,7 @@ void Mail::openMailbox(long long charid){
 }
 
 void Mail::closeMailbox(long long charid){
-	std::cout << "[GAME] [MAIL] Closing Postbox" << std::endl;
+	Logger::log("GAME", "MAIL", "Closing Postbox");
 	SystemAddress addr = SessionsTable::findCharacter(charid);
 	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
 		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
@@ -464,7 +459,7 @@ void Mail::closeMailbox(long long charid){
 }
 
 void Mail::loadMailboxData(long long charid){
-	std::cout << "[GAME] [MAIL] Loading Mails" << std::endl;
+	Logger::log("GAME", "MAIL", "Loading Mails");
 	SystemAddress addr = SessionsTable::findCharacter(charid);
 	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
 		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MAIL_STUFF);
@@ -479,9 +474,7 @@ void Mail::loadMailboxData(long long charid){
 			PacketTools::WriteToPacket(aw, UtfConverter::FromUtf8(mails.at(k).subject), 50);
 			PacketTools::WriteToPacket(aw, UtfConverter::FromUtf8(mails.at(k).text), 400);
 			std::wstring s = UtfConverter::FromUtf8(mails.at(k).sender);
-			std::cout << "[GAME] [MAIL] Loading id " << std::to_string(mails.at(k).id) << " FROM ";
-			std::wcout << s;
-			std::cout << std::endl;
+			Logger::log("GAME", "MAIL", "Loading ID " + std::to_string(mails.at(k).id) + " FROM " + mails.at(k).sender, LOG_DEBUG);
 			PacketTools::WriteToPacket(aw, s, 32);
 			aw->Write((unsigned long)0);
 			aw->Write((unsigned long long)0);
@@ -511,7 +504,7 @@ void Mail::loadMailboxData(long long charid){
 }
 
 void Mail::sendMailSendResponse(long long charid, long status){
-	std::cout << "[GAME] [MAIL] Loading Mails" << std::endl;
+	Logger::log("GAME", "MAIL", "Loading Mails");
 	SystemAddress addr = SessionsTable::findCharacter(charid);
 	if (addr != UNASSIGNED_SYSTEM_ADDRESS){
 		RakNet::BitStream *aw = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MAIL_STUFF);
@@ -563,7 +556,7 @@ void Mail::deleteMail(long long mailid, long long charid){
 		aw->Write((unsigned long)8); //Mail ID
 		aw->Write((unsigned long)0); //return code
 		aw->Write(mailid);
-		std::cout << "[GAME] [MAIL] Send Mail " << std::to_string(mailid) << " delete confirm" << std::endl;
+		Logger::log("GAME", "MAIL", "Send Mail " + std::to_string(mailid) + " delete confirm", LOG_DEBUG);
 		WorldServer::sendPacket(aw, addr);
 	}
 }
@@ -575,7 +568,7 @@ void Mail::removeAttachment(long long mailid, long long charid){
 		aw->Write((unsigned long)6);
 		aw->Write((unsigned long)0);
 		aw->Write(mailid);
-		std::cout << "[GAME] [MAIL] Send Mail " << std::to_string(mailid) << " attachment remove confirm confirm" << std::endl;
+		Logger::log("GAME", "MAIL", "Send Mail " + std::to_string(mailid) + " attachment remove confirm confirm", LOG_DEBUG);
 		WorldServer::sendPacket(aw, addr);
 	}
 }

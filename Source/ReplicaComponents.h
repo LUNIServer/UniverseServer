@@ -4,7 +4,6 @@
 
 #include "RakNet\BitStream.h"
 #include "ReplicaDefinitions.h"
-#include "SUtil\Common.h"
 
 #include <vector>
 
@@ -19,29 +18,29 @@ public:
 //Component 1 Structs
 #pragma pack(push, 1)
 struct COMPONENT1_DATA1{
-	ulong d1 = 0;
+	unsigned long d1 = 0;
 	bool d2 = false;
 	bool d3 = false;
 };
 struct COMPONENT1_DATA2{
-	ulong d1 = 0;
-	ulong d2 = 0;
-	ulong d3 = 0;
-	ulong d4 = 0;
-	ulong d5 = 0;
-	ulong d6 = 0;
-	ulong d7 = 0;
+	unsigned long d1 = 0;
+	unsigned long d2 = 0;
+	unsigned long d3 = 0;
+	unsigned long d4 = 0;
+	unsigned long d5 = 0;
+	unsigned long d6 = 0;
+	unsigned long d7 = 0;
 };
 struct COMPONENT1_DATA3{
-	ulong d1 = 0;
-	ulong d2 = 0;
+	unsigned long d1 = 0;
+	unsigned long d2 = 0;
 };
 struct COMPONENT1_DATA4{
-	ulong d1 = 0;
+	unsigned long d1 = 0;
 	bool d2 = false;
 };
 struct COMPONENT1_DATA5{
-	ulong d1 = 0;
+	unsigned long d1 = 0;
 	bool d2 = false;
 };
 struct COMPONENT1_POSITION{
@@ -100,14 +99,14 @@ struct COMPONENT1_VELOCITY_ANGULAR{
 };
 struct COMPONENT1_DATA6_3{
 	long long objid;
-	ulong d2;
-	ulong d3;
-	ulong d4;
+	unsigned long d2;
+	unsigned long d3;
+	unsigned long d4;
 };
 struct COMPONENT1_DATA6_3_1{
-	ulong d1;
-	ulong d2;
-	ulong d3;
+	unsigned long d1;
+	unsigned long d2;
+	unsigned long d3;
 };
 #pragma pack(pop)
 
@@ -184,16 +183,16 @@ struct COMPONENT4_DATA3{
 struct COMPONENT4_DATA9{
 	bool d1 = false;
 	bool d2 = false;
-	uchar d3 = 0;
+	unsigned char d3 = 0;
 	bool d4 = false;
-	uchar d5 = 0;
+	unsigned char d5 = 0;
 };
 
 struct COMPONENT4_DATA11{
-	ulonglong d1 = 0;
-	uchar d2 = 0;
+	unsigned long long d1 = 0;
+	unsigned char d2 = 0;
 	bool d3 = true;
-	ulong d4 = 0xFFFFFFFF;
+	unsigned long d4 = 0xFFFFFFFF;
 };
 
 class Component4 : public ReplicaComponent{
@@ -201,22 +200,22 @@ private:
 	//Index 24
 	bool flag1;
 	bool flag1_1;
-	ulonglong data1_1;
-	uchar data1_2;
+	unsigned long long data1_1;
+	unsigned char data1_2;
 	//Index 27
 	bool hasLevel;
-	ulong level;
+	unsigned long level;
 	//Index 28
 	bool flag3;
 	COMPONENT4_DATA3 data3;
 	bool flag4;
-	ulonglong data4;
+	unsigned long long data4;
 	bool flag5;
-	ulonglong data5;
+	unsigned long long data5;
 	bool flag6;
-	ulonglong data6;
+	unsigned long long data6;
 	bool flag7;
-	ulonglong data7;
+	unsigned long long data7;
 	PLAYER_STYLE style;
 	PLAYER_INFO info;
 	PLAYER_STATS stats;
@@ -226,7 +225,7 @@ private:
 	bool flag9;
 	COMPONENT4_DATA9 data9;
 	bool flag10;
-	ulong data10;
+	unsigned long data10;
 	bool flag11;
 	COMPONENT4_DATA11 data11;
 public:
@@ -236,37 +235,37 @@ public:
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 
-	void setData1_1(ulonglong d1_1);
-	void setData1_2(uchar d1_2);
-	void setLevel(ulong lvl);
+	void setData1_1(unsigned long long d1_1);
+	void setData1_2(unsigned char d1_2);
+	void setLevel(unsigned long lvl);
 	void setData3(COMPONENT4_DATA3 d3);
-	void setData4(ulonglong d4);
-	void setData5(ulonglong d5);
-	void setData6(ulonglong d6);
-	void setData7(ulonglong d7);
+	void setData4(unsigned long long d4);
+	void setData5(unsigned long long d5);
+	void setData6(unsigned long long d6);
+	void setData7(unsigned long long d7);
 
 	void setStyle(PLAYER_STYLE style);
 	void setInfo(PLAYER_INFO info);
 	void setStats(PLAYER_STATS stats);
 	void setData8(std::wstring d8);
 	void setData9(COMPONENT4_DATA9 d9);
-	void setData10(ulong d10);
+	void setData10(unsigned long d10);
 	void setData11(COMPONENT4_DATA11 d11);
 
-	ulonglong getData1_1();
-	uchar getData1_2();
-	ulong getLevel();
+	unsigned long long getData1_1();
+	unsigned char getData1_2();
+	unsigned long getLevel();
 	COMPONENT4_DATA3 getData3();
-	ulonglong getData4();
-	ulonglong getData5();
-	ulonglong getData6();
-	ulonglong getData7();
+	unsigned long long getData4();
+	unsigned long long getData5();
+	unsigned long long getData6();
+	unsigned long long getData7();
 	PLAYER_STYLE getStyle();
 	PLAYER_INFO getInfo();
 	PLAYER_STATS getStats();
 	std::wstring getData8();
 	COMPONENT4_DATA9 getData9();
-	ulong getData10();
+	unsigned long getData10();
 	COMPONENT4_DATA11 getData11();
 };
 
@@ -274,9 +273,9 @@ public:
 
 #pragma region Component7
 struct COMPONENT7_DATA1{
-	ulong d1 = 0;
+	unsigned long d1 = 0;
 	bool d2f = false;
-	ulong d2 = 0;
+	unsigned long d2 = 0;
 	bool d3 = false;
 	bool d4 = false;
 	bool d5 = false;
@@ -287,14 +286,14 @@ struct COMPONENT7_DATA1{
 	bool d10 = false;
 	bool d11 = false; //flag für d13
 	bool d12 = false;
-	ulonglong d13 = 0;
-	ulong d14 = 0;
+	unsigned long long d13 = 0;
+	unsigned long d14 = 0;
 };
 
 struct COMPONENT7_DATA2{
-	ulong d1 = 0;
+	unsigned long d1 = 0;
 	bool d2f = false;
-	ulong d2 = 0;
+	unsigned long d2 = 0;
 	bool d3 = false;
 	bool d4 = false;
 	bool d5 = false;
@@ -305,30 +304,30 @@ struct COMPONENT7_DATA2{
 	bool d10 = false;
 	bool d11 = false; //flag für d13
 	bool d12 = false;
-	ulonglong d13 = 0;
-	ulong d14 = 0;
+	unsigned long long d13 = 0;
+	unsigned long d14 = 0;
 };
 
 struct COMPONENT7_DATA3{
-	ulong d1 = 0;
-	ulong d2 = 0;
-	ulong d3 = 0;
-	ulong d4 = 0;
-	ulong d5 = 0;
-	ulong d6 = 0;
-	ulong d7 = 0;
-	ulong d8 = 0;
-	ulong d9 = 0;
+	unsigned long d1 = 0;
+	unsigned long d2 = 0;
+	unsigned long d3 = 0;
+	unsigned long d4 = 0;
+	unsigned long d5 = 0;
+	unsigned long d6 = 0;
+	unsigned long d7 = 0;
+	unsigned long d8 = 0;
+	unsigned long d9 = 0;
 };
 
 struct COMPONENT7_DATA4{
-	ulong health = 4;
+	unsigned long health = 4;
 	float maxHealthN = 4.0F;
-	ulong armor = 0;
+	unsigned long armor = 0;
 	float maxArmorN = 0.0F;
-	ulong imagination = 0;
+	unsigned long imagination = 0;
 	float maxImaginationN = 0.0F;
-	ulong d7 = 0;
+	unsigned long d7 = 0;
 	bool d8 = false;
 	bool d9 = false;
 	bool d10 = false;
@@ -350,13 +349,13 @@ private:
 	COMPONENT7_DATA3 data3;
 	bool flag4;
 	COMPONENT7_DATA4 data4;
-	std::vector<ulong> data4_1;
+	std::vector<unsigned long> data4_1;
 	bool trigger;
 	bool data4_2;
 	bool data4_3;
 	bool data4_4_1;
 	bool flag4_4_2;
-	ulong data4_4_2;
+	unsigned long data4_4_2;
 	bool flag5;
 	bool data5;
 public:
@@ -369,12 +368,12 @@ public:
 	std::vector<COMPONENT7_DATA2> *getData2Ref();
 	COMPONENT7_DATA3 getData3();
 	COMPONENT7_DATA4 getData4();
-	std::vector<ulong> *getData4_1Ref();
+	std::vector<unsigned long> *getData4_1Ref();
 	bool getTrigger();
 	bool getData4_2();
 	bool getData4_3();
 	bool getData4_4_1();
-	ulong getData4_4_2();
+	unsigned long getData4_4_2();
 	bool getData5();
 	void setData3(COMPONENT7_DATA3 data3);
 	void setData4(COMPONENT7_DATA4 data4);
@@ -382,7 +381,7 @@ public:
 	void setData4_2(bool data4_2);
 	void setData4_3(bool data4_3);
 	void setData4_4_1(bool data4_4_1);
-	void setData4_4_2(ulong data4_4_2);
+	void setData4_4_2(unsigned long data4_4_2);
 	void setData5(bool data5);
 };
 #pragma endregion
@@ -391,27 +390,27 @@ public:
 struct COMPONENT17_EQUIPMENT{
 	long long objid = 0;
 	long lot = LOT::LOT_NONE;
-	ulonglong d3 = 0;
-	ulong d4 = 1; //Always 1?
-	ushort slot = 0;
-	ulong d6 = 4; //Always 4?
-	std::vector<uchar> d7;
+	unsigned long long d3 = 0;
+	unsigned long d4 = 1; //Always 1?
+	unsigned short slot = 0;
+	unsigned long d6 = 4; //Always 4?
+	std::vector<unsigned char> d7;
 	bool d8;
 };
 
 class Component17 : public ReplicaComponent{
 private:
 	std::vector<COMPONENT17_EQUIPMENT> equipment;
-	ulong data2 = 0; //May be a count for something
+	unsigned long data2 = 0; //May be a count for something
 public:
 	Component17();
 	~Component17();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
-	void setData2(ulong d2);
-	ulong getData2();
+	void setData2(unsigned long d2);
+	unsigned long getData2();
 	std::vector<COMPONENT17_EQUIPMENT> *getEquipment();
-	long equipItem(long long objid, ushort slot = 0);
+	long equipItem(long long objid, unsigned short slot = 0);
 	bool unequipItem(long long objid);
 };
 #pragma endregion

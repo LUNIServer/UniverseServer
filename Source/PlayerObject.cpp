@@ -11,7 +11,7 @@
 
 #include <map>
 
-extern ReplicaManager replicaManager;
+//extern ReplicaManager replicaManager;
 //extern std::map<SystemAddress, ZoneId> Player;
 
 PlayerObject::PlayerObject(long long objid, std::wstring name){
@@ -19,7 +19,7 @@ PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->name = name;
 	this->LOT = 1UL;
 
-	//The order is VERY IMPORTANT for the packet 1,7,4,17,9,2,107
+	//The order is VERY IMPORTANT for the packet: 1,7,4,17,9,2,107
 	this->addComponent(new Component1());
 	this->addComponent(new Component7());
 	this->addComponent(new Component4());

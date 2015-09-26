@@ -151,10 +151,10 @@ RocketInfo ObjectsTable::getRocketInfo(long long objid){
 std::vector<long long> EquipmentTable::getItems(long long charid){
 	auto qr = Database::Query("SELECT `object` FROM `equipment` WHERE `owner` = '" + std::to_string(charid) + "';");
 	
-	uint numrows = (uint)mysql_num_rows(qr);
+	unsigned int numrows = (uint)mysql_num_rows(qr);
 	std::vector<long long> items;
 	items.reserve(numrows);
-	for (uint k = 0; k < numrows; k++){
+	for (unsigned int k = 0; k < numrows; k++){
 		auto ftc = mysql_fetch_row(qr);
 		long long itemid = std::stoll(ftc[0]);
 		items.push_back(itemid);

@@ -1,13 +1,13 @@
 #include "Logger.h"
 
 #include "Common.h"
-#include "SUtil\Kbhit.h"
+#include <conio.h>
 #include <iomanip>
 
 using namespace std;
 
 // This converts raw hex data to a readable ASCII string
-string RawDataToString(uchar* data, uint size, bool onlyraw, ulong start) {
+string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw, unsigned long start) {
 	// Initialize the ostringstream buffer
 	ostringstream buffer;
 
@@ -15,7 +15,7 @@ string RawDataToString(uchar* data, uint size, bool onlyraw, ulong start) {
 	if (!onlyraw ) buffer << "Data in bytes: ";
 
 	// Copy the data into the stringstream
-	for (uint i = start; i < size; i++) {
+	for (unsigned int i = start; i < size; i++) {
 		if (!onlyraw) if ((i-start) % 16 == 0) buffer << "\n\t\t";
 		else if (!onlyraw) buffer << " ";
 		buffer << setw(2) << hex << setfill('0') << (int)data[i];
@@ -30,7 +30,7 @@ string RawDataToString(uchar* data, uint size, bool onlyraw, ulong start) {
 // Server QuitError
 void QuitError(const string& msg) {
 	Logger::log("ERROR", "TERMINATED", msg, LOG_ERROR);
-	Logger::log("ERROR", "TERMINATED", "PRESS ENTER TO QUIT", LOG_ERROR);
+	Logger::log("ERROR", "TERMINATED", "PRESS ANY KEY TO QUIT", LOG_ERROR);
 	while (!_kbhit());
 	exit(1);
 }

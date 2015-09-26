@@ -11,8 +11,8 @@
 using namespace RakNet;
 using namespace std;
 
-void CreatePacketHeader(MessageID messageId, ushort connectionType, ulong internalPacketId, BitStream *output) {
-	uchar unknown1 = 0; // This is an unknown uchar
+void CreatePacketHeader(MessageID messageId, unsigned short connectionType, unsigned long internalPacketId, BitStream *output) {
+	unsigned char unknown1 = 0; // This is an unknown unsigned char
 	
 	// Write data to provided BitStream
 	output->Write(messageId);
@@ -40,19 +40,19 @@ void SendInitPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddr
 }
 
 void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress, RakNet::BitStream * data, std::string SERVER){
-	ulong s_remoteConnectionType = 4;
+	unsigned long s_remoteConnectionType = 4;
 	if (SERVER == "AUTH") s_remoteConnectionType = 1;
-	ulong version;
+	unsigned long version;
 	data->Read(version);
-	ulong unknown;
+	unsigned long unknown;
 	data->Read(unknown);
-	ulong remoteConnectionType;
+	unsigned long remoteConnectionType;
 	data->Read(remoteConnectionType);
-	ulong processid;
+	unsigned long processid;
 	data->Read(processid);
-	ushort port;
+	unsigned short port;
 	data->Read(port);
-	std::vector<uchar> addv;
+	std::vector<unsigned char> addv;
 	addv.reserve(33);
 	bool flag = true;
 	std::string address = PacketTools::ReadStrFromPacket(data, 33); //Unused, no data
@@ -66,9 +66,9 @@ void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress
 	//Preparing answer:
 	RakNet::BitStream *aw = new RakNet::BitStream(59);
 	CreatePacketHeader(ID_USER_PACKET_ENUM, 0, 0, aw);
-	ulong s_version = 171022UL;
-	ulong s_unknown = 0x93;
-	ulong s_processid = GetCurrentProcessId();
+	unsigned long s_version = 171022UL;
+	unsigned long s_unknown = 0x93;
+	unsigned long s_processid = GetCurrentProcessId();
 	short s_unknown2 = -1; //port = 0xFFFF = -1 -> no port?
 	std::string s_ip = rakServer->GetLocalIP(0);
 	Logger::log(SERVER, "", "Server Handshake Response", LOG_DEBUG);
@@ -82,9 +82,9 @@ void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress
 	aw->Write(s_processid);
 	aw->Write(s_unknown2);
 
-	for (uchar k = 0; k < 33; k++){
-		if (k < s_ip.size()) aw->Write((uchar)s_ip.at(k));
-		else aw->Write((uchar)0);
+	for (unsigned char k = 0; k < 33; k++){
+		if (k < s_ip.size()) aw->Write((unsigned char)s_ip.at(k));
+		else aw->Write((unsigned char)0);
 	}
 	rakServer->Send(aw, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
 }
@@ -99,7 +99,7 @@ void WriteStringToBitStream(const char *myString, int stringSize, int maxChars, 
 
 	// If so, fill with 0x00
 	for (int i = 0; i < remaining; i++) {
-		uchar zero = 0;
+		unsigned char zero = 0;
 
 		output->Write(zero);
 	}
@@ -134,7 +134,7 @@ std::wstring PacketTools::ReadFromPacket(RakNet::BitStream *bs, unsigned int siz
 	std::vector<wchar_t> strv;
 	strv.reserve(size);
 	bool flag = true;
-	for (uint k = 0; k < size; k++){
+	for (unsigned int k = 0; k < size; k++){
 		wchar_t c;
 		bs->Read(c);
 		if (c == 0){
@@ -152,7 +152,7 @@ std::string PacketTools::ReadStrFromPacket(RakNet::BitStream *bs, unsigned int s
 	std::vector<char> strv;
 	strv.reserve(size);
 	bool flag = true;
-	for (uint k = 0; k < size; k++){
+	for (unsigned int k = 0; k < size; k++){
 		char c;
 		bs->Read(c);
 		if (c == 0){
@@ -187,8 +187,13 @@ void PacketTools::WriteToPacket(RakNet::BitStream *bs, std::string str, unsigned
 }
 
 void PacketTools::printRest(RakNet::BitStream *bs){
-	unsigned long bytes = ((bs->GetNumberOfUnreadBits() - 1) >> 3) + 1;
-	printBytes(bs, bytes);
+	if (bs->GetNumberOfUnreadBits() > 0){
+		unsigned long bytes = ((bs->GetNumberOfUnreadBits() - 1) >> 3) + 1;
+		printBytes(bs, bytes);
+	}
+	else{
+		Logger::log("DATA", "", "No Data", LOG_DEBUG);
+	}
 }
 
 void PacketTools::printBytes(RakNet::BitStream *bs, unsigned long number){
@@ -209,20 +214,20 @@ void PacketTools::printBytes(RakNet::BitStream *bs, unsigned long number){
 
 // ----- NOTE: THESE SHOULD NOT BE USED RIGHT NOW AS WINDOWS ALREADY WRITES IN LITTLE ENDIAN ----- //
 
-// Swap a ushort between little and big endian
-ushort SwapUShort(ushort number) {
-	ushort swappedNum = _byteswap_ushort(number);
+// Swap a unsigned short between little and big endian
+unsigned short SwapUShort(unsigned short number) {
+	unsigned short swappedNum = _byteswap_ushort(number);
 	return swappedNum;
 }
 
-ulong SwapULong(ulong number) {
-	ulong swappedNum = _byteswap_ulong(number);
+unsigned long SwapULong(unsigned long number) {
+	unsigned long swappedNum = _byteswap_ulong(number);
 	return swappedNum;
 }
 
-ulonglong SwapULongLong(ulonglong number) {
+unsigned long long SwapULongLong(unsigned long long number) {
 	unsigned __int64 numberToSwap = (unsigned __int64)number;
 	unsigned __int64 swappedNum = _byteswap_uint64(numberToSwap);
 
-	return (ulonglong)swappedNum;
+	return (unsigned long long)swappedNum;
 }

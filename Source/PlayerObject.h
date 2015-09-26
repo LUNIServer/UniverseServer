@@ -3,7 +3,6 @@
 #include "ReplicaData.h"
 #include "ReplicaComponents.h"
 
-#include "SUtil\Common.h"
 #include "RakNet\Replica.h"
 
 #include "ReplicaObject.h"

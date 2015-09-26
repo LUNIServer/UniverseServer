@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Common.h"
+//#include "Common.h"
 
 #include <iostream>
 
 // This is the ZoneID enum containing the World IDs
-enum ZoneId : ushort { 
+enum ZoneId : unsigned short { 
 	NO_ZONE = 0,
 	VENTURE_EXPLORER = 1000, VENTURE_EXPLORER_RETURN = 1001,
 	AVANT_GARDENS = 1100, AVANT_GARDENS_SURVIVAL = 1101, SPIDER_QUEEN_BATTLE = 1102, BLOCK_YARD = 1150, AVANT_GROVE = 1151,

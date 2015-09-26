@@ -68,8 +68,8 @@ void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAd
 }
 
 // Function to easily create extra packet data and write it to bitStream
-void CreateExtraPacketData(ulong stampId, signed long bracketNum, ulong afterNum, RakNet::BitStream *bitStream) {
-	ulong zeroPacket = 0;
+void CreateExtraPacketData(unsigned long stampId, signed long bracketNum, unsigned long afterNum, RakNet::BitStream *bitStream) {
+	unsigned long zeroPacket = 0;
 
 	bitStream->Write(stampId);
 	bitStream->Write(bracketNum);

@@ -13,18 +13,18 @@
 	The source is open and free under the GPL License, Version 3 for use on a non-commercial basis
 */
 
-#include "TimeUtil.h"
-
 #include "Common.h"
 #include "serverLoop.h"
 #include "Database.h"
 #include "AccountsDB.h"
+#include "IniReader.h"
+#include "Common\Utility\Config.h"
 
-#include "SUtil\IniReader.h"
-#include "SUtil\Kbhit.h"
-#include <thread>
 #include <sys/stat.h>
+#include <conio.h>
 #include "Logger.h"
+
+#include <sstream>
 
 #ifdef _WIN32
 	// For mkdir command
@@ -39,79 +39,6 @@ enum ServerRole : unsigned char{
 	ROLE_WORLD,
 };
 
-//Test for file existence
-inline bool exists(const std::string& name) {
-	struct stat buffer;
-	return (stat(name.c_str(), &buffer) == 0);
-}
-
-// Load the config file (config.ini)
-void LoadConfig(std::string configFile, CONNECT_INFO& auth, CONNECT_INFO& world) {
-	bool plain = exists(configFile);
-	std::string locals = configFile.insert(0, ".\\");
-	bool local = exists(locals);
-	bool config = exists(".\\config.ini");	
-	
-	char *cfile;
-
-	if (local){
-		configFile = locals;
-	}
-	else{
-		if (!plain){
-			if (config){
-				configFile = ".\\config.ini";
-			}else{
-				configFile = "";
-			}
-		}
-	}
-
-	cfile = new char[configFile.length() + 1];
-	strcpy(cfile, configFile.c_str());
-
-	Logger::log("MAIN", "CONFIG", "File: '" + std::string(cfile) + "'");
-	CIniReader iniReader(cfile); // Load config.ini
-	
-	strcpy(auth.redirectIp, iniReader.ReadString("Settings", "redirect_ip", "127.0.0.1")); // Copy the auth redirect IP from the file
-	strcpy(world.redirectIp, auth.redirectIp); // Copy the world redirect IP
-
-	Logger::log("MAIN", "CONFIG", "Server on IP " + std::string(auth.redirectIp));
-
-	// Get whether to use encryption
-	auth.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
-
-	// Get whether to use log file
-	auth.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
-
-	// NOTE: The default ports are the ports LU listens on / redirects on
-	// Changing these may result in the game not running properly!
-	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2003); // Get auth redirect port (default: 2002)
-	auth.listenPort = iniReader.ReadInteger("Auth", "listen_port", 1001); // Get auth listen port (default: 1001)
-
-	world.redirectPort = iniReader.ReadInteger("World", "redirect_port", 2004); // Get world redirect port (default: 2004)
-	world.listenPort = iniReader.ReadInteger("World", "listen_port", 2003); // Get world listen port (default: 2003)
-
-	// Try to connect to the database...
-	try {
-		char * db_host = iniReader.ReadString("MYSQL", "host", "localhost");
-		char * db_database = iniReader.ReadString("MYSQL", "database", "luni");
-		char * db_username = iniReader.ReadString("MYSQL", "username", "root");
-		char * db_password = iniReader.ReadString("MYSQL", "password", "");
-		Database::Connect(db_host, db_database, db_username, db_password);
-	}
-	// Otherwise, exit the server
-	catch (MySqlException& ex) {
-		QuitError(ex.what());
-	}
-	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
-
-	// Print that the server loaded the config file!
-	Logger::log("MAIN", "CONFIG", "Loaded config!");
-	
-	delete [] cfile;
-}
-
 void ConsoleLoop(){
 	// If quit is ever equal to true, quit the server
 	bool quit = false;
@@ -120,6 +47,7 @@ void ConsoleLoop(){
 	while (!quit) {
 		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
 			std::string command; // Initialize command string...
+			
 			std::cout << "> "; // Print "> " to show user where to type
 			std::cin >> command; // Get the command
 
@@ -141,7 +69,7 @@ void ConsoleLoop(){
 					std::cout << "Password: ";
 					std::cin >> password; // Get the password
 					// Create the new user into the database
-					ulonglong acid = AccountsTable::addAccount(username, password);
+					unsigned long long acid = AccountsTable::addAccount(username, password);
 					if (acid > 0){
 						std::stringstream str;
 						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
@@ -170,40 +98,70 @@ int main(int argc, char* argv[]) {
 	std::cout << "  LL       EE    EE   GG   GGGG   OO" << std::endl;
 	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO" << std::endl;
 	std::cout << std::endl;
-	std::cout << "  Custom  LEGO (c)  Universe  Server" << std::endl;
+	std::cout << "  Custom   LEGO    Universe   Server" << std::endl;
 	std::cout << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Originally created by raffa505" << std::endl;
 	std::cout << "Original project: luniserver.sf.net" << std::endl;
 	std::cout << "Github (main LUNI repo):" << std::endl << "github.com/jaller200/LUNIServerProject" << std::endl;
-	std::cout << "Github (this version only):" << std::endl << "github.com/dsuser97/LUNI-Latest-Dev" << std::endl;
+	std::cout << "Github (this version only):" << std::endl << "github.com/LUNIServer/UniverseServer" << std::endl;
 	std::cout << std::endl;
 	std::cout << "This version is based on Jon002s code." << std::endl;
 	std::cout << "This version is still very unstable!" << std::endl;
 	std::cout << "Don't be surprised if the server crashes!" << std::endl;
 	std::cout << "Please report any unreported issues on Github" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
-	std::cout << "Press enter type \"help\" and enter again for commands" << std::endl;
+	std::cout << "The  LEGO Group  has not  endorsed  or" << std::endl;
+	std::cout << "authorized the  operation of this game " << std::endl;
+	std::cout << "and  is  not  liable  for  any  safety" << std::endl;
+	std::cout << "issues in relation to the operation of" << std::endl;
+	std::cout << "this game." << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << " Type \"help\", then ENTER for commands" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Server Log" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
+	Logger::setLogFile("server.log");
 	Logger::log("MAIN", "", "Initializing LUNI test server...");
 	
 	// Args parser
 	int state = 0;
-	char * configFile = "";
+	std::string configFile = "";
+	std::string setting = "";
 	ServerRole Role = ROLE_CONSOLE;
 
 	for (int argi = 0; argi < argc; argi++){
 		std::string arg = std::string(argv[argi]);
 		Logger::log("MAIN", "ARGS", arg, LOG_ALL);
 		switch (state){
+		case 2:
+			{
+				bool f = true;
+				if (arg.size() > 1){
+					if (arg.substr(0, 2) == "--"){
+						f = false;
+					}
+				}
+				if (f){
+					setting = arg;
+					break;
+				}
+			}
 		case 0:
 			if (arg == "--config"){
 				state = 1;
-				Logger::log("WRLD", "ARGS", "config");
+				Logger::log("WRLD", "ARGS", "config", LOG_ALL);
 			}
-			if (arg == "--world") Role = ROLE_WORLD;
-			if (arg == "--auth") Role = ROLE_AUTH;
+			if (arg == "--world"){
+				Role = ROLE_WORLD;
+				setting = "World";
+				state = 2;
+			}
+			if (arg == "--auth"){
+				Role = ROLE_AUTH;
+				setting = "Auth";
+				state = 2;
+			}
 			break;
 		case 1:
 			configFile = argv[argi];
@@ -212,11 +170,26 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	// Initialize the auth, character, and world CONNECT_INFO structs
-	CONNECT_INFO auth, world;
+	Configuration * config = new Configuration(configFile);
 
-	// Load the values for them and store them into their structs
-	LoadConfig(configFile, auth, world);
+	if (!config->isValid()){
+		Logger::log("MAIN", "CONFIG", "No config file has been loaded!", LOG_WARNING);
+		Logger::log("MAIN", "CONFIG", "Using default values.", LOG_WARNING);
+	}
+
+	Settings settings = config->getSettings();
+	MySQLSettings mysql = config->getMySQLSettings();
+
+	unsigned int db_connect_result = Database::Connect(mysql.host, mysql.database, mysql.username, mysql.password);
+	if (db_connect_result > 0){
+		QuitError("Could not connect to MYSQL database");
+	}
+	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
+
+	if (settings.redirect_ip == "127.0.0.1" || settings.redirect_ip == "localhost"){
+		Logger::log("MAIN", "WARNING", "AUTH will redirect to localhost, meaning MULTIPLAYER will NOT WORK", LOG_WARNING);
+		Logger::log("MAIN", "WARNING", "To fix this, set 'redirect_ip' to the public IP of this computer", LOG_WARNING);
+	}
 
 	// Create the directory .//logs// if it does not exist
 	_mkdir("logs");
@@ -231,8 +204,16 @@ int main(int argc, char* argv[]) {
 	#endif
 
 	// Start the two new threads (Auth and World servers)
-	if (Role == ROLE_AUTH) AuthLoop(&auth);
-	if (Role == ROLE_WORLD) WorldLoop(&world);
+	if (Role == ROLE_AUTH){
+		CONNECT_INFO auth;
+		config->setServerSettings(auth, settings, setting);
+		AuthLoop(&auth);
+	}
+	if (Role == ROLE_WORLD){
+		CONNECT_INFO world;
+		config->setServerSettings(world, settings, setting);
+		WorldLoop(&world);
+	}
 	if (Role == ROLE_CONSOLE) ConsoleLoop();
 
 	exit(0);

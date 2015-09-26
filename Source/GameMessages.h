@@ -1,5 +1,4 @@
 #pragma once
-#include "SUtil\Common.h"
 #include "World.h"
 
 #include <string>
@@ -37,7 +36,7 @@ struct ObjectInformation{
 	}
 };
 
-std::string getSpeedchatMessage(ushort speedchatid);
+std::string getSpeedchatMessage(unsigned short speedchatid);
 ObjectInformation getObjectInformation(long long objectid);
 std::string getObjectDescription(ObjectInformation obj, long long objid = -1);
 ZoneId getLaunchPadTarget(ObjectInformation obj);

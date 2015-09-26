@@ -1,4 +1,6 @@
 #include "World.h"
+
+#include <string>
 using namespace std;
 
 // Write the World IDs of the worlds

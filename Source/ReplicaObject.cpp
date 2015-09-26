@@ -45,7 +45,7 @@ void ReplicaObject::writeToPacket(RakNet::BitStream * packet, REPLICA_PACKET_TYP
 		packet->Write(this->objid);
 		packet->Write(this->LOT);
 
-		packet->Write((uchar)this->name.size());
+		packet->Write((unsigned char)this->name.size());
 		for (unsigned int k = 0; k < this->name.size(); k++){
 			packet->Write(this->name.at(k));
 		}

@@ -8,8 +8,8 @@ void replicaPacketGeneral(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		Packet->Write(objid);
 		Packet->Write(1UL);
 
-		Packet->Write((uchar)name.size());
-		for (uint k = 0; k < name.size(); k++){
+		Packet->Write((unsigned char)name.size());
+		for (unsigned int k = 0; k < name.size(); k++){
 			Packet->Write(name.at(k));
 		}
 
@@ -23,7 +23,7 @@ void replicaPacketGeneral(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool isMythran = false;
 		Packet->Write(isMythran);
 		if (isMythran){
-			Packet->Write((uchar)2);
+			Packet->Write((unsigned char)2);
 		}
 	}
 	Packet->Write(true);
@@ -37,7 +37,7 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool flag_20_1 = false;
 		Packet->Write(flag_20_1);
 		if (flag_20_1){
-			ulong d20_1_1 = 0;
+			unsigned long d20_1_1 = 0;
 			bool d20_1_2 = false;
 			bool d20_1_3 = false;
 			Packet->Write(d20_1_1);
@@ -48,7 +48,7 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool flag_20_2 = true;
 		Packet->Write(flag_20_2);
 		if (flag_20_2){
-			for (uchar k = 0; k < 7; k++){ //Probably not actually a for-loop
+			for (unsigned char k = 0; k < 7; k++){ //Probably not actually a for-loop
 				Packet->Write(0UL);
 			}
 		}
@@ -57,8 +57,8 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool flag_20_3 = true;
 	Packet->Write(flag_20_3);
 	if (flag_20_3){
-		ulong d20_3_1 = 1065353216;
-		ulong d20_3_2 = 1065772647;
+		unsigned long d20_3_1 = 1065353216;
+		unsigned long d20_3_2 = 1065772647;
 		Packet->Write(d20_3_1);
 		Packet->Write(d20_3_2);
 	}
@@ -66,7 +66,7 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool flag_20_4 = true;
 	Packet->Write(flag_20_4);
 	if (flag_20_4){
-		ulong d20_4_1 = 0;
+		unsigned long d20_4_1 = 0;
 		Packet->Write(d20_4_1);
 		bool d20_4_2 = false;
 		Packet->Write(d20_4_2);
@@ -78,7 +78,7 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool d20_5_1 = false;
 		Packet->Write(d20_5_1);
 		if (d20_5_1){
-			ulong d20_5_1_1 = 0;
+			unsigned long d20_5_1_1 = 0;
 			Packet->Write(d20_5_1_1);
 			bool d20_5_1_2 = false;
 			Packet->Write(d20_5_1_2);
@@ -134,7 +134,7 @@ void replicaPacketLOT1i20(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool physical_d2 = false;
 		Packet->Write(physical_d2);
 		if (physical_d2){
-			ulonglong physical_d2_1 = 0;
+			unsigned long long physical_d2_1 = 0;
 			float physical_d2_2 = 0;
 			float physical_d2_3 = 0;
 			float physical_d2_4 = 0;
@@ -168,9 +168,9 @@ void replicaPacketLOT1i22(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool flag_22_1 = false;
 		Packet->Write(flag_22_1);
 		if (flag_22_1){
-			ulong d22_1_1 = 0;
+			unsigned long d22_1_1 = 0;
 			Packet->Write(d22_1_1);
-			for (ulong k = 0; k < d22_1_1; k++){
+			for (unsigned long k = 0; k < d22_1_1; k++){
 				//TODO implement loop
 				//See Documentation LOT 1 Index 22
 			}
@@ -179,9 +179,9 @@ void replicaPacketLOT1i22(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool flag_22_2 = false;
 		Packet->Write(flag_22_2);
 		if (flag_22_2){
-			ulong d22_2_1 = 0;
+			unsigned long d22_2_1 = 0;
 			Packet->Write(d22_2_1);
-			for (ulong k = 0; k < d22_2_1; k++){
+			for (unsigned long k = 0; k < d22_2_1; k++){
 				//TODO implement loop
 				//See Documentation LOT 1 Index 22
 			}
@@ -189,13 +189,13 @@ void replicaPacketLOT1i22(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	}
 }
 
-void replicaPacketLOT1i23(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetType, ulong health){
+void replicaPacketLOT1i23(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetType, unsigned long health){
 	if (packetType == REPLICA_CONSTRUCTION_PACKET){
 		bool flag23_1 = true;
 		Packet->Write(flag23_1);
 		if (flag23_1){
-			ulong d23_1[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-			for (uchar k = 0; k < 9; k++){
+			unsigned long d23_1[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			for (unsigned char k = 0; k < 9; k++){
 				Packet->Write(d23_1[k]);
 			}
 		}
@@ -204,13 +204,13 @@ void replicaPacketLOT1i23(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool hasPlayerStatus = true;
 	Packet->Write(hasPlayerStatus);
 	if (hasPlayerStatus){
-		ulong playerHealth = health;
+		unsigned long playerHealth = health;
 		float playerHealthMax = 9.0F;
-		ulong playerArmor = 0;
+		unsigned long playerArmor = 0;
 		float playerArmorMax = 0.0F;
-		ulong playerImagination = 0;
+		unsigned long playerImagination = 0;
 		float playerImaginationMax = 40.0F;
-		ulong playerUnknownStatusValue = 0; //Even that data type is not known
+		unsigned long playerUnknownStatusValue = 0; //Even that data type is not known
 
 		Packet->Write(playerHealth);
 		Packet->Write(playerHealthMax);
@@ -232,10 +232,10 @@ void replicaPacketLOT1i23(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		Packet->Write(playerArmorMax);
 		Packet->Write(playerImaginationMax);
 
-		ulong playerFactionCounterUnsure = 2;
+		unsigned long playerFactionCounterUnsure = 2;
 		Packet->Write(playerFactionCounterUnsure);
-		for (ulong k = 0; k < playerFactionCounterUnsure; k++){ //Could also be something else then a loop
-			ulong playerFactionIdUnsure = 1;
+		for (unsigned long k = 0; k < playerFactionCounterUnsure; k++){ //Could also be something else then a loop
+			unsigned long playerFactionIdUnsure = 1;
 			Packet->Write(playerFactionIdUnsure);
 		}
 
@@ -253,7 +253,7 @@ void replicaPacketLOT1i23(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 				Packet->Write(playerBit6);
 				Packet->Write(playerBit7);
 				if (playerBit7){
-					ulong playerUnknownStatusValue2 = 0;
+					unsigned long playerUnknownStatusValue2 = 0;
 					Packet->Write(playerUnknownStatusValue2);
 				}
 			}
@@ -275,11 +275,11 @@ void replicaPacketLOT1i24(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool d24_1_1 = false;
 		Packet->Write(d24_1_1);
 		if (d24_1_1){
-			ulonglong d24_1_1_1 = 0;
+			unsigned long long d24_1_1_1 = 0;
 			Packet->Write(d24_1_1_1);
 		}
 
-		uchar d24_1_2 = 0;
+		unsigned char d24_1_2 = 0;
 		Packet->Write(d24_1_2);
 	}
 }
@@ -288,7 +288,7 @@ void replicaPacketLOT1i27(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool updateLevel = true;
 	Packet->Write(updateLevel);
 	if (updateLevel){
-		ulong level = 42;
+		unsigned long level = 42;
 		Packet->Write(level);
 	}
 }
@@ -309,7 +309,7 @@ void replicaPacketLOT1i29(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		/*bool coFlag = true; //Not 100% known to be co
 		Packet->Write(coFlag);
 		if (coFlag){
-			ulonglong co = 65552;
+			unsigned long long co = 65552;
 			Packet->Write(co);
 		}
 
@@ -318,32 +318,32 @@ void replicaPacketLOT1i29(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		bool flag29_3 = false;
 		Packet->Write(flag29_1);
 		if (flag29_1){
-			ulonglong d29_1 = 0;
+			unsigned long long d29_1 = 0;
 			Packet->Write(d29_1);
 		}
 		Packet->Write(flag29_2);
 		if (flag29_2){
-			ulonglong d29_2 = 0;
+			unsigned long long d29_2 = 0;
 			Packet->Write(d29_2);
 		}
 		Packet->Write(flag29_3);
 		if (flag29_3){
-			ulonglong d29_3 = 0;
+			unsigned long long d29_3 = 0;
 			Packet->Write(d29_3);
 		}
 
 		Packet->Write(playerStyle);*/
 
-		/*ulong playerStyleHairColor = 96;
-		ulong playerStyleHairStyle = 4;
-		ulong playerStyleHD_HDC = 0; //hd or hdc? Unknown
-		ulong playerStyleShirtColor = 96;
-		ulong playerStylePantsColor = 6;
-		ulong playerStyleCD = 24; //cd? Unknown
-		ulong playerStyleHDC_HD = 0;//hdc or hd? Unknown
-		ulong playerStyleEyebrowsStyle = 20;
-		ulong playerStyleEyesStyle = 1;
-		ulong playerStyleMouthStyle = 8;*/
+		/*unsigned long playerStyleHairColor = 96;
+		unsigned long playerStyleHairStyle = 4;
+		unsigned long playerStyleHD_HDC = 0; //hd or hdc? Unknown
+		unsigned long playerStyleShirtColor = 96;
+		unsigned long playerStylePantsColor = 6;
+		unsigned long playerStyleCD = 24; //cd? Unknown
+		unsigned long playerStyleHDC_HD = 0;//hdc or hd? Unknown
+		unsigned long playerStyleEyebrowsStyle = 20;
+		unsigned long playerStyleEyesStyle = 1;
+		unsigned long playerStyleMouthStyle = 8;*/
 
 		/*Packet->Write(playerStyleHairColor);
 		Packet->Write(playerStyleHairStyle);
@@ -356,10 +356,10 @@ void replicaPacketLOT1i29(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		Packet->Write(playerStyleEyesStyle);
 		Packet->Write(playerStyleMouthStyle);*/
 
-		/*ulonglong accountID = 104116;
-		ulonglong llog = 1327707052;
-		ulonglong unknown = 0;
-		ulonglong legoScore = 100000; //Ingame Universe Points
+		/*unsigned long long accountID = 104116;
+		unsigned long long llog = 1327707052;
+		unsigned long long unknown = 0;
+		unsigned long long legoScore = 100000; //Ingame Universe Points
 
 		//Packet->Write(accountID);
 		//Packet->Write(llog);
@@ -406,7 +406,7 @@ void replicaPacketLOT1i29(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		if (!flag29_4 && flag29_5){
 			wstring d29_4_str = L"CheekyMonkey";
 			Packet->Write((UINT16)d29_4_str.size());
-			for (uint k = 0; k < d29_4_str.size(); k++){
+			for (unsigned int k = 0; k < d29_4_str.size(); k++){
 				Packet->Write(d29_4_str.at(k));
 			}
 		}*/
@@ -422,7 +422,7 @@ void replicaPacketLOT1i29(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool flag29_7 = true;
 	Packet->Write(flag29_7);
 	if (flag29_7){
-		ulong d29_7_1 = 0;
+		unsigned long d29_7_1 = 0;
 		Packet->Write(d29_7_1);
 	}
 
@@ -466,19 +466,19 @@ void replicaPacketLOT1i30(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 		vector<bool> flag30_5 = vector<bool>({ false, false, false, false });
 		vector<bool> flag30_6 = vector<bool>({ true, true, true, true });
 		
-		Packet->Write((ulong)playerEquipment.size());
+		Packet->Write((unsigned long)playerEquipment.size());
 
-		for (uint k = 0; k < playerEquipment.size(); k++){
+		for (unsigned int k = 0; k < playerEquipment.size(); k++){
 			Packet->Write(playerEquipment.at(k).obj.objid);
-			Packet->Write((ulong)playerEquipment.at(k).obj.LOT);
+			Packet->Write((unsigned long)playerEquipment.at(k).obj.LOT);
 			Packet->Write(flag30_1.at(k));
 			if (flag30_1.at(k)){
-				ulonglong unknown = 0;
+				unsigned long long unknown = 0;
 				Packet->Write(unknown);
 			}
 			Packet->Write(flag30_2.at(k));
 			if (flag30_2.at(k)){
-				ulong always1Unknown = 1;
+				unsigned long always1Unknown = 1;
 				Packet->Write(always1Unknown);
 			}
 			Packet->Write(flag30_3.at(k));
@@ -487,7 +487,7 @@ void replicaPacketLOT1i30(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 			}
 			Packet->Write(flag30_4.at(k));
 			if(flag30_4.at(k)){
-				ulong always4Unknown = 4;
+				unsigned long always4Unknown = 4;
 				Packet->Write(always4Unknown);
 			}
 			Packet->Write(flag30_5.at(k));
@@ -501,7 +501,7 @@ void replicaPacketLOT1i30(RakNet::BitStream *Packet, REPLICA_PACKET_TYPE packetT
 	bool flag30_7 = true;
 	Packet->Write(flag30_7);
 	if (flag30_7){
-		ulong d30_7_1 = 0;
+		unsigned long d30_7_1 = 0;
 		Packet->Write(d30_7_1);
 	}
 }

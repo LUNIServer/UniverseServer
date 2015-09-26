@@ -234,6 +234,10 @@ void AuthLoop(CONNECT_INFO* cfg) {
 		rakServer->AttachPlugin(msgFileHandler);
 	}
 
+	//for (int k = 0; k < 10; k++){
+	//	Logger::log("AUTH", "IP", std::string(rakServer->GetLocalIP(k)), LOG_DEBUG);
+	//}
+
 	// Initialize security IF user has enabled it in config.ini
 	InitSecurity(rakServer, cfg->useEncryption);
 
@@ -255,11 +259,11 @@ void AuthLoop(CONNECT_INFO* cfg) {
 	// Initialize the Packet class
 	Packet* packet;
 
-	//LUNI_AUTH = true;
+	bool LUNI_AUTH = true;
 
 	// LUNIterminate is the bool used to terminate threads.
 	// While it is false, the thread runs, but if it is true, the thread exits
-	while (!getTerminate()) {
+	while (LUNI_AUTH) {
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Get the packets from the client
 		if (packet == NULL) continue; // If the packet is null, just continue without processing anything
