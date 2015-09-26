@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS `mails` (
   `recipient_id` bigint(20) NOT NULL,
   `attachment` bigint(20) NOT NULL DEFAULT '0',
   `attachment_count` int(11) NOT NULL DEFAULT '0',
-  `sent_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `sent_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `is_read` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM AUTO_INCREMENT=37 DEFAULT CHARSET=latin1;
 
