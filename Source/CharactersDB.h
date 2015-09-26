@@ -2,8 +2,11 @@
 #include <my_global.h>
 #include <mysql.h>
 
+#include "Database.h"
+
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 struct WorldPlace{
 	unsigned short zoneID = 0; //default to NO_ZONE 
@@ -43,7 +46,7 @@ struct ListCharacterInfo{
 	CharacterInfo info;
 };
 
-class CharactersTable{
+class CharactersTable : public MySQLTable{
 private:
 	static ListCharacterInfo getCharacterInfo(MYSQL_RES *res);
 public:
@@ -59,9 +62,12 @@ public:
 	static long long add(CharacterStyle style, unsigned int accountid, CharacterInfo names);
 	static bool unapprovedNameExists(std::string unapprovedname);
 	static void setGMlevel(long long objid, unsigned short newLevel);
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
-class FriendsTable{
+class FriendsTable : public MySQLTable{
 public:
 	static void requestFriend(long long sender, long long reciever);
 	static void requestBestFriend(long long sender, long long reciever);
@@ -79,6 +85,9 @@ public:
 
 	static void accept(long long requester, long long accepter);
 	static void decline(long long requester, long long accepter);
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 struct MISSION_DATA{
@@ -87,9 +96,12 @@ struct MISSION_DATA{
 	time_t timestamp;
 };
 
-class MissionsTable{
+class MissionsTable : public MySQLTable{
 public:
 	static std::vector<MISSION_DATA> getMissions(long long charid);
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 struct MailData{
@@ -104,10 +116,13 @@ struct MailData{
 	bool read;
 };
 
-class MailsTable{
+class MailsTable : public MySQLTable{
 public:
 	static void setIsRead(long long mailid);
 	static void deleteMail(long long mailid);
 	static void addMail(MailData data);
 	static std::vector<MailData> getMails(long long charid);
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };

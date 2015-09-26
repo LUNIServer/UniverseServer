@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include "CharactersDB.h"
+#include "Database.h"
 #include "RakNet\RakNetTypes.h"
 
 struct AccountAccessInfo{
@@ -53,7 +54,7 @@ struct SessionInfo{
 //	}
 //};
 
-class AccountsTable{
+class AccountsTable : public MySQLTable{
 public:
 	//Returns the id of an Account, and 0 if nothing is found
 	static unsigned int getAccountID(std::string username);
@@ -73,6 +74,9 @@ public:
 	static std::string getAccountName(unsigned int accountid);
 
 	static unsigned char getRank(unsigned int accountid);
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 /*
@@ -81,7 +85,7 @@ public:
 	but is instead done via an internal std::unordered_map
 */
 
-class SessionsTable{
+class SessionsTable : public MySQLTable{
 private:
 	//static std::unordered_map<SystemAddress, SessionInfo, SystemAddressHasher> sessions;
 public:
@@ -111,4 +115,7 @@ public:
 	static SessionInfo leave(long long charid);
 
 	static unsigned int count();
+
+	std::string getName();
+	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };

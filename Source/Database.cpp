@@ -1,9 +1,30 @@
 #include "Database.h"
+#include "AccountsDB.h"
+#include "CharactersDB.h"
+#include "InventoryDB.h"
+#include "ServerDB.h"
 #include "Logger.h"
 #include <iostream>
 using namespace std;
 
 MYSQL * Database::_con = NULL; // Set MYSQL connection variable to NULL
+std::vector<MySQLTable *> Database::tables;
+
+ColData::ColData(std::string t, bool n, std::string k, std::string d, std::string e){
+	this->type = t;
+	this->null = n;
+	this->key = k;
+	this->default = d;
+	this->extra = e;
+};
+
+ColData::ColData(){
+	this->type = "";
+	this->null = false;
+	this->key = "";
+	this->default = "NULL";
+	this->extra = "";
+}
 
 // Connect to the MySQL database. Requires the host, database, DB user, and DB password to connect
 unsigned int Database::Connect(const string& host, const string& database, const string& username, const string& password) {
@@ -136,4 +157,160 @@ MYSQL_RES * Database::Query(const string & query) {
 
 MYSQL * Database::getConnection(){
 	return _con;
+}
+
+void Database::checkEnv(){
+	Logger::log("DBMS", "ENVCHECK", "Starting Database checks", LOG_NORMAL);
+	std::unordered_map<std::string, std::unordered_map<std::string, compare<ColData *> *> *> tableMap;
+
+	for (unsigned int j = 0; j < Database::tables.size(); j++){
+		MySQLTable * tbl = Database::tables.at(j);
+		std::string tblName = tbl->getName();
+		std::unordered_map<std::string, compare<ColData *> *> * map = new std::unordered_map<std::string, compare<ColData *> *>();
+		tableMap.insert(std::make_pair(tblName, map));
+		tbl->mapTable(map);
+	}
+
+	std::string sql = "SHOW TABLES";
+	MYSQL_RES * res = Database::Query(sql);
+	if (res != NULL){
+		tableMap.reserve((unsigned int)mysql_num_rows(res));
+		for (int i = 0; i < mysql_num_rows(res); i++){
+			MYSQL_ROW row = mysql_fetch_row(res);
+			std::string tblName = row[0];
+			std::unordered_map<std::string, compare<ColData *> *> * map;
+			std::unordered_map<std::string, std::unordered_map<std::string, compare<ColData *> * > * >::iterator it = tableMap.find(tblName);
+			//Logger::log("DBMS", "ENVCHECK", "Found Table: `" + tblName + "`", LOG_NORMAL);
+			if (it == tableMap.end()){
+				map = new std::unordered_map<std::string, compare<ColData *> *>();
+				tableMap.insert(std::make_pair(tblName, map));
+			}
+			else{
+				map = it->second;
+			}
+			
+			MYSQL_RES * res2;
+			std::string sql2 = "SHOW COLUMNS FROM `" + tblName + "`";
+			res2 = Database::Query(sql2);
+			if (res2 != NULL){
+				for (int i = 0; i < mysql_num_rows(res2); i++){
+					MYSQL_ROW row2 = mysql_fetch_row(res2);
+					std::string colName = row2[0];
+					
+					std::unordered_map<std::string, compare<ColData *> *>::iterator it2 = map->find(colName);
+					compare<ColData *> * cmp;
+					if (it2 == map->end()){
+						cmp = new compare<ColData *>();
+						map->insert(std::make_pair(colName, cmp));
+					}
+					else{
+						cmp = it2->second;
+					}
+
+					cmp->left = new ColData();
+					cmp->left->type = row2[1];
+					if (std::string(row2[2]) == "YES") cmp->left->null = true; else cmp->left->null = false;
+					if (row2[3]) cmp->left->key = row2[3];
+					if (row2[4]) cmp->left->default = row2[4];
+					if (row2[5]) cmp->left->extra = row2[5];
+
+					//Logger::log("DBMS", "ENVCHECK", "Found Column: `" + std::string(row2[0]) + "`", LOG_NORMAL);
+				}
+			}
+			mysql_free_result(res2);
+		}
+	}
+	mysql_free_result(res);
+
+	for (const auto & table_pair : tableMap) {
+		
+		bool tblRequired = false;
+		bool tblError = false;
+		std::unordered_map<std::string, compare<ColData *> *> map = *table_pair.second;
+		for (const auto & table_col_pair : map ) {
+			if (table_col_pair.second->right){
+				tblRequired = true;
+				if (table_col_pair.second->left){
+					//Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "`");
+					//Logger::log("DBMS", "ENVCHECK", "Checking match");
+					if (table_col_pair.second->right->default != table_col_pair.second->left->default){
+						Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` mismatching default");
+						tblError = true;
+					}
+					if (table_col_pair.second->right->extra != table_col_pair.second->left->extra){
+						Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` mismatching extra");
+						tblError = true;
+					}
+					if (table_col_pair.second->right->key != table_col_pair.second->left->key){
+						Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` mismatching key");
+						tblError = true;
+					}
+					if (table_col_pair.second->right->null != table_col_pair.second->left->null){
+						Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` mismatching null");
+						tblError = true;
+					}
+					if (table_col_pair.second->right->type != table_col_pair.second->left->type){
+						Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` mismatching type");
+						tblError = true;
+					}
+					//Compare:
+					//table_col_pair.second->right
+					//table_col_pair.second->left
+				}
+				else{
+					Logger::log("DBMS", "ENVCHECK", "Column: `" + table_col_pair.first + "` not provided");
+					tblError = true;
+				}
+			}
+			else{
+				//Logger::log("DBMS", "ENVCHECK", "Column not required");
+			}
+		}
+		if (!tblRequired){
+			Logger::log("DBMS", "ENVCHECK", "Table: `" + table_pair.first + "` not required");
+		}
+		else if (tblError){
+			Logger::log("DBMS", "ENVCHECK", "Table: `" + table_pair.first + "` not matching");
+		}
+		else{
+			Logger::log("DBMS", "ENVCHECK", "Table: `" + table_pair.first + "` matched");
+		}
+	}
+}
+
+void Database::registerTables(){
+	Database::tables.reserve(1);
+	//AccountsDB
+	Database::registerTable(new AccountsTable());
+	Database::registerTable(new SessionsTable());
+	//CharactersDB
+	Database::registerTable(new CharactersTable());
+	Database::registerTable(new FriendsTable());
+	Database::registerTable(new MissionsTable());
+	Database::registerTable(new MailsTable());
+	//InventoryDB
+	Database::registerTable(new InventoryTable());
+	Database::registerTable(new EquipmentTable());
+	Database::registerTable(new ObjectsTable());
+	//ServerDB
+	Database::registerTable(new InstancesTable());
+}
+
+void Database::registerTable(MySQLTable * table){
+	Database::tables.push_back(table);
+}
+
+void Database::addColToMap(std::unordered_map<std::string, compare<ColData *> *> * data, std::string colName, ColData * colData){
+	std::unordered_map<std::string, compare<ColData *> *>::iterator it;
+
+	compare<ColData *> * col;
+	it = data->find(colName);
+	if (it == data->end()){
+		col = new compare<ColData *>();
+		data->insert(std::make_pair(colName, col));
+	}
+	else{
+		col = it->second;
+	}
+	col->right = colData;
 }

@@ -65,6 +65,7 @@
       <AdditionalDependencies>ws2_32.lib;libmysql.lib;SUtil.lib;zdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>MySql\lib;ZLIB\lib;Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <ResourceCompile />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Auth|Win32'">
     <ClCompile>

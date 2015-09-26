@@ -25,6 +25,8 @@
 #include "Logger.h"
 
 #include <sstream>
+#include <iostream>
+#include <windows.h>
 
 #ifdef _WIN32
 	// For mkdir command
@@ -61,6 +63,10 @@ void ConsoleLoop(){
 				std::cout << str.str();
 			}
 			else if (command == "quit") quit = LUNIterminate = true;
+			else if (command == "envcheck"){
+				Database::registerTables();
+				Database::checkEnv();
+			}
 			else if (command == "register") {
 				std::string username, password;
 				std::cout << "Username: ";
@@ -86,41 +92,62 @@ void ConsoleLoop(){
 	}
 }
 
+void inset(unsigned char color){
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+	std::cout << "   ";
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+
+void color(unsigned char color){
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+
 // This is the entry point into the server (the main() function)
 int main(int argc, char* argv[]) {
 	// Print starting info to the console
+	std::cout << std::endl << std::endl;
+	inset(207);  std::cout << "                                      " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GG     GG   OO  " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GGG    GG   OO  " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GGGG   GG   OO  " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GG GG  GG   OO  " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GG  GG GG   OO  " << std::endl;
+	inset(207);  std::cout << "  LL       EE    EE   GG   GGGG   OO  " << std::endl;
+	inset(207);  std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO  " << std::endl;
+	inset(207);  std::cout << "                                      " << std::endl;
+	inset(207);  std::cout << "  Custom   LEGO    Universe   Server  " << std::endl;
+	inset(207);  std::cout << "                                      " << std::endl;
+	std::cout << std::endl << std::endl;
+	inset(15);  std::cout << "--------------------------------------" << std::endl;
 	std::cout << std::endl;
-	std::cout << "  LL       EE    EE   GG     GG   OO" << std::endl;
-	std::cout << "  LL       EE    EE   GGG    GG   OO" << std::endl;
-	std::cout << "  LL       EE    EE   GGGG   GG   OO" << std::endl;
-	std::cout << "  LL       EE    EE   GG GG  GG   OO" << std::endl;
-	std::cout << "  LL       EE    EE   GG  GG GG   OO" << std::endl;
-	std::cout << "  LL       EE    EE   GG   GGGG   OO" << std::endl;
-	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO" << std::endl;
+	inset(15); std::cout << "Original project by ";
+	color(13); std::cout << "raffa505";
+	color(15); std::cout << ": " << std::endl;
+	inset(11); std::cout << "luniserver.sf.net" << std::endl;
 	std::cout << std::endl;
-	std::cout << "  Custom   LEGO    Universe   Server" << std::endl;
+	inset(15); std::cout << "LUNIServer Github:" << std::endl;
+	inset(11); std::cout << "github.com/LUNIServer/UniverseServer" << std::endl;
+	inset(15); std::cout << std::endl;
+	inset(15); std::cout << "This software  is still  very unstable" << std::endl;
+	inset(15); std::cout << "and  may  crash  at  any  time. Please" << std::endl;
+	inset(15); std::cout << "report any unreported issues on Github" << std::endl;
 	std::cout << std::endl;
-	std::cout << "--------------------------------------" << std::endl;
-	std::cout << "Originally created by raffa505" << std::endl;
-	std::cout << "Original project: luniserver.sf.net" << std::endl;
-	std::cout << "Github (main LUNI repo):" << std::endl << "github.com/jaller200/LUNIServerProject" << std::endl;
-	std::cout << "Github (this version only):" << std::endl << "github.com/LUNIServer/UniverseServer" << std::endl;
+	inset(15); std::cout << "--------------------------------------" << std::endl;
 	std::cout << std::endl;
-	std::cout << "This version is based on Jon002s code." << std::endl;
-	std::cout << "This version is still very unstable!" << std::endl;
-	std::cout << "Don't be surprised if the server crashes!" << std::endl;
-	std::cout << "Please report any unreported issues on Github" << std::endl;
-	std::cout << "--------------------------------------" << std::endl;
-	std::cout << "The  LEGO Group  has not  endorsed  or" << std::endl;
-	std::cout << "authorized the  operation of this game " << std::endl;
-	std::cout << "and  is  not  liable  for  any  safety" << std::endl;
-	std::cout << "issues in relation to the operation of" << std::endl;
-	std::cout << "this game." << std::endl;
-	std::cout << "--------------------------------------" << std::endl;
-	std::cout << " Type \"help\", then ENTER for commands" << std::endl;
+	inset(15); std::cout << "LUNI is licensed under the AGPLv3:" << std::endl;
+	inset(11); std::cout << "www.gnu.org/licenses/agpl-3.0.html  " << std::endl;
 	std::cout << std::endl;
-	std::cout << "Server Log" << std::endl;
-	std::cout << "--------------------------------------" << std::endl;
+	inset(15); std::cout << "The  LEGO Group  has  not  endorsed or" << std::endl;
+	inset(15); std::cout << "authorized the  operation of this game" << std::endl;
+	inset(15); std::cout << "and  is  not  liable  for  any  safety" << std::endl;
+	inset(15); std::cout << "issues in relation to the operation of" << std::endl;
+	inset(15); std::cout << "game." << std::endl;
+	std::cout << std::endl;
+	inset(15); std::cout << "--------------------------------------" << std::endl;
+	color(7); std::cout << std::endl << std::endl;
+	
+	std::cout << " Server Log" << std::endl;
+	std::cout << "-----------------------------------------" << std::endl;
 	Logger::setLogFile("server.log");
 	Logger::log("MAIN", "", "Initializing LUNI test server...");
 	
