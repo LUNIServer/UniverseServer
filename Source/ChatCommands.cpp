@@ -535,7 +535,7 @@ void AttributeCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wst
 		}
 		PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
 		if (player != NULL){
-			Component7 * c7 = player->getComponent7();
+			DestructibleComponent * c7 = player->getComponent7();
 			COMPONENT7_DATA4 d4 = c7->getData4();
 			if (attr == L"health"){
 				d4.health = value;

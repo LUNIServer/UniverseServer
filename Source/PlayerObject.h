@@ -14,11 +14,11 @@ public:
 	PlayerObject(long long objid, std::wstring name);
 
 	// -- Components --
-	Component1 *getComponent1();
-	Component7 *getComponent7();
-	Component4 *getComponent4();
-	Component17 *getComponent17();
-	Component9 *getComponent9();
-	Component2 *getComponent2();
-	Component107 *getComponent107();
+	ControllablePhysicsComponent *getComponent1();
+	DestructibleComponent *getComponent7();
+	CharacterComponent *getComponent4();
+	InventoryComponent *getComponent17();
+	SkillComponent *getComponent9();
+	RenderComponent *getComponent2();
+	Index36Component *getComponent107();
 };
