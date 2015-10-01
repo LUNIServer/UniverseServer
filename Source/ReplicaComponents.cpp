@@ -1022,7 +1022,7 @@ void BouncerComponent::writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_T
 	}
 }
 
-unsigned int getComponentID(){ return 6; }
+unsigned int BouncerComponent::getComponentID(){ return 6; }
 
 bool BouncerComponent::getFlag1(){ return flag1; }
 bool BouncerComponent::getData1(){ return data1; }
