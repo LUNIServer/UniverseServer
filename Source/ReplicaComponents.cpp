@@ -1121,6 +1121,7 @@ void RacingControlComponent::writeToPacket(RakNet::BitStream *packet, REPLICA_PA
 			packet->Write(data1.racecarObjID);
 			packet->Write(data1.data1);
 			packet->Write(data1.data2);
+			break;
 		}
 	}
 
@@ -1132,6 +1133,7 @@ void RacingControlComponent::writeToPacket(RakNet::BitStream *packet, REPLICA_PA
 
 			packet->Write(data2.playerObjID);
 			packet->Write(data2.data1);
+			break;
 		}
 	}
 
