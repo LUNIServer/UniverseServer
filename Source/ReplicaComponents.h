@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ReplicaDefinitions.h"
-
 #include "RakNet\BitStream.h"
 #include "ReplicaDefinitions.h"
 
@@ -14,7 +12,45 @@ public:
 	virtual unsigned int getComponentID() = 0;
 };
 
-#pragma region Component1
+#pragma region Componet108 (Name Unknown)
+
+class Component108 : public ReplicaComponent {
+private:
+	bool flag1;
+	bool flag2;
+	long long driverObjID;
+	bool flag3;
+	long data3_1;
+	bool data4;
+public:
+	Component108();
+	~Component108();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	bool getFlag2();
+	long long getDriverObjID();
+	bool getFlag3();
+	long getData3_1();
+	bool getData4();
+
+	void setFlag1(bool flag1);
+	void setFlag2(bool flag2);
+	void setDriverObjID(long long driverObjID);
+	void setFlag3(bool flag3);
+	void setData3_1(long data3_1);
+	void setData4(bool data4);
+};
+
+#pragma endregion
+
+// No data has been discovered for this component...
+#pragma region ModuleAssemblyComponent (Component Unknown)
+
+#pragma endregion
+
+#pragma region ControllablePhysicsComponent (Component 1)
 //Component 1 Structs
 #pragma pack(push, 1)
 struct COMPONENT1_DATA1{
@@ -111,7 +147,7 @@ struct COMPONENT1_DATA6_3_1{
 #pragma pack(pop)
 
 //Component 1 - Position&Movement
-class Component1 : public ReplicaComponent{
+class ControllablePhysicsComponent : public ReplicaComponent{
 private:
 	bool flag1;
 	COMPONENT1_DATA1 data1;
@@ -136,8 +172,8 @@ private:
 	COMPONENT1_DATA6_3_1 data6_3_1;
 	bool flag6_4;
 public:
-	Component1();
-	~Component1();
+	ControllablePhysicsComponent();
+	~ControllablePhysicsComponent();
 
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
@@ -173,105 +209,280 @@ public:
 };
 #pragma endregion
 
-#pragma region Component4
+#pragma region SimplePhysicsComponent (Component 3)
 
-struct COMPONENT4_DATA3{
-	bool d1 = false;
-	bool d2 = false;
+struct COMPONENT3_POSITION {
+	float posX;
+	float posY;
+	float posZ;
+
+	COMPONENT3_POSITION(float x, float y, float z) {
+		this->posX = x; this->posY = y; this->posZ = z;
+	}
+
+	COMPONENT3_POSITION() {
+		this->posX = 0; this->posY = 0; this->posZ = 0;
+	}
+
+	bool isNull() {
+		return (this->posX == 0 && this->posY == 0 && this->posZ == 0);
+	}
 };
 
-struct COMPONENT4_DATA9{
-	bool d1 = false;
-	bool d2 = false;
-	unsigned char d3 = 0;
-	bool d4 = false;
-	unsigned char d5 = 0;
+struct COMPONENT3_ROTATION {
+	float rotX;
+	float rotY;
+	float rotZ;
+	float rotW;
+
+	COMPONENT3_ROTATION() {
+		this->rotX = 0; this->rotY = 0; this->rotZ = 0; this->rotW = 0;
+	}
+
+	COMPONENT3_ROTATION(float x, float y, float z, float w) {
+		this->rotX = x; this->rotY = y; this->rotZ = z; this->rotW = w;
+	}
+
+	bool isNull() {
+		return (this->rotX == 0 && this->rotY == 0 && this->rotZ == 0 && this->rotW == 0);
+	}
 };
 
-struct COMPONENT4_DATA11{
-	unsigned long long d1 = 0;
-	unsigned char d2 = 0;
-	bool d3 = true;
-	unsigned long d4 = 0xFFFFFFFF;
-};
-
-class Component4 : public ReplicaComponent{
+class SimplePhysicsComponent : public ReplicaComponent {
 private:
-	//Index 24
-	bool flag1;
-	bool flag1_1;
-	unsigned long long data1_1;
-	unsigned char data1_2;
-	//Index 27
-	bool hasLevel;
-	unsigned long level;
-	//Index 28
+	bool flag1; // Creation only
+	int data1; // Creation only
+	bool flag2;
+	int data2_1;
+	int data2_2;
+	int data2_3;
+	int data2_4;
+	int data2_5;
+	int data2_6;
 	bool flag3;
-	COMPONENT4_DATA3 data3;
+	int data3;
 	bool flag4;
-	unsigned long long data4;
-	bool flag5;
-	unsigned long long data5;
-	bool flag6;
-	unsigned long long data6;
-	bool flag7;
-	unsigned long long data7;
-	PLAYER_STYLE style;
-	PLAYER_INFO info;
-	PLAYER_STATS stats;
-	bool flag8a;
-	bool flag8b;
-	std::wstring data8;
-	bool flag9;
-	COMPONENT4_DATA9 data9;
-	bool flag10;
-	unsigned long data10;
-	bool flag11;
-	COMPONENT4_DATA11 data11;
+	COMPONENT3_POSITION position;
+	COMPONENT3_ROTATION rotation;
 public:
-	Component4();
-	~Component4();
-
+	SimplePhysicsComponent();
+	~SimplePhysicsComponent();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 
-	void setData1_1(unsigned long long d1_1);
-	void setData1_2(unsigned char d1_2);
-	void setLevel(unsigned long lvl);
-	void setData3(COMPONENT4_DATA3 d3);
-	void setData4(unsigned long long d4);
-	void setData5(unsigned long long d5);
-	void setData6(unsigned long long d6);
-	void setData7(unsigned long long d7);
+	bool getFlag1();
+	int getData1();
+	bool getFlag2();
+	int getData2_1();
+	int getData2_2();
+	int getData2_3();
+	int getData2_4();
+	int getData2_5();
+	int getData2_6();
+	bool getFlag3();
+	int getData3();
+	bool getFlag4();
+	COMPONENT3_POSITION getPosition();
+	COMPONENT3_ROTATION getRotation();
 
-	void setStyle(PLAYER_STYLE style);
-	void setInfo(PLAYER_INFO info);
-	void setStats(PLAYER_STATS stats);
-	void setData8(std::wstring d8);
-	void setData9(COMPONENT4_DATA9 d9);
-	void setData10(unsigned long d10);
-	void setData11(COMPONENT4_DATA11 d11);
+	void setFlag1(bool flag1);
+	void setData1(int data1);
+	void setFlag2(bool flag2);
+	void setData2_1(int data2_1);
+	void setData2_2(int data2_2);
+	void setData2_3(int data2_3);
+	void setData2_4(int data2_4);
+	void setData2_5(int data2_5);
+	void setData2_6(int data2_6);
+	void setFlag3(bool flag3);
+	void setData3(int data3);
+	void setFlag4(bool flag4);
+	void setPosition(COMPONENT3_POSITION position);
+	void setRotation(COMPONENT3_ROTATION rotation);
 
-	unsigned long long getData1_1();
-	unsigned char getData1_2();
-	unsigned long getLevel();
-	COMPONENT4_DATA3 getData3();
-	unsigned long long getData4();
-	unsigned long long getData5();
-	unsigned long long getData6();
-	unsigned long long getData7();
-	PLAYER_STYLE getStyle();
-	PLAYER_INFO getInfo();
-	PLAYER_STATS getStats();
-	std::wstring getData8();
-	COMPONENT4_DATA9 getData9();
-	unsigned long getData10();
-	COMPONENT4_DATA11 getData11();
 };
 
 #pragma endregion
 
-#pragma region Component7
+#pragma region RigidBodyPhantomPhysicsComponent (Component 20)
+
+struct COMPONENT20_POSITION {
+	float x;
+	float y;
+	float z;
+
+	COMPONENT20_POSITION() {
+		this->x = 0; this->y = 0; this->z = 0;
+	}
+
+	COMPONENT20_POSITION(float x, float y, float z) {
+		this->x = x; this->y = y; this->z = z;
+	}
+};
+
+struct COMPONENT20_ROTATION {
+	float x;
+	float y;
+	float z;
+	float w;
+
+	COMPONENT20_ROTATION() {
+		this->x = 0; this->y = 0; this->z = 0; this->w = 0;
+	}
+
+	COMPONENT20_ROTATION(float x, float y, float z, float w) {
+		this->x = x; this->y = y; this->z = z; this->w = w;
+	}
+};
+
+class RigidBodyPhantomPhysicsComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	COMPONENT20_POSITION pos;
+	COMPONENT20_ROTATION rot;
+public:
+	RigidBodyPhantomPhysicsComponent();
+	~RigidBodyPhantomPhysicsComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	COMPONENT20_POSITION getPos();
+	COMPONENT20_ROTATION getRot();
+
+	void setFlag1(bool flag1);
+	void setPos(COMPONENT20_POSITION pos);
+	void setRot(COMPONENT20_ROTATION rot);
+};
+
+#pragma endregion
+
+#pragma region VehiclePhysicsComponent (Component 30)
+
+class VehiclePhysicsComponent : public ReplicaComponent {
+private:
+	char data1; // Creation only
+	bool data2; // Creation only
+
+	bool flag3;
+	bool data3;
+public:
+	VehiclePhysicsComponent();
+	~VehiclePhysicsComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	char getData1();
+	bool getData2();
+	bool getFlag3();
+	bool getData3();
+
+	void setData1(char data1);
+	void setData2(bool data2);
+	void setFlag3(bool flag3);
+	void setData3(bool data3);
+};
+
+#pragma endregion
+
+#pragma region PhantomPhysicsComponent (Component 40)
+
+struct COMPONENT40_POSITION {
+	float posX;
+	float posY;
+	float posZ;
+
+	COMPONENT40_POSITION() {
+		this->posX = 0.0; this->posY = 0.0; this->posZ = 0.0;
+	}
+
+	COMPONENT40_POSITION(float x, float y, float z) {
+		this->posX = x; this->posY = y; this->posZ = z;
+	}
+
+	bool isNull() {
+		return (this->posX == 0.0 && this->posY == 0.0 && this->posZ == 0.0);
+	}
+};
+
+struct COMPONENT40_ROTATION {
+	float rotX;
+	float rotY;
+	float rotZ;
+	float rotW;
+
+	COMPONENT40_ROTATION() {
+		this->rotX = 0.0; this->rotY = 0.0; this->rotZ = 0.0; this->rotW = 0.0;
+	}
+
+	COMPONENT40_ROTATION(float x, float y, float z, float w) {
+		this->rotX = x; this->rotY = y; this->rotZ = z; this->rotW = w;
+	}
+
+	bool isNull() {
+		return (this->rotX == 0 && this->rotY == 0 && this->rotZ == 0 && this->rotW == 0);
+	}
+};
+
+struct COMPONENT40_DATA1 {
+	long d1;
+	long d2;
+};
+
+struct COMPONENT40_DATA2 {
+	long d1;
+	long d2;
+};
+
+struct COMPONENT40_DATA3 {
+	float f1;
+	float f2;
+	float f3;
+};
+
+class PhantomPhysicsComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	COMPONENT40_POSITION pos;
+	COMPONENT40_ROTATION rot;
+	bool flag2;
+	bool flag3;
+	COMPONENT40_DATA1 data1;
+	bool flag4_1;
+	COMPONENT40_DATA2 data2;
+	bool flag4_2;
+	COMPONENT40_DATA3 data3;
+public:
+	PhantomPhysicsComponent();
+	~PhantomPhysicsComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	COMPONENT40_POSITION getPosition();
+	COMPONENT40_ROTATION getRotation();
+	bool getFlag2();
+	bool getFlag3();
+	COMPONENT40_DATA1 getData1();
+	bool getFlag4_1();
+	COMPONENT40_DATA2 getData2();
+	bool getFlag4_2();
+	COMPONENT40_DATA3 getData3();
+
+
+	void setFlag1(bool flag1);
+	void setPosition(COMPONENT40_POSITION position);
+	void setRotation(COMPONENT40_ROTATION rotation);
+	void setFlag2(bool flag2);
+	void setData1(COMPONENT40_DATA1 data1);
+	void setData2(COMPONENT40_DATA2 data2);
+	void setData3(COMPONENT40_DATA3 data3);
+};
+
+#pragma endregion
+
+#pragma region DestructibleComponent (Component 7)
+
 struct COMPONENT7_DATA1{
 	unsigned long d1 = 0;
 	bool d2f = false;
@@ -337,7 +548,7 @@ struct COMPONENT7_DATA4{
 };
 
 //Index 22,23 -> Player Health etc
-class Component7 : public ReplicaComponent{
+class DestructibleComponent : public ReplicaComponent{
 private:
 	//Index 22
 	bool flag1;
@@ -359,8 +570,8 @@ private:
 	bool flag5;
 	bool data5;
 public:
-	Component7();
-	~Component7();
+	DestructibleComponent();
+	~DestructibleComponent();
 
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
@@ -386,7 +597,176 @@ public:
 };
 #pragma endregion
 
-#pragma region Component17
+#pragma region SwitchComponent (Component 49)
+
+class SwitchComponent : public ReplicaComponent {
+private:
+	bool switchState = false;
+
+public:
+	SwitchComponent();
+	~SwitchComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getSwitchState();
+	void setSwitchState(bool switchState);
+};
+
+#pragma endregion
+
+#pragma region PetComponent (Component 26)
+
+class PetComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	long data1;
+	long data2;
+	bool flag3;
+	long long data3;
+	bool flag4;
+	long long data4;
+	bool flag5;
+	long data5_1;
+	char length1;
+	short data5_1_1;
+	char length2;
+	short data5_1_2;
+
+public:
+	PetComponent();
+	~PetComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	long getData1();
+	long getData2();
+	bool getFlag3();
+	long long getData3();
+	bool getFlag4();
+	long long getData4();
+	bool getFlag5();
+	long getData5_1();
+	char getLength1();
+	short getData5_1_1();
+	char getLength2();
+	short getData5_1_2();
+
+	void setFlag1(bool flag1);
+	void setData1(long data1);
+	void setData2(long data2);
+	void setData3(long long data3);
+	void setData4(long long data4);
+	void setData5_1(long data5_1);
+	void setLength1(char length1);
+	void setData5_1_1(short data5_1_1);
+	void setLength2(char length2);
+	void setData5_1_2(short data5_1_2);
+};
+
+#pragma endregion
+
+#pragma region CharacterComponent (Component 4)
+
+struct COMPONENT4_DATA3{
+	bool d1 = false;
+	bool d2 = false;
+};
+
+struct COMPONENT4_DATA9{
+	bool d1 = false;
+	bool d2 = false;
+	unsigned char d3 = 0;
+	bool d4 = false;
+	unsigned char d5 = 0;
+};
+
+struct COMPONENT4_DATA11{
+	unsigned long long d1 = 0;
+	unsigned char d2 = 0;
+	bool d3 = true;
+	unsigned long d4 = 0xFFFFFFFF;
+};
+
+class CharacterComponent : public ReplicaComponent{
+private:
+	//Index 24
+	bool flag1;
+	bool flag1_1;
+	unsigned long long data1_1;
+	unsigned char data1_2;
+	//Index 27
+	bool hasLevel;
+	unsigned long level;
+	//Index 28
+	bool flag3;
+	COMPONENT4_DATA3 data3;
+	bool flag4;
+	unsigned long long data4;
+	bool flag5;
+	unsigned long long data5;
+	bool flag6;
+	unsigned long long data6;
+	bool flag7;
+	unsigned long long data7;
+	PLAYER_STYLE style;
+	PLAYER_INFO info;
+	PLAYER_STATS stats;
+	bool flag8a;
+	bool flag8b;
+	std::wstring data8;
+	bool flag9;
+	COMPONENT4_DATA9 data9;
+	bool flag10;
+	unsigned long data10;
+	bool flag11;
+	COMPONENT4_DATA11 data11;
+public:
+	CharacterComponent();
+	~CharacterComponent();
+
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	void setData1_1(unsigned long long d1_1);
+	void setData1_2(unsigned char d1_2);
+	void setLevel(unsigned long lvl);
+	void setData3(COMPONENT4_DATA3 d3);
+	void setData4(unsigned long long d4);
+	void setData5(unsigned long long d5);
+	void setData6(unsigned long long d6);
+	void setData7(unsigned long long d7);
+
+	void setStyle(PLAYER_STYLE style);
+	void setInfo(PLAYER_INFO info);
+	void setStats(PLAYER_STATS stats);
+	void setData8(std::wstring d8);
+	void setData9(COMPONENT4_DATA9 d9);
+	void setData10(unsigned long d10);
+	void setData11(COMPONENT4_DATA11 d11);
+
+	unsigned long long getData1_1();
+	unsigned char getData1_2();
+	unsigned long getLevel();
+	COMPONENT4_DATA3 getData3();
+	unsigned long long getData4();
+	unsigned long long getData5();
+	unsigned long long getData6();
+	unsigned long long getData7();
+	PLAYER_STYLE getStyle();
+	PLAYER_INFO getInfo();
+	PLAYER_STATS getStats();
+	std::wstring getData8();
+	COMPONENT4_DATA9 getData9();
+	unsigned long getData10();
+	COMPONENT4_DATA11 getData11();
+};
+
+#pragma endregion
+
+#pragma region InventoryComponent (Component 17)
+
 struct COMPONENT17_EQUIPMENT{
 	long long objid = 0;
 	long lot = LOT::LOT_NONE;
@@ -398,13 +778,13 @@ struct COMPONENT17_EQUIPMENT{
 	bool d8;
 };
 
-class Component17 : public ReplicaComponent{
+class InventoryComponent : public ReplicaComponent{
 private:
 	std::vector<COMPONENT17_EQUIPMENT> equipment;
 	unsigned long data2 = 0; //May be a count for something
 public:
-	Component17();
-	~Component17();
+	InventoryComponent();
+	~InventoryComponent();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 	void setData2(unsigned long d2);
@@ -413,34 +793,251 @@ public:
 	long equipItem(long long objid, unsigned short slot = 0);
 	bool unequipItem(long long objid);
 };
+
 #pragma endregion
 
-#pragma region Component9
-class Component9 : public ReplicaComponent{
+#pragma region ScriptComponent (Component 5)
+
+class ScriptComponent : public ReplicaComponent {
+private:
+	bool flag1;
 public:
-	Component9();
-	~Component9();
+	ScriptComponent();
+	~ScriptComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+
+	void setFlag1(bool flag1);
+};
+
+#pragma endregion
+
+#pragma region SkillComponent (Component 9)
+
+class SkillComponent : public ReplicaComponent{
+public:
+	SkillComponent();
+	~SkillComponent();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 };
+
 #pragma endregion
 
-#pragma region Component2
-class Component2 : public ReplicaComponent{
+#pragma region BaseCombatAIComponent (Component 60)
+
+class BaseCombatAIComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	long data1;
+	long long data2;
 public:
-	Component2();
-	~Component2();
+	BaseCombatAIComponent();
+	~BaseCombatAIComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+
+	bool getFlag1();
+	long getData1();
+	long long getData2();
+
+	void writeFlag1(bool flag1);
+	void writeData1(long data1);
+	void writeData2(long long data2);
+};
+
+#pragma endregion
+
+#pragma region VendorComponent (Component 16)
+
+class VendorComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	bool flag1_1;
+	bool flag1_2;
+public:
+	VendorComponent();
+	~VendorComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	bool getFlag1_1();
+	bool getFlag1_2();
+
+	void setFlag1(bool flag1);
+	void setFlag1_1(bool flag1_1);
+	void setFlag1_2(bool flag1_2);
+};
+
+#pragma endregion
+
+#pragma region BouncerComponent (Component 6)
+
+class BouncerComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	bool data1;
+public:
+	BouncerComponent();
+	~BouncerComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	bool getData1();
+
+	void setFlag1(bool flag1);
+	void setData1(bool data1);
+};
+
+#pragma endregion
+
+#pragma region ScriptedActivityComponent (Component 39)
+
+class ScriptedActivityComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	long data1;
+	long long data2;
+	float data2_1;
+	float data2_2;
+	float data2_3;
+	float data2_4;
+	float data2_5;
+	float data2_6;
+	float data2_7;
+	float data2_8;
+	float data2_9;
+	float data2_10;
+public:
+	ScriptedActivityComponent();
+	~ScriptedActivityComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	long getData1();
+	long long getData2();
+	float getData2_1();
+	float getData2_2();
+	float getData2_3();
+	float getData2_4();
+	float getData2_5();
+	float getData2_6();
+	float getData2_7();
+	float getData2_8();
+	float getData2_9();
+	float getData2_10();
+
+	void setFlag1(bool flag1);
+	void setData1(long data1);
+	void setData2(long long data2);
+	void setData2_1(float data2_1);
+	void setData2_2(float data2_2);
+	void setData2_3(float data2_3);
+	void setData2_4(float data2_4);
+	void setData2_5(float data2_5);
+	void setData2_6(float data2_6);
+	void setData2_7(float data2_7);
+	void setData2_8(float data2_8);
+	void setData2_9(float data2_9);
+	void setData2_10(float data2_10);
+};
+
+#pragma endregion
+
+#pragma region RacingControlComponent (Component 71)
+
+struct COMPONENT71_DATA1 {
+	bool not_break;
+	long long playerObjID;
+	long long racecarObjID;
+	unsigned long data1;
+	bool data2;
+};
+
+struct COMPONENT71_DATA2 {
+	bool not_break;
+	long long playerObjID;
+	unsigned long data1;
+};
+
+struct COMPONENT71_DATA3 {
+	unsigned short remainingLaps;
+	short length; // Why do we need a length?
+	short pathName; // Maybe the current path??
+};
+
+struct COMPONENT71_DATA4 {
+	bool flag1;
+	long long data1;
+	float data2;
+	float data3;
+};
+
+class RacingControlComponent : public ReplicaComponent {
+private:
+	bool flag1;
+	short shortData;
+	bool flag2;
+	COMPONENT71_DATA1 data1;
+	bool flag3;
+	COMPONENT71_DATA2 data2;
+	bool flag4;
+	COMPONENT71_DATA3 data3;
+	bool flag5;
+	COMPONENT71_DATA4 data4;
+public:
+	RacingControlComponent();
+	~RacingControlComponent();
+	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
+	unsigned int getComponentID();
+
+	bool getFlag1();
+	short getShortData();
+	bool getFlag2();
+	COMPONENT71_DATA1 getData1();
+	bool getFlag3();
+	COMPONENT71_DATA2 getData2();
+	bool getFlag4();
+	COMPONENT71_DATA3 getData3();
+	bool getFlag5();
+	COMPONENT71_DATA4 getData4();
+
+	void setFlag1(bool flag1);
+	void setShortData(short shortData);
+	void setData1(COMPONENT71_DATA1 data1);
+	void setData2(COMPONENT71_DATA2 data2);
+	void setData3(COMPONENT71_DATA3 data3);
+	void setData4(COMPONENT71_DATA4 data4);
+};
+
+#pragma endregion
+
+#pragma region RenderComponent (Component 2)
+
+class RenderComponent : public ReplicaComponent{
+public:
+	RenderComponent();
+	~RenderComponent();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 };
+
 #pragma endregion
 
-#pragma region Component107
-class Component107 : public ReplicaComponent{
+#pragma region Index36Component (Component 107)
+
+class Index36Component : public ReplicaComponent{
 public:
-	Component107();
-	~Component107();
+	Index36Component();
+	~Index36Component();
 	void writeToPacket(RakNet::BitStream *packet, REPLICA_PACKET_TYPE packetType);
 	unsigned int getComponentID();
 };
+
 #pragma endregion

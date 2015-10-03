@@ -30,7 +30,7 @@ string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw, uns
 // Server QuitError
 void QuitError(const string& msg) {
 	Logger::log("ERROR", "TERMINATED", msg, LOG_ERROR);
-	Logger::log("ERROR", "TERMINATED", "PRESS ENTER TO QUIT", LOG_ERROR);
+	Logger::log("ERROR", "TERMINATED", "PRESS ANY KEY TO QUIT", LOG_ERROR);
 	while (!_kbhit());
 	exit(1);
 }

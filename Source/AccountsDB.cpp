@@ -149,6 +149,28 @@ unsigned char AccountsTable::getRank(unsigned int accountid){
 	}
 }
 
+std::string AccountsTable::getName(){
+	return "accounts";
+}
+
+void AccountsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
+	Database::addColToMap(data, "id", new ColData("int(10) unsigned", false, "PRI", "NULL", "auto_increment"));
+	Database::addColToMap(data, "name", new ColData("varchar(35)", false, "UNI", "NULL", ""));
+	Database::addColToMap(data, "password", new ColData("varchar(64)", false, "", "NULL", ""));
+	Database::addColToMap(data, "email", new ColData("varchar(30)", false, "", "NULL", ""));
+	Database::addColToMap(data, "ip", new ColData("varchar(32)", false, "", "127.0.0.1", ""));
+	Database::addColToMap(data, "rank", new ColData("smallint(1)", false, "", "0", ""));
+	Database::addColToMap(data, "numChars", new ColData("tinyint(4)", false, "", "NULL", ""));
+	Database::addColToMap(data, "frontChar", new ColData("bigint(20)", false, "", "NULL", ""));
+	Database::addColToMap(data, "lastLog", new ColData("timestamp", false, "", "CURRENT_TIMESTAMP", ""));
+	Database::addColToMap(data, "activeSub", new ColData("smallint(1)", false, "", "0", ""));
+	Database::addColToMap(data, "subTime", new ColData("int(32)", false, "", "NULL", ""));
+	Database::addColToMap(data, "legoClub", new ColData("smallint(1)", false, "", "NULL", ""));
+	Database::addColToMap(data, "locked", new ColData("tinyint(4)", false, "", "NULL", ""));
+	Database::addColToMap(data, "banned", new ColData("tinyint(4)", false, "", "NULL", ""));
+	Database::addColToMap(data, "loginTries", new ColData("int(1)", false, "", "NULL", ""));
+}
+
 /*void AccountsTable::setNumChars(CharacterOwner o){
 	Database::Query("UPDATE `accounts` SET `numChars` = " + std::to_string(o.charIndex) + " WHERE `id` = '" + std::to_string(o.accountid) + "'");
 }*/
@@ -569,4 +591,21 @@ unsigned int SessionsTable::count(){
 		return (unsigned int) num;
 	}
 	//return sessions.size();
+}
+
+std::string SessionsTable::getName(){
+	return "sessions";
+}
+
+void SessionsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
+	Database::addColToMap(data, "sessionid", new ColData("int(20)", false, "PRI", "NULL", "auto_increment"));
+	Database::addColToMap(data, "ipaddress", new ColData("varchar(21)", false, "", "", ""));
+	Database::addColToMap(data, "phase", new ColData("smallint(6)", false, "", "1", ""));
+	Database::addColToMap(data, "sessionkey", new ColData("varchar(33)", false, "", "", ""));
+	Database::addColToMap(data, "instanceid", new ColData("int(11)", true, "", "NULL", ""));
+	Database::addColToMap(data, "accountid", new ColData("int(10) unsigned", false, "", "0", ""));
+	Database::addColToMap(data, "login_time", new ColData("timestamp", false, "", "CURRENT_TIMESTAMP", ""));
+	Database::addColToMap(data, "charid", new ColData("bigint(20)", true, "", "NULL", ""));
+	Database::addColToMap(data, "zoneid", new ColData("int(11)", false, "", "0", ""));
+	Database::addColToMap(data, "cloneid", new ColData("int(10) unsigned", false, "", "0", ""));
 }

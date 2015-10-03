@@ -93,9 +93,6 @@
     <ClInclude Include="Faction.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="World.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
@@ -170,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="Common\Utility\Config.h">
       <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>Header Files\Database</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
