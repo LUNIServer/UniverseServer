@@ -6,6 +6,7 @@
 #include "Account.h"
 #include "Logger.h"
 #include "PlayerObject.h"
+#include "InventoryDB.h"
 
 bool Worlds::loadWorld(SystemAddress address, ZoneId zone, COMPONENT1_POSITION pos, unsigned short instance, unsigned long clone){
 	RakNet::BitStream * stream = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::MSG_CLIENT_LOAD_STATIC_ZONE);
@@ -155,4 +156,26 @@ void ObjectsManager::clientJoinWorld(ReplicaObject * player, SystemAddress addr)
 	}
 	ObjectsManager::registerObject(player);
 	ObjectsManager::create(player);
+}
+
+std::unordered_map<uint, LOTInfoContainer*> LOTInfo::lotInfoList;
+
+std::string LOTInfo::getName(uint lot){
+	std::unordered_map<uint, LOTInfoContainer*>::iterator it = lotInfoList.find(lot);
+	if (it != lotInfoList.end())
+		return it->second->name;
+	else
+		return "NOT_FOUND";
+}
+
+std::string LOTInfo::getType(uint lot){
+	std::unordered_map<uint, LOTInfoContainer*>::iterator it = lotInfoList.find(lot);
+	if (it != lotInfoList.end())
+		return it->second->type;
+	else
+		return "NOT_FOUND";
+}
+
+void LOTInfo::registerLOT(uint lot, LOTInfoContainer* lotInfo){
+	lotInfoList.insert(std::make_pair(lot, lotInfo));
 }

@@ -10,6 +10,11 @@ using namespace std;
 MYSQL * Database::_con = NULL; // Set MYSQL connection variable to NULL
 std::vector<MySQLTable *> Database::tables;
 
+std::string Database::host;
+std::string Database::database;
+std::string Database::username;
+std::string Database::password;
+
 ColData::ColData(std::string t, bool n, std::string k, std::string d, std::string e){
 	this->type = t;
 	this->null = n;
@@ -26,11 +31,19 @@ ColData::ColData(){
 	this->extra = "";
 }
 
+void Database::Init(const string& host, const string& database, const string& username, const string& password) {
+	Database::host = host;
+	Database::database = database;
+	Database::username = username;
+	Database::password = password;
+}
+
 // Connect to the MySQL database. Requires the host, database, DB user, and DB password to connect
-unsigned int Database::Connect(const string& host, const string& database, const string& username, const string& password) {
+unsigned int Database::Connect() {
 	_con = mysql_init(NULL); //init sql connection
 	if (_con == NULL) return 1;
 	//if (!_con) throw MySqlException("Can't start mysql service!\n");
+	mysql_options(_con, MYSQL_OPT_RECONNECT, new bool(true));
 
 	MYSQL * _cont = mysql_real_connect(_con, host.c_str(), username.c_str(), password.c_str(), database.c_str(), 0, NULL, 0); //connection to luni database
 	if (_cont == NULL){
@@ -146,6 +159,10 @@ unsigned int Database::Connect(const string& host, const string& database, const
 	mysql_query(_con, "SET NAMES 'utf8';");
 
 	return 0;
+}
+
+void Database::Close() {
+	mysql_close(_con);
 }
 
 // Query the MySQL database for a specific string

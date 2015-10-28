@@ -73,7 +73,7 @@ bool Characters::CreateCharacter(RakNet::BitStream *packet, SystemAddress addres
 			if (CharactersTable::unapprovedNameExists(requestName)){
 				flag2 = false;
 			}
-			//if (flag2){ // Uncomment this line and comment the next line if you want to stop players from requesting character names that someone else already requested
+			// if (flag2){ // Uncomment this line and comment the next line if you want to stop players from requesting character names that someone else already requested
 			if (true){
 				Logger::log("GAME", "CHARS", "Adding Char to Database");
 
@@ -96,6 +96,8 @@ bool Characters::CreateCharacter(RakNet::BitStream *packet, SystemAddress addres
 				long long pantsObjid = ObjectsTable::createObject(pantsID);
 				InventoryTable::insertItem(charObjid, pantsObjid, 1, 1, true);
 				EquipmentTable::equipItem(charObjid, pantsObjid);
+
+				MissionsTable::addMission(charObjid, 1727);
 			}
 			else{
 				Logger::log("GAME", "CHARS", "The requested name was already requested by someone else");
@@ -124,6 +126,15 @@ bool Characters::CreateCharacter(RakNet::BitStream *packet, SystemAddress addres
 void Characters::DeleteCharacter(unsigned int accountid, long long charid){
 	CharactersTable::deleteCharacter(charid);
 	AccountsTable::unsetFrontChar(accountid);
+
+	std::vector<long long> equipment = EquipmentTable::getItems(charid);
+	if (equipment.size() > 0){
+		for (uint i = 0; i < equipment.size(); i++){
+			ObjectsTable::deleteObject(equipment.at(i));
+		}
+	}
+
 	EquipmentTable::deleteEquipment(charid); //Delete Equipment entries
 	InventoryTable::deleteInventory(charid); //Delete inventory entries
+	MissionsTable::deleteMissions(charid);
 }

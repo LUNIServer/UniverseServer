@@ -51,7 +51,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)\Env\</OutDir>
+    <TargetName>LUNIServer</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)\Env\</OutDir>
+    <TargetName>LUNIServer</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -102,6 +109,7 @@
   <ItemGroup>
     <ClInclude Include="Account.h" />
     <ClInclude Include="AccountsDB.h" />
+    <ClInclude Include="AuthTicketsDB.h" />
     <ClInclude Include="Characters.h" />
     <ClInclude Include="CharactersDB.h" />
     <ClInclude Include="ChatCommands.h" />
@@ -119,9 +127,12 @@
     <ClInclude Include="LDF.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="md5.h" />
+    <ClInclude Include="NPCObject.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="legoPackets.h" />
     <ClInclude Include="PlayerObject.h" />
+    <ClInclude Include="pugiconfig.hpp" />
+    <ClInclude Include="pugixml.hpp" />
     <ClInclude Include="Replica.h" />
     <ClInclude Include="ReplicaComponents.h" />
     <ClInclude Include="ReplicaData.h" />
@@ -135,6 +146,7 @@
     <ClInclude Include="UtfConverter.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="WorldConnection.h" />
+    <ClInclude Include="WorldObjectsDB.h" />
     <ClInclude Include="Worlds.h" />
     <ClInclude Include="WorldServer.h" />
   </ItemGroup>
@@ -142,6 +154,7 @@
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="AccountsDB.cpp" />
     <ClCompile Include="AuthLoop.cpp" />
+    <ClCompile Include="AuthTicketsDB.cpp" />
     <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="ChatCommands.cpp" />
@@ -155,7 +168,9 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="md5.cpp" />
+    <ClCompile Include="NPCObject.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
+    <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="Replica.cpp" />
     <ClCompile Include="ReplicaComponents.cpp" />
     <ClCompile Include="ReplicaData.cpp" />
@@ -170,6 +185,7 @@
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldConnection.cpp" />
     <ClCompile Include="WorldLoop.cpp" />
+    <ClCompile Include="WorldObjectsDB.cpp" />
     <ClCompile Include="Worlds.cpp" />
     <ClCompile Include="WorldServer.cpp" />
   </ItemGroup>

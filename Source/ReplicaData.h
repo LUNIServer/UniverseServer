@@ -2,9 +2,10 @@
 #include "World.h"
 #include "ReplicaComponents.h"
 
+#include "Common.h"
 #include <vector>
 
-enum CHAR_STYLE_HAIR : unsigned long{
+enum CHAR_STYLE_HAIR : ulong{
 	HAIR_NONE = 0,
 	HAIR_LONG,
 	HAIR_SHORT,
@@ -18,7 +19,7 @@ enum CHAR_STYLE_HAIR : unsigned long{
 	HAIR_LONG_BACK
 };
 
-enum CHAR_COLORS : unsigned long {
+enum CHAR_COLORS : ulong {
 	COLOR_RED = 0,
 	COLOR_BLUE,
 	COLOR_YELLOW,
@@ -43,7 +44,7 @@ enum CHAR_COLORS : unsigned long {
 	COLOR_SANDGREEN
 };
 
-enum CHAR_STYLE_EYES : unsigned long{
+enum CHAR_STYLE_EYES : ulong{
 	EYES_NONE = 0, //Can not be reset to 0
 	EYES_NORMAL,
 	EYES_OLD,
@@ -85,7 +86,7 @@ enum CHAR_STYLE_EYES : unsigned long{
 	EYES_BLACK_BROWS,
 };
 
-enum CHAR_STYLE_EYEBROWS : unsigned long{
+enum CHAR_STYLE_EYEBROWS : ulong{
 	EYEBROWS_NONE = 0, //Can not be reset to 0
 	EYEBROWS_THIN,
 	EYEBROWS_DOWN,
@@ -141,12 +142,12 @@ enum CHAR_STYLE_EYEBROWS : unsigned long{
 	EYEBROWS_BLUE
 };
 
-enum CHAR_STYLE_MOUTH : unsigned long {
+enum CHAR_STYLE_MOUTH : ulong {
 	MOUTH_SMALL,
 	MOUTH_SMALL_OPEN,
 
 	MOUTH_BLUE = 61, //Makes Head white
 };
 
-std::vector<unsigned char> getWorldTarget(ZoneId zonde_id);
+std::vector<uchar> getWorldTarget(ZoneId zonde_id);
 COMPONENT1_POSITION getZoneSpawnPoint(ZoneId zone_id, ZoneId from_zone_id = NO_ZONE);

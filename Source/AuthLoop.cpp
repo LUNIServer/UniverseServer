@@ -94,7 +94,12 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		//Validating the input
 		//Set default values
 		UserSuccess currentLoginStatus = UserSuccess::SUCCESS;
+		std::string errorMessage = "";
 		//Ref<User> user = NULL;
+
+		SystemAddress serverAddr;
+		serverAddr.SetBinaryAddress(cfg->redirectIp);
+		serverAddr.port = cfg->redirectPort;
 		
 		//query the account id of the associated with the username from the database
 		unsigned int accountid = AccountsTable::getAccountID(usernameA);
@@ -105,7 +110,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 			//check if the password is correct
 			bool passwordCorrect = AccountsTable::checkPassword(passwordA, accountid);
 			AccountAccessInfo info = AccountsTable::getAccessInfo(accountid);
-
+			
 			if (info.locked || info.banned){
 				if (info.banned){
 					Logger::log("USER", "LOGIN", "User is BANNED");
@@ -137,6 +142,12 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 					}					
 				}
 				AccountsTable::setAccessInfo(accountid, info);
+
+				Availability *av = AvailabilityTable::getAvailability(serverAddr);
+				if (!av->isAvailable){
+					errorMessage = av->message;
+					currentLoginStatus = UserSuccess::UNKNOWN2;
+				}
 			}
 		}
 
@@ -192,21 +203,15 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		loginStatusPacket.redirectIp = cfg->redirectIp;
 		loginStatusPacket.redirectPort = cfg->redirectPort;
 
-		// Set the error msg and the error msg length
-		// This message only shows
-		loginStatusPacket.errorMsg = "";
+		loginStatusPacket.errorMsg = errorMessage;
 		loginStatusPacket.errorMsgLength = loginStatusPacket.errorMsg.length();
 
 		std::string world_server_address;
 		
-		SystemAddress serverAddr;
-		serverAddr.SetBinaryAddress(cfg->redirectIp);
-		serverAddr.port = cfg->redirectPort;
-
 		int instanceid = InstancesTable::getInstanceId(serverAddr);
 		if (instanceid == -1){
 			loginStatusPacket.loginStatus = UserSuccess::UNKNOWN2;
-			loginStatusPacket.errorMsg = "Universe not available";
+			loginStatusPacket.errorMsg = "Universe not available!";
 			currentLoginStatus = UserSuccess::UNKNOWN2;
 			Logger::log("AUTH", "LOGIN", "INSTANCE UNAVAILABLE", LOG_ERROR);
 		}
@@ -246,12 +251,12 @@ void AuthLoop(CONNECT_INFO* cfg) {
 
 	// If the startup of the server is successful, print it to the console
 	// Otherwise, print an error
-	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
+	if (rakServer->Startup(10, 30, &socketDescriptor, 1)) {
 		Logger::log("AUTH", "", "started! Listening on port " + std::to_string(cfg->listenPort));
 	} else QuitError("[AUTH] server init error!");
 
 	// Set max incoming connections to 8
-	rakServer->SetMaximumIncomingConnections(8);
+	rakServer->SetMaximumIncomingConnections(10);
 
 	// If msgFileHandler is initalized, use it to log the server in ./logs/auth
 	if (msgFileHandler != NULL) msgFileHandler->StartLog(".\\logs\\auth");
@@ -288,6 +293,7 @@ void AuthLoop(CONNECT_INFO* cfg) {
 						if (packetType == 0) {
 							// Send the Init packet to the client
 							//SendInitPacket(rakServer, packet->systemAddress, true);
+							MySQL_Util_Functions::flushCache();
 							DoHandshake(rakServer, packet->systemAddress, data, "AUTH");
 						}
 						break;

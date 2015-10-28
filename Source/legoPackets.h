@@ -39,7 +39,8 @@ enum RemoteConnection : unsigned char {
 	CHAT,
 	UNKNOWNCONN,
 	SERVER,
-	CLIENT
+	CLIENT,
+	SERVER_INSTANCE_COMMUNICATION
 };
 // IDs for all servers
 enum ServerPacketID : unsigned char {
@@ -178,5 +179,9 @@ enum ClientPacketID : unsigned short{
 	FRIEND_REQUEST_RESPONSE = 28,
 	FRIENDS_LIST = 30,
 	FRIEND_UPDATE = 31,
-	MAIL_STUFF = 49,
+	MAIL_STUFF = 49
+};
+
+enum ServerInstanceCommunicationID : unsigned char{
+	AUTH_TICKET_VALIDATION_REQUEST = 0
 };

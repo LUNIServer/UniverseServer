@@ -171,6 +171,21 @@
     <ClInclude Include="World.h">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
+    <ClInclude Include="NPCObject.h">
+      <Filter>Header Files\Replica</Filter>
+    </ClInclude>
+    <ClInclude Include="pugiconfig.hpp">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="pugixml.hpp">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldObjectsDB.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="AuthTicketsDB.h">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -271,6 +286,18 @@
     </ClCompile>
     <ClCompile Include="Common\Utility\Config.cpp">
       <Filter>Source Files\Common\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="NPCObject.cpp">
+      <Filter>Source Files\Replica</Filter>
+    </ClCompile>
+    <ClCompile Include="pugixml.cpp">
+      <Filter>Source Files\Common\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldObjectsDB.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="AuthTicketsDB.cpp">
+      <Filter>Source Files\Database</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -419,6 +419,18 @@ std::vector<MISSION_DATA> MissionsTable::getMissions(long long charid){
 	}
 }
 
+void MissionsTable::addMission(long long charid, int missionid){
+	std::stringstream eqqr;
+	eqqr << "INSERT INTO `luni`.`missions` (`id`, `character`, `missionid`) VALUES(NULL, '" << charid << "', '" << missionid << "');";
+	Database::Query(eqqr.str());
+}
+
+void MissionsTable::deleteMissions(long long charid){
+	std::stringstream eqqr;
+	eqqr << "DELETE FROM `missions` WHERE `character`='" << charid << "';";
+	Database::Query(eqqr.str());
+}
+
 std::string MissionsTable::getName(){
 	return "missions";
 }

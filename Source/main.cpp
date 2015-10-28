@@ -18,6 +18,7 @@
 #include "Database.h"
 #include "AccountsDB.h"
 #include "IniReader.h"
+#include "ServerDB.h"
 #include "Common\Utility\Config.h"
 
 #include <sys/stat.h>
@@ -41,33 +42,42 @@ enum ServerRole : unsigned char{
 	ROLE_WORLD,
 };
 
-void ConsoleLoop(){
+void ConsoleLoop(Configuration config, Settings settings){
 	// If quit is ever equal to true, quit the server
 	bool quit = false;
 
+	SystemAddress ServerAddress;
+	ServerAddress.SetBinaryAddress(settings.redirect_ip.c_str());
+	IniFile* ini = config.getConfigFile();
+	ServerAddress.port = ini->getSection("World")->getIntValue("listen_port", 2002);
+	
+
 	// Keep the server from quitting by using a infinite loop
 	while (!quit) {
-		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
-			std::string command; // Initialize command string...
+		//if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
+			std::string rawCommand; // Initialize command string...
 			
 			std::cout << "> "; // Print "> " to show user where to type
-			std::cin >> command; // Get the command
+			std::cin >> rawCommand; // Get the command
+
+			std::vector<std::string> command = split(rawCommand, ' ');
 
 			// Match command to a pre-specified command here...
-			if (command == "help") {
+			if (command[0] == "help") {
 				std::stringstream str;
 				str << "Available commands:" << std::endl <<
 					"quit        = Quit the Server" << std::endl <<
 					"register    = Register New User" << std::endl <<
-					"sessions    = Show Number of sessions" << std::endl;
+					"sessions    = Show Number of sessions" << std::endl <<
+					"envcheck    = Checks environment" << std::endl;
 				std::cout << str.str();
 			}
-			else if (command == "quit") quit = LUNIterminate = true;
-			else if (command == "envcheck"){
+			else if (command[0] == "quit") quit = LUNIterminate = true;
+			else if (command[0] == "envcheck"){
 				Database::registerTables();
 				Database::checkEnv();
 			}
-			else if (command == "register") {
+			else if (command[0] == "register") {
 				std::string username, password;
 				std::cout << "Username: ";
 				std::cin >> username; // Get the username
@@ -84,11 +94,24 @@ void ConsoleLoop(){
 				}
 				else std::cout << "Username already exist!\n";
 			}
-			else if (command == "sessions"){
+			else if (command[0] == "sessions"){
 				std::cout << "Current session count: " << std::to_string(SessionsTable::count()) << std::endl;
 			}
-			else std::cout << "Invalid Command: " << command << "!" << std::endl;
-		}
+			else if (command[0] == "setunavailable"){
+				if (command.size() > 1){
+					std::string reason;
+					std::cout << "Reason: ";
+					std::cin >> reason;
+					AvailabilityTable::setAvailability(ServerAddress, false, reason);
+					std::cout << "Successfully set the availability to 'unavailable' with reason '" + reason + "'!" << std::endl;
+				}
+			}
+			else if (command[0] == "setavailable"){
+				AvailabilityTable::setAvailability(ServerAddress, true, "");
+				std::cout << "Successfully set the availability to 'available'!" << std::endl;
+			}
+			else std::cout << "Invalid Command: " << command[0] << "!" << std::endl;
+		//}
 	}
 }
 
@@ -149,7 +172,7 @@ int main(int argc, char* argv[]) {
 	std::cout << " Server Log" << std::endl;
 	std::cout << "-----------------------------------------" << std::endl;
 	Logger::setLogFile("server.log");
-	Logger::log("MAIN", "", "Initializing LUNI test server...");
+	Logger::log("MAIN", "", "Initializing LUNI test server...\nRunning update \"06.10.15_2\"");
 	
 	// Args parser
 	int state = 0;
@@ -207,7 +230,8 @@ int main(int argc, char* argv[]) {
 	Settings settings = config->getSettings();
 	MySQLSettings mysql = config->getMySQLSettings();
 
-	unsigned int db_connect_result = Database::Connect(mysql.host, mysql.database, mysql.username, mysql.password);
+	Database::Init(mysql.host, mysql.database, mysql.username, mysql.password);
+	unsigned int db_connect_result = Database::Connect();
 	if (db_connect_result > 0){
 		QuitError("Could not connect to MYSQL database");
 	}
@@ -241,7 +265,9 @@ int main(int argc, char* argv[]) {
 		config->setServerSettings(world, settings, setting);
 		WorldLoop(&world);
 	}
-	if (Role == ROLE_CONSOLE) ConsoleLoop();
+	if (Role == ROLE_CONSOLE){
+		ConsoleLoop(*config, settings);
+	}
 
 	exit(0);
 }

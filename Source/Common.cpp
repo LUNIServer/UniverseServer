@@ -3,6 +3,7 @@
 #include "Common.h"
 #include <conio.h>
 #include <iomanip>
+#include <regex>
 
 using namespace std;
 
@@ -61,6 +62,17 @@ bool endsWith(std::wstring haystack, std::wstring needle){
 	return (a.compare(needle) == 0);
 }
 
+std::vector<std::string> split(std::string text, char sep) {
+	std::vector<std::string> tokens;
+	int start = 0, end = 0;
+	while ((end = text.find(sep, start)) != std::string::npos) {
+		tokens.push_back(text.substr(start, end - start));
+		start = end + 1;
+	}
+	tokens.push_back(text.substr(start));
+	return tokens;
+}
+
 std::wstring removeRight(std::wstring str, unsigned int num){
 	if (num > str.size()) return L"";
 	return str.substr(0, str.size() - num);
@@ -75,4 +87,12 @@ std::wstring removeLeft(std::wstring str, unsigned int num){
 std::wstring remove(std::wstring str, unsigned int left, unsigned int right){
 	if ((left + right) > str.size()) return L"";
 	return str.substr(left, str.size() - left - right);
+}
+
+bool isNumber(std::string str){
+	std::regex e("^-?\\d+");
+	if (std::regex_match(str, e))
+		return true;
+	else
+		return false;
 }
