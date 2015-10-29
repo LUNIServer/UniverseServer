@@ -1,6 +1,6 @@
 ﻿# LUNI 
 
-## Setup Instructions for 0.8 Alpha2 and 0.8 Alpha1
+## Setup Instructions for 0.8 Alpha2 
 You should be familiar with the setup of LUNI before working with this repository.
 
 1. Setup XAMPP with mysql (to get XAMPP go here: https://www.apachefriends.org/download.html) and import luni.sql
@@ -9,7 +9,7 @@ You should be familiar with the setup of LUNI before working with this repositor
 	- If you care about multiplayer, this IP needs to be one that is accessible for all PCs that want to connect, so for a LAN server this would be your local address (e.g. 192.168.0.9 for me)
 	- You could set it up to use your global IP but then you have to deal with port forwarding and the like.
 	- Finally if you only want to test it locally, you can simply put in 127.0.0.1
-3. Open the project in Visual Studio (Don't Do This if you are using 0.8 Alpha1, you already got Debug and Release so you are done, just open LUNIServer.exe in debug)
+3. Open the project in Visual Studio 
 	- Please use the Debug mode for now to see where crashes come from
 4. Some mysql servers seem to be very picky about unset values in INSERT statements.
 	- If you experience problems creating accounts/characters/sessions, please add the necessary values to the *DB.cpp files.
