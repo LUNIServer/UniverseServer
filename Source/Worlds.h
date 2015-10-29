@@ -40,3 +40,24 @@ public:
 	static void clientLeaveWorld(long long objid, SystemAddress addr);
 	static void clientJoinWorld(ReplicaObject * player, SystemAddress addr);
 };
+
+struct LOTInfoContainer{
+	uint lot;
+	std::string name;
+	std::string type;
+	LOTInfoContainer(uint lot, std::string name, std::string type){
+		this->lot = lot;
+		this->name = name;
+		this->type = type;
+	}
+};
+
+class LOTInfo{
+	static std::unordered_map<uint, LOTInfoContainer*> lotInfoList;
+
+
+public:
+	static std::string getName(uint lot);
+	static std::string getType(uint lot);
+	static void registerLOT(uint lot, LOTInfoContainer* lotInfo);
+};

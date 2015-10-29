@@ -13,8 +13,10 @@
 #include "InventoryDB.h"
 #include "PlayerObject.h"
 #include "serverLoop.h"
-
-#include <ctype.h>
+#include "NPCObject.h"
+#include "ReplicaComponents.h"
+#include "pugixml.hpp"
+#include "WorldObjectsDB.h"
 
 std::vector<ChatCommandHandler *> ChatCommandManager::ChatCommandHandlers;
 std::unordered_map<std::wstring, ChatCommandHandler *> ChatCommandManager::ChatCommands;
@@ -91,10 +93,12 @@ void FlightCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstrin
 		if (params->at(0) == L"off" || params->at(0) == L"false"){
 			WorldServerPackets::SendGameMessage(s->addr, s->activeCharId, 561);
 			f2 = false;
+			Chat::sendChatMessage(s->addr, L"Switched off fly mode!");
 		}
 	}
 	if (f2){
 		RakNet::BitStream *pc = WorldServerPackets::InitGameMessage(s->activeCharId, 561);
+
 		pc->Write((unsigned long)0x70ba);
 		pc->Write((unsigned short)0x8);
 		pc->Write((unsigned char)0x5);
@@ -107,7 +111,10 @@ void FlightCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstrin
 		pc->Write((unsigned char)0x80);
 		pc->Write((unsigned char)0x7f);
 		pc->Write((unsigned long)0xa7);
+
 		WorldServer::sendPacket(pc, s->addr);
+
+		Chat::sendChatMessage(s->addr, L"Switched on fly mode!");
 	}
 }
 
@@ -118,34 +125,59 @@ std::vector<std::wstring> FlightCommandHandler::getCommandNames(){
 std::wstring FlightCommandHandler::getDescription(){
 	return L"Enables the player to fly around the world as if they were to wear a jetpack";
 }
+
 std::wstring FlightCommandHandler::getShortDescription(){
 	return L"Enables flight";
 }
+
 std::wstring FlightCommandHandler::getSyntax(){
 	return L"[off]";
 }
 
 void TeleportCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
-	RakNet::BitStream *bs = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
-	bs->Write(s->activeCharId);
-	bs->Write((unsigned short)19);
-	bs->Write(false);
-	bs->Write(false);
-	bs->Write(false);
-	float x = 0.0F;
-	float y = 0.0F;
-	float z = 0.0F;
-	if (params->size() > 2){
-		x = std::stof(params->at(0));
-		y = std::stof(params->at(1));
-		z = std::stof(params->at(2));
+	if (params->size() == 3){
+		std::string check = UtfConverter::ToUtf8(params->at(0));
+		bool flag = isNumber(check);
+		check = UtfConverter::ToUtf8(params->at(1));
+		if (flag) flag = isNumber(check);
+		check = UtfConverter::ToUtf8(params->at(2));
+		if (flag) flag = isNumber(check);
+		if (flag){
+			RakNet::BitStream *bs = WorldServer::initPacket(RemoteConnection::CLIENT, ClientPacketID::SERVER_GAME_MSG);
+
+			bs->Write(s->activeCharId);
+			bs->Write((unsigned short)19);
+			bs->Write(false);
+			bs->Write(false);
+			bs->Write(false);
+
+			float x = 0.0F;
+			float y = 0.0F;
+			float z = 0.0F;
+
+			if (params->size() > 2){
+				x = std::stof(params->at(0));
+				y = std::stof(params->at(1));
+				z = std::stof(params->at(2));
+			}
+
+			bs->Write(x);
+			bs->Write(y);
+			bs->Write(z);
+
+			std::vector<SessionInfo> sessionsz = SessionsTable::getClientsInWorld(s->zone);
+			for (unsigned int k = 0; k < sessionsz.size(); k++){
+				WorldServer::sendPacket(bs, sessionsz.at(k).addr);
+			}
+
+			Chat::sendChatMessage(s->addr, L"Teleported!");
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
 	}
-	bs->Write(x);
-	bs->Write(y);
-	bs->Write(z);
-	std::vector<SessionInfo> sessionsz = SessionsTable::getClientsInWorld(s->zone);
-	for (unsigned int k = 0; k < sessionsz.size(); k++){
-		WorldServer::sendPacket(bs, sessionsz.at(k).addr);
+	else{
+		Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 	}
 }
 
@@ -167,10 +199,12 @@ void WhisperCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstri
 	if (params->size() > 1){
 		std::wstring reciever = params->at(0);
 		std::wstring message = params->at(1);
+
 		for (unsigned int k = 2; k < params->size(); k++){
 			message.append(L" ");
 			message.append(params->at(k));
 		}
+
 		Logger::log("WRLD", "COMMAND", "Private message to " + UtfConverter::ToUtf8(reciever));
 		Logger::log("WRLD", "COMMAND", UtfConverter::ToUtf8(message));
 	}
@@ -191,13 +225,9 @@ std::wstring WhisperCommandHandler::getSyntax(){
 }
 
 void TestmapCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
-	if (params->size() > 0){
-		std::string checkZoneID = UtfConverter::ToUtf8(params->at(0));
-		bool flag = true;
-		for (unsigned int i = 0; i < checkZoneID.length(); i++){
-			if (!isdigit(checkZoneID.at(i)))
-				flag = false;
-		}
+	if (params->size() == 1){
+		std::string check = UtfConverter::ToUtf8(params->at(0));
+		bool flag = isNumber(check);
 		if (flag){
 			unsigned short argumentValue = std::stoi(params->at(0));
 			ZoneId zone = static_cast<ZoneId>(argumentValue);
@@ -217,6 +247,7 @@ void TestmapCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstri
 						place.x = pos.x;
 						place.y = pos.y;
 						place.z = pos.z;
+
 						CharactersTable::setCharactersPlace(s->activeCharId, place);
 						ObjectsManager::clientLeaveWorld(s->activeCharId, s->addr);
 					}
@@ -235,6 +266,9 @@ void TestmapCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstri
 		else{
 			Chat::sendChatMessage(s->addr, L"Cannot teleport to WorldID " + params->at(0));
 		}
+	}
+	else{
+		Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 	}
 }
 
@@ -290,174 +324,128 @@ std::wstring SwitchCommandHandler::getSyntax(){
 	return L"<IP> <port>";
 }
 
-void ItemsCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
-	if (params->size() > 1){
-		if (params->at(0) == L"create"){
-			long lot = std::stol(params->at(1));
-			long long objid = ObjectsTable::createObject(lot);
-			Chat::sendChatMessage(s->addr, L"Object created with id: " + std::to_wstring(objid - 1152921510794154770));
-		}
-
-		if (params->at(0) == L"equip"){
-			long long objid = 1152921510794154770 + std::stoll(params->at(1));
-			PlayerObject *player = (PlayerObject *) ObjectsManager::getObjectByID(s->activeCharId);
-			if (player != NULL){
-				if (params->size() > 2){
-					unsigned short slot = std::stoi(params->at(2));
-					player->getComponent17()->equipItem(objid, slot);
-				}
-				else{
-					player->getComponent17()->equipItem(objid);
-				}
-				ObjectsManager::serialize(player);  //player->serialize();
-			}
-		}
-		if (params->at(0) == L"unequip"){
-			long long objid = 1152921510794154770 + std::stoll(params->at(1));
-			PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
-			if (player != NULL){
-				bool un = player->getComponent17()->unequipItem(objid);
-				if (!un){
-					Chat::sendChatMessage(s->addr, L"Object not found");
-				}
-				else{
-					ObjectsManager::serialize(player); // player->serialize();
-				}
-			}
-		}
-	}
-}
-
-std::vector<std::wstring> ItemsCommandHandler::getCommandNames(){
-	return{ L"inventory", L"item"};
-}
-
-std::wstring ItemsCommandHandler::getDescription(){
-	return L"Manages Items for a player";
-}
-
-std::wstring ItemsCommandHandler::getShortDescription(){
-	return L"Manage Items";
-}
-
-std::wstring ItemsCommandHandler::getSyntax(){
-	return L"(create <LOT>|equip <num>|unequip <num>)";
-}
-
 void AddItemCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
 	if (params->size() == 2){
-		std::string checkLOT = UtfConverter::ToUtf8(params->at(0));
-		std::string checkAmount = UtfConverter::ToUtf8(params->at(1));
-		bool flag = true;
-		for (unsigned int i = 0; i < checkLOT.length(); i++){
-			if (!isdigit(checkLOT.at(i)))
-				flag = false;
-		}
-		for (unsigned int i = 0; i < checkAmount.length(); i++){
-			if (!isdigit(checkAmount.at(i)))
-				flag = false;
-		}
+		std::string check = UtfConverter::ToUtf8(params->at(0));
+		bool flag = isNumber(check);
+		check = UtfConverter::ToUtf8(params->at(1));
+		if (flag) flag = isNumber(check);
 		if (flag){
-			long lot = std::stoi(params->at(0));
-			unsigned long amount = std::stoi(params->at(1));
+			uint lot = std::stoi(params->at(0));
 
-			unsigned long slot = -1;
-			for (int i = 0; (slot == -1) && (i != 24); i++){
-				if (InventoryTable::getItemFromSlot(s->activeCharId, i) == -1)
-					slot = i;
-			}
+			std::string type = LOTInfo::getType(lot);
+			std::string name = LOTInfo::getName(lot);
 
-			if (slot == -1){
-				Chat::sendChatMessage(s->addr, L"Can't add requested item to your inventory. There aren't any free slots!");
+			if (type != "NOT_FOUND"){
+				if (type == "Loot" || AccountsTable::getRank(s->accountid) > 0){
+					if (!startsWith(UtfConverter::FromUtf8(name), L"Model Reward") || AccountsTable::getRank(s->accountid) > 0){
+						unsigned long amount = std::stoi(params->at(1));
+
+						unsigned long slot = -1;
+						for (int i = 0; (slot == -1) && (i != 64); i++){
+							if (InventoryTable::getItemFromSlot(s->activeCharId, i) == -1)
+								slot = i;
+						}
+
+						if (slot == -1){
+							Chat::sendChatMessage(s->addr, L"Can't add requested item to your inventory. There aren't any free slots!");
+						}
+						else{
+							long long objid = ObjectsTable::createObject(lot);
+							InventoryTable::insertItem(s->activeCharId, objid, amount, slot, false);
+							Chat::sendChatMessage(s->addr, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+						}
+					}
+					else{
+						Chat::sendChatMessage(s->addr, L"You aren't allowed to have models in your inventory!");
+					}
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"You aren't allowed to own items with ObjectType '" + UtfConverter::FromUtf8(type) + L"'!");
+				}
 			}
 			else{
-				long long objid = ObjectsTable::createObject(lot);
-				InventoryTable::insertItem(s->activeCharId, objid, amount, slot, false);
-				Chat::sendChatMessage(s->addr, L"Successfully added the requested item to your inventory! Please travel to another world or relog to reload your inventory.");
+				Chat::sendChatMessage(s->addr, L"Invalid LOT: '" + std::to_wstring(lot) + L"'");
 			}
 		}
 		else{
-			Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 		}
 	}
 	else if (params->size() == 3){
-		std::string checkLOT = UtfConverter::ToUtf8(params->at(0));
-		std::string checkAmount = UtfConverter::ToUtf8(params->at(1));
-		bool flag = true;
-		for (unsigned int i = 0; i < checkLOT.length(); i++){
-			if (!isdigit(checkLOT.at(i)))
-				flag = false;
-		}
-		for (unsigned int i = 0; i < checkAmount.length(); i++){
-			if (!isdigit(checkAmount.at(i)))
-				flag = false;
-		}
+		std::string check = UtfConverter::ToUtf8(params->at(0));
+		bool flag = isNumber(check);
+		check = UtfConverter::ToUtf8(params->at(1));
+		if (flag) flag = isNumber(check);
 		if (flag){
-			long lot = std::stoi(params->at(0));
-			unsigned long amount = std::stoi(params->at(1));
-			std::string name = UtfConverter::ToUtf8(params->at(2));
+			uint lot = std::stoi(params->at(0));
 
-			bool found = false;
-			long long charid = CharactersTable::getObjidFromCharacter(name);
-			if (charid > 0){
-				SystemAddress addr = SessionsTable::findCharacter(charid);
-				if (addr != UNASSIGNED_SYSTEM_ADDRESS){
-					found = true;
+			std::string type = LOTInfo::getType(lot);
+			std::string name = LOTInfo::getName(lot);
 
-					unsigned long slot = -1;
-					for (int i = 0; (slot == -1) && (i != 24); i++){
-						if (InventoryTable::getItemFromSlot(charid, i) == -1)
-							slot = i;
-					}
+			if (type != "NOT_FOUND"){
+				if (type == "Loot" || AccountsTable::getRank(s->accountid) > 0){
+					if (!startsWith(UtfConverter::FromUtf8(name), L"Model Reward") || AccountsTable::getRank(s->accountid) > 0){
+						unsigned long amount = std::stoi(params->at(1));
+						std::string name = UtfConverter::ToUtf8(params->at(2));
 
-					if (slot == -1){
-						std::stringstream ss;
-						ss << "Can't add requested item to ";
-						ss << name;
-						ss << "'s inventory. There aren't any free slots!";
+						bool found = false;
+						long long charid = CharactersTable::getObjidFromCharacter(name);
+						if (charid > 0){
+							SystemAddress addr = SessionsTable::findCharacter(charid);
+							if (addr != UNASSIGNED_SYSTEM_ADDRESS){
+								found = true;
 
-						Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
+								unsigned long slot = -1;
+								for (int i = 0; (slot == -1) && (i != 64); i++){
+									if (InventoryTable::getItemFromSlot(charid, i) == -1)
+										slot = i;
+								}
+
+								if (slot == -1){
+									Chat::sendChatMessage(s->addr, L"Can't add requested item to " + UtfConverter::FromUtf8(name) + L"'s inventory. There aren't any free slots!");
+								}
+								else{
+									long long objid = ObjectsTable::createObject(lot);
+									InventoryTable::insertItem(charid, objid, amount, slot, false);
+
+									Chat::sendChatMessage(s->addr, L"Successfully added the requested item to " + UtfConverter::FromUtf8(name) + L"'s inventory!");
+
+									std::string source = "UNKNOWN";
+
+									ListCharacterInfo c = CharactersTable::getCharacterInfo(s->activeCharId);
+									if (c.info.objid > 0){
+										source = c.info.name;
+									}
+
+									Chat::sendChatMessage(addr, UtfConverter::FromUtf8(source) + L" added an item with LOT " + std::to_wstring(lot) + L" to your inventory. Please travel to another world or relog to reload your inventory.");
+								}
+							}
+						}
+
+						if (!found){
+							Chat::sendChatMessage(s->addr, L"Can't add requested item to " + UtfConverter::FromUtf8(name) + L"'s inventory. Player not found/online!");
+						}
 					}
 					else{
-						long long objid = ObjectsTable::createObject(lot);
-						InventoryTable::insertItem(charid, objid, amount, slot, false);
-
-						std::stringstream ss;
-						ss << "Successfully added the requested item to ";
-						ss << name;
-						ss << "'s inventory!";
-						Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
-
-						std::string source = "UNKNOWN";
-
-						ListCharacterInfo c = CharactersTable::getCharacterInfo(s->activeCharId);
-						if (c.info.objid > 0){
-							source = c.info.name;
-						}
-						std::stringstream ss2;
-						ss2 << source;
-						ss2 << " added an item with LOT ";
-						ss2 << std::to_string(lot);
-						ss2 << " to your inventory. Please travel to another world or relog to reload your inventory.";
-						Chat::sendChatMessage(addr, UtfConverter::FromUtf8(ss2.str()));
+						Chat::sendChatMessage(s->addr, L"You aren't allowed to have models in your inventory!");
 					}
 				}
+				else{
+					Chat::sendChatMessage(s->addr, L"You aren't allowed to own items with ObjectType '" + UtfConverter::FromUtf8(type) + L"'!");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Invalid LOT: '" + std::to_wstring(lot) + L"'");
 			}
 
-			if (!found){
-				std::stringstream ss;
-				ss << "Can't add requested item to ";
-				ss << name;
-				ss << "'s inventory. Player not found/online!";
-				Chat::sendChatMessage(s->addr, UtfConverter::FromUtf8(ss.str()));
-			}
 		}
 		else{
-			Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 		}
 	}
 	else{
-		Chat::sendChatMessage(s->addr, L"Syntax: /gmadditem " + this->getSyntax());
+		Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 	}
 }
 
@@ -482,7 +470,7 @@ void PositionCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstr
 	std::wstringstream wstr;
 	if (player != NULL){
 		COMPONENT1_POSITION pos = player->getComponent1()->getPosition();
-		wstr << L"Position: (" << pos.x << "|" << pos.y << "|" << pos.z << ")";
+		wstr << L"Position:  X:" << pos.x << "  Y:" << pos.y << "  Z:" << pos.z;
 	}
 	Chat::sendChatMessage(s->addr, wstr.str());
 }
@@ -503,9 +491,7 @@ std::wstring PositionCommandHandler::getSyntax(){
 	return L"";
 }
 
-void ClientCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
-
-}
+void ClientCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){}
 
 std::vector<std::wstring> ClientCommandHandler::getCommandNames(){
 	return{ L"loc"};
@@ -535,7 +521,7 @@ void AttributeCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wst
 		}
 		PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
 		if (player != NULL){
-			DestructibleComponent * c7 = player->getComponent7();
+			Component7 * c7 = player->getComponent7();
 			COMPONENT7_DATA4 d4 = c7->getData4();
 			if (attr == L"health"){
 				d4.health = value;
@@ -603,47 +589,52 @@ std::wstring PacketCommandHandler::getSyntax(){
 }
 
 void AnnouncementCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params){
-	if (params->size() > 1){
-		long long charid;
-		std::wstring rec = params->at(0);
-		bool flagOne = false;
-		if (rec == L"#"){
-			charid = s->activeCharId;
-			flagOne = true;
-		}
-		else if (rec == L"*"){
-			std::string msg = UtfConverter::ToUtf8(params->at(1));
-			std::string title = "Information";
-			if (params->size() > 2){
-				title = UtfConverter::ToUtf8(params->at(2));
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() > 1){
+			long long charid;
+			std::wstring rec = params->at(0);
+			bool flagOne = false;
+			if (rec == L"#"){
+				charid = s->activeCharId;
+				flagOne = true;
 			}
-			std::vector<SessionInfo> wsessions = SessionsTable::getClientsInWorld(s->zone);
-			for (unsigned int i = 0; i < wsessions.size(); i++){
-				Chat::sendMythranInfo(wsessions.at(i).activeCharId, msg, title);
-			}
-		}
-		else{
-			charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
-			flagOne = true;
-		}
-
-		if (flagOne){
-			if (charid > 0){
+			else if (rec == L"*"){
 				std::string msg = UtfConverter::ToUtf8(params->at(1));
 				std::string title = "Information";
 				if (params->size() > 2){
 					title = UtfConverter::ToUtf8(params->at(2));
 				}
-				Chat::sendMythranInfo(charid, msg, title);
+				std::vector<SessionInfo> wsessions = SessionsTable::getClientsInWorld(s->zone);
+				for (unsigned int i = 0; i < wsessions.size(); i++){
+					Chat::sendMythranInfo(wsessions.at(i).activeCharId, msg, title);
+				}
 			}
 			else{
-				std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
-				Chat::sendChatMessage(s->addr, response);
+				charid = CharactersTable::getObjidFromCharacter(UtfConverter::ToUtf8(rec));
+				flagOne = true;
 			}
+
+			if (flagOne){
+				if (charid > 0){
+					std::string msg = UtfConverter::ToUtf8(params->at(1));
+					std::string title = "Information";
+					if (params->size() > 2){
+						title = UtfConverter::ToUtf8(params->at(2));
+					}
+					Chat::sendMythranInfo(charid, msg, title);
+				}
+				else{
+					std::wstring response = L"\"" + rec + L"\" is not a valid Playername";
+					Chat::sendChatMessage(s->addr, response);
+				}
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 		}
 	}
 	else{
-		Chat::sendChatMessage(s->addr, L"Usage: /popup " + this->getSyntax());
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
 	}
 }
 
@@ -669,12 +660,8 @@ void AdminCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring
 
 		unsigned short maxLevel = AccountsTable::getRank(s->accountid);
 		unsigned short oldLevel = cinfo.info.gmlevel;
-		std::string checkLevel = UtfConverter::ToUtf8(params->at(0));
-		bool flag = true;
-		for (unsigned int i = 0; i < checkLevel.length(); i++){
-			if (!isdigit(checkLevel.at(i)))
-				flag = false;
-		}
+		std::string check = UtfConverter::ToUtf8(params->at(0));
+		bool flag = isNumber(check);
 		if (flag){
 			unsigned short newLevel = (unsigned char)std::stoi(params->at(0));
 			unsigned char success = 0;
@@ -695,11 +682,11 @@ void AdminCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring
 			WorldServer::sendPacket(packet, s->addr);
 		}
 		else{
-			Chat::sendChatMessage(s->addr, L"Syntax: " + AdminCommandHandler::getSyntax());
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 		}
 	}
 	else{
-		Chat::sendChatMessage(s->addr, L"Syntax: " + AdminCommandHandler::getSyntax());
+		Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
 	}
 }
 
@@ -708,7 +695,7 @@ std::vector<std::wstring> AdminCommandHandler::getCommandNames(){
 }
 
 std::wstring AdminCommandHandler::getDescription(){
-	return L"Set Moderator Level";
+	return L"Sets your GM-Level";
 }
 
 std::wstring AdminCommandHandler::getShortDescription(){
@@ -717,4 +704,396 @@ std::wstring AdminCommandHandler::getShortDescription(){
 
 std::wstring AdminCommandHandler::getSyntax(){
 	return L"<level>";
+}
+
+void SpawnObjectCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params) {
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() == 1 || params->size() == 2) {
+			std::string check = UtfConverter::ToUtf8(params->at(0));
+			bool flag = isNumber(check);
+			if (flag){
+				uint lot = std::stoi(params->at(0));
+
+				std::string type = LOTInfo::getType(lot);
+				std::string name = LOTInfo::getName(lot);
+
+				if (type != "NOT_FOUND"){
+					std::wstring name = L"";
+					if (params->size() > 1)
+						name = params->at(1);
+
+					longlong objID = ObjectsTable::createObject(lot);
+
+					PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
+
+					Component1 *c1 = player->getComponent1();
+					COMPONENT1_POSITION position = c1->getPosition();
+					COMPONENT1_ROTATION rotation = c1->getRotation();
+
+					NPCObject *npc = new NPCObject(objID, lot, objID);
+
+					npc->name = name;
+
+					World *world = new World(player->world.zone, 0, 0);
+					npc->world = *world;
+
+					Component3 *c3 = npc->getComponent3();
+
+					COMPONENT3_POSITION pos = c3->getPosition();
+					pos.posX = position.x;
+					pos.posY = position.y;
+					pos.posZ = position.z;
+					c3->setPosition(pos);
+
+					COMPONENT3_ROTATION rot = c3->getRotation();
+					rot.rotX = rotation.x;
+					rot.rotY = rotation.y;
+					rot.rotZ = rotation.z;
+					rot.rotW = rotation.w;
+					c3->setRotation(rot);
+
+					COMPONENT7_DATA3 data3 = COMPONENT7_DATA3();
+					data3.d1 = 0; data3.d2 = 0; data3.d3 = 0; data3.d4 = 0; data3.d5 = 0; data3.d6 = 0; data3.d7 = 0; data3.d8 = 0; data3.d9 = 0;
+
+					Component7 *c7 = npc->getComponent7();
+					c7->setData3(data3);
+
+					COMPONENT7_DATA4 d4 = c7->getData4();
+					d4.health = 1;
+					d4.maxHealthN = 1.0;
+					d4.maxHealth = 1.0;
+
+					c7->getData4_1Ref()->push_back(-1);
+
+					c7->setData4(d4);
+					c7->setData4_4_1(true);
+					c7->setData5(false);
+
+					ulonglong id = NPCTable::registerNPC(npc);
+					ObjectsManager::registerObject(npc);
+					ObjectsManager::create(npc);
+
+					Chat::sendChatMessage(s->addr, L"Successfully spawned object with LOT '" + std::to_wstring(npc->getLOT()) + L"' in your world and saved it with ID '" + std::to_wstring(id) + L"'!");
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"Invalid LOT: '" + std::to_wstring(lot) + L"'");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
+	}
+	else {
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
+	}
+}
+
+std::vector<std::wstring> SpawnObjectCommandHandler::getCommandNames() {
+	return{ L"spawnobject" };
+}
+
+std::wstring SpawnObjectCommandHandler::getDescription() {
+	return L"Spawns an object by LOT";
+}
+
+std::wstring SpawnObjectCommandHandler::getShortDescription() {
+	return L"Spawn Object";
+}
+
+std::wstring SpawnObjectCommandHandler::getSyntax() {
+	return L"<LOT>";
+}
+
+void DeleteObjectCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params) {
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() == 1) {
+			std::string check = UtfConverter::ToUtf8(params->at(0));
+			bool flag = isNumber(check);
+			if (flag){
+				ulonglong id = std::stoull(params->at(0));
+
+				long long objID = NPCTable::getObjID(id);
+				if (objID != -1){
+					ReplicaObject *object = ObjectsManager::getObjectByID(objID);
+
+					Component17 *c17 = (Component17*)object->getComponent(17);
+
+					std::vector<long long> equipment = EquipmentTable::getItems(objID);
+					if (equipment.size() > 0){
+						for (uint i = 0; i < equipment.size(); i++){
+							c17->unequipItem(equipment.at(i));
+							EquipmentTable::unequipItem(objID, equipment.at(i));
+							ObjectsTable::deleteObject(equipment.at(i));
+						}
+					}
+
+					NPCTable::deleteNPC(id);
+					ObjectsManager::unregisterObject(object);
+					ObjectsManager::destruct(object);
+
+					Chat::sendChatMessage(s->addr, L"Successfully deleted object with ID '" + std::to_wstring(id) + L"'!");
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"There isn't an object with ID '" + std::to_wstring(id) + L"'!");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
+	}
+	else {
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
+	}
+}
+
+std::vector<std::wstring> DeleteObjectCommandHandler::getCommandNames() {
+	return{ L"deleteobject" };
+}
+
+std::wstring DeleteObjectCommandHandler::getDescription() {
+	return L"Deletes an object by ID";
+}
+
+std::wstring DeleteObjectCommandHandler::getShortDescription() {
+	return L"Delete Object";
+}
+
+std::wstring DeleteObjectCommandHandler::getSyntax() {
+	return L"<ID>";
+}
+
+void EquipNPCCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params) {
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() == 2) {
+			std::string check = UtfConverter::ToUtf8(params->at(0));
+			bool flag = isNumber(check);
+			check = UtfConverter::ToUtf8(params->at(1));
+			if (flag) flag = isNumber(check);
+			if (flag){
+				ulonglong id = std::stoull(params->at(0));
+				long lot = std::stoi(params->at(1));
+
+				longlong objID = NPCTable::getObjID(id);
+				if (objID != -1){
+					ReplicaObject *object = ObjectsManager::getObjectByID(objID);
+
+					Component17 *c17 = (Component17*)object->getComponent(17);
+
+					longlong itemID = ObjectsTable::createObject(lot);
+					c17->equipItem(itemID, lot, 0, 0, true);
+					EquipmentTable::equipItem(objID, itemID);
+
+					ObjectsManager::serialize(object);
+
+					Chat::sendChatMessage(s->addr, L"Successfully added item with LOT '" + std::to_wstring(lot) + L"' to the equipment of NPC with ID '" + std::to_wstring(id) + L"'!");
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"There isn't an object with ID '" + std::to_wstring(id) + L"'!");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
+	}
+	else {
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
+	}
+}
+
+std::vector<std::wstring> EquipNPCCommandHandler::getCommandNames() {
+	return{ L"equipnpc" };
+}
+
+std::wstring EquipNPCCommandHandler::getDescription() {
+	return L"Equips a specific item on an NPC";
+}
+
+std::wstring EquipNPCCommandHandler::getShortDescription() {
+	return L"Equip NPC";
+}
+
+std::wstring EquipNPCCommandHandler::getSyntax() {
+	return L"<ID> <LOT>";
+}
+
+void UnequipNPCCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params) {
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() == 1) {
+			std::string check = UtfConverter::ToUtf8(params->at(0));
+			bool flag = isNumber(check);
+			if (flag){
+				ulonglong id = std::stoull(params->at(0));
+
+				longlong objID = NPCTable::getObjID(id);
+				if (objID != -1){
+					std::vector<longlong> equipment = EquipmentTable::getItems(objID);
+
+					if (equipment.size() > 0){
+						ReplicaObject *object = ObjectsManager::getObjectByID(objID);
+
+						Component17 *c17 = (Component17*)object->getComponent(17);
+
+						for (uint i = 0; i < equipment.size(); i++){
+							c17->unequipItem(equipment.at(i));
+							EquipmentTable::unequipItem(objID, equipment.at(i));
+							ObjectsTable::deleteObject(equipment.at(i));
+						}
+
+						ObjectsManager::serialize(object);
+
+						Chat::sendChatMessage(s->addr, L"Successfully unequipped items of NPC with ID '" + std::to_wstring(id) + L"'!");
+					}
+					else{
+						Chat::sendChatMessage(s->addr, L"NPC with ID '" + std::to_wstring(id) + L"' doesn't even have any items equipped!");
+					}
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"There isn't an object with ID '" + std::to_wstring(id) + L"'!");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
+	}
+	else {
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
+	}
+}
+
+std::vector<std::wstring> UnequipNPCCommandHandler::getCommandNames() {
+	return{ L"unequipnpc" };
+}
+
+std::wstring UnequipNPCCommandHandler::getDescription() {
+	return L"Unequips all items of an NPC";
+}
+
+std::wstring UnequipNPCCommandHandler::getShortDescription() {
+	return L"Unequip NPC";
+}
+
+std::wstring UnequipNPCCommandHandler::getSyntax() {
+	return L"<ID>";
+}
+
+void NearMeCommandHandler::handleCommand(SessionInfo *s, std::vector<std::wstring> * params) {
+	if (AccountsTable::getRank(s->accountid) > 0){
+		if (params->size() == 1){
+			std::string check = UtfConverter::ToUtf8(params->at(0));
+			bool flag = isNumber(check);
+			if (flag){
+				long radius = std::stol(params->at(0));
+
+				std::vector<NPCInfo*> npcs = NPCTable::getNPCs();
+
+				if (npcs.size() > 0){
+					std::vector<NPCInfo*> sameWorld;
+					for (uint i = 0; i < npcs.size(); i++){
+						sameWorld.push_back(npcs.at(i));
+					}
+
+					if (sameWorld.size() > 0){
+						std::vector<NPCInfo*> nearChar;
+
+						PlayerObject *player = (PlayerObject *)ObjectsManager::getObjectByID(s->activeCharId);
+
+						Component1 *c1 = player->getComponent1();
+						COMPONENT1_POSITION position = c1->getPosition();
+
+						float posX_m_r = position.x - radius;
+						float posX_p_r = position.x + radius;
+
+						float posY_m_r = position.y - radius;
+						float posY_p_r = position.y + radius;
+
+						float posZ_m_r = position.z - radius;
+						float posZ_p_r = position.z + radius;
+
+						for (uint i = 0; i < sameWorld.size(); i++){
+							if ((sameWorld.at(i)->posX >= posX_m_r && sameWorld.at(i)->posX <= posX_p_r) && (sameWorld.at(i)->posY >= posY_m_r && sameWorld.at(i)->posY <= posY_p_r) && (sameWorld.at(i)->posZ >= posZ_m_r && sameWorld.at(i)->posZ <= posZ_p_r))
+								nearChar.push_back(sameWorld.at(i));
+						}
+
+						if (nearChar.size() > 0){
+							std::wstringstream wss;
+							wss << L"Found the following world objects within a radius of '";
+							wss << radius;
+							wss << L"':\n";
+
+							for (uint i = 0; i < nearChar.size(); i++){
+								std::wstring type = UtfConverter::FromUtf8(LOTInfo::getType(NPCTable::getLOT(nearChar.at(i)->objID)));
+								if (type == L"Enemies")
+									type = L"Enemy";
+								else if (endsWith(type, L"s"))
+									type = removeRight(type, 1);
+
+								wss << L"- ";
+								wss << type;
+								wss << L" with ID '";
+								wss << NPCTable::getID(nearChar.at(i)->objID);
+								wss << L"' and LOT '";
+								wss << NPCTable::getLOT(nearChar.at(i)->objID);
+								wss << L"'";
+
+								if (i != nearChar.size() - 1)
+									wss << L"\n";
+							}
+
+							Chat::sendChatMessage(s->addr, wss.str());
+						}
+						else{
+							Chat::sendChatMessage(s->addr, L"There aren't any world objects near you! (At least not within a radius of '" + std::to_wstring(radius) + L"'!)");
+						}
+					}
+					else{
+						Chat::sendChatMessage(s->addr, L"There aren't any world objects in your world!");
+					}
+				}
+				else{
+					Chat::sendChatMessage(s->addr, L"There aren't any world objects in the database!");
+				}
+			}
+			else{
+				Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+			}
+		}
+		else{
+			Chat::sendChatMessage(s->addr, L"Syntax: /" + this->getCommandNames().at(0) + L" " + this->getSyntax());
+		}
+	}
+	else {
+		Chat::sendChatMessage(s->addr, L"You don't have permission to use this command!");
+	}
+}
+
+std::vector<std::wstring> NearMeCommandHandler::getCommandNames() {
+	return{ L"nearme" };
+}
+
+std::wstring NearMeCommandHandler::getDescription() {
+	return L"Shows a list of world objects near you in a specific radius";
+}
+
+std::wstring NearMeCommandHandler::getShortDescription() {
+	return L"List objects near you";
+}
+
+std::wstring NearMeCommandHandler::getSyntax() {
+	return L"<radius>";
 }

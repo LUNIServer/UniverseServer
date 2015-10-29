@@ -7,12 +7,15 @@
 // -- Utility --
 #include "UtfConverter.h"
 #include "Logger.h"
+#include "pugixml.hpp"
 
 // - Database - 
 #include "Database.h"
 #include "CharactersDB.h"
 #include "InventoryDB.h"
 #include "ServerDB.h"
+#include "WorldObjectsDB.h"
+#include "AuthTicketsDB.h"
 
 // - Mechanics -
 #include "Account.h"
@@ -76,13 +79,13 @@ void WorldLoop(CONNECT_INFO* cfg) {
 	// If the startup of the server is successful, print it to the console
 	// Otherwise, quit the server (as the char server is REQUIRED for the
 	// server to function properly)
-	if (rakServer->Startup(8, 30, &socketDescriptor, 1)) {
+	if (rakServer->Startup(40, 30, &socketDescriptor, 1)) {
 		Logger::log("WRLD", "", "started! Listening on port " + std::to_string(cfg->listenPort));
 		Instances::registerInstance(ServerAddress);
 	} else exit(2);
 
 	// Set max incoming connections to 8
-	rakServer->SetMaximumIncomingConnections(8);
+	rakServer->SetMaximumIncomingConnections(40);
 
 	// If msgFileHandler is not NULL, save logs of char server
 	if (msgFileHandler != NULL) msgFileHandler->StartLog(".\\logs\\world");
@@ -117,20 +120,95 @@ void WorldLoop(CONNECT_INFO* cfg) {
 
 	//Before we start handling packets, we set this RakPeer as the world server of this instance
 	WorldServer::publishWorldServer(rakServer, &replicaManager, ServerAddress);
+	AvailabilityTable::setAvailability(ServerAddress, true);
 
 	ChatCommandManager::registerCommands(new FlightCommandHandler());
 	ChatCommandManager::registerCommands(new TeleportCommandHandler());
-	ChatCommandManager::registerCommands(new WhisperCommandHandler());
+	//ChatCommandManager::registerCommands(new WhisperCommandHandler());
 	ChatCommandManager::registerCommands(new TestmapCommandHandler());
-	ChatCommandManager::registerCommands(new SwitchCommandHandler());
+	//ChatCommandManager::registerCommands(new SwitchCommandHandler());
 	ChatCommandManager::registerCommands(new AddItemCommandHandler());
-	ChatCommandManager::registerCommands(new ItemsCommandHandler());
 	ChatCommandManager::registerCommands(new PositionCommandHandler());
 	ChatCommandManager::registerCommands(new ClientCommandHandler());
-	ChatCommandManager::registerCommands(new AttributeCommandHandler());
+	//ChatCommandManager::registerCommands(new AttributeCommandHandler());
 	ChatCommandManager::registerCommands(new PacketCommandHandler());
 	ChatCommandManager::registerCommands(new AnnouncementCommandHandler());
 	ChatCommandManager::registerCommands(new AdminCommandHandler());
+	ChatCommandManager::registerCommands(new SpawnObjectCommandHandler());
+	ChatCommandManager::registerCommands(new DeleteObjectCommandHandler());
+	ChatCommandManager::registerCommands(new EquipNPCCommandHandler());
+	ChatCommandManager::registerCommands(new UnequipNPCCommandHandler());
+	ChatCommandManager::registerCommands(new NearMeCommandHandler());
+
+	pugi::xml_document objects;
+	objects.load_file(".\\objects.xml");
+
+	Logger::log("WRLD", "OBJECTS", "Starting to register LOTInfo...");
+	for (pugi::xml_node row = objects.child("rows").first_child(); row; row = row.next_sibling()){
+		LOTInfoContainer* lotInfo = new LOTInfoContainer(row.attribute("id").as_uint(), row.attribute("name").as_string(), row.attribute("type").as_string());
+		LOTInfo::registerLOT(lotInfo->lot, lotInfo);
+	}
+	objects.~xml_document();
+	Logger::log("WRLD", "OBJECTS", "Finished registering LOTInfo!");
+
+	Logger::log("WRLD", "NPCs", "Starting to register NPCs...");
+	std::vector<NPCInfo*> npcs = NPCTable::getNPCs();
+	if (npcs.size() > 0){
+		for (uint i = 0; i < npcs.size(); i++){
+			NPCInfo *info = npcs.at(i);
+
+			NPCObject *npc = new NPCObject(info->objID, NPCTable::getLOT(info->objID), info->objID);
+
+			npc->name = info->name;
+
+			World *world = new World(info->zone, 0, 0);
+			npc->world = *world;
+
+			Component3 *c3 = npc->getComponent3();
+
+			COMPONENT3_POSITION pos = c3->getPosition();
+			pos.posX = info->posX;
+			pos.posY = info->posY;
+			pos.posZ = info->posZ;
+			c3->setPosition(pos);
+
+			COMPONENT3_ROTATION rot = c3->getRotation();
+			rot.rotX = info->rotX;
+			rot.rotY = info->rotY;
+			rot.rotZ = info->rotZ;
+			rot.rotW = info->rotW;
+			c3->setRotation(rot);
+
+			COMPONENT7_DATA3 data3 = COMPONENT7_DATA3();
+			data3.d1 = 0; data3.d2 = 0; data3.d3 = 0; data3.d4 = 0; data3.d5 = 0; data3.d6 = 0; data3.d7 = 0; data3.d8 = 0; data3.d9 = 0;
+
+			Component7 *c7 = npc->getComponent7();
+			c7->setData3(data3);
+
+			COMPONENT7_DATA4 d4 = c7->getData4();
+			d4.health = 1;
+			d4.maxHealthN = 1.0;
+			d4.maxHealth = 1.0;
+
+			c7->getData4_1Ref()->push_back(-1);
+
+			c7->setData4(d4);
+			c7->setData4_4_1(true);
+			c7->setData5(false);
+
+			Component17 *c17 = npc->getComponent17();
+
+			std::vector<longlong> equipment = EquipmentTable::getItems(info->objID);
+			if (equipment.size() > 0){
+				for (uint i = 0; i < equipment.size(); i++){
+					c17->equipItem(equipment.at(i));
+				}
+			}
+
+			ObjectsManager::registerObject(npc);
+		}
+	}
+	Logger::log("WRLD", "NPCs", "Finished registering NPCs!");
 
 	bool LUNI_WRLD = true;
 	std::vector<unsigned char> buffer;
@@ -315,6 +393,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		switch (packetId){
 		case ServerPacketID::VERSION_CONFIRM:
 		{
+			MySQL_Util_Functions::flushCache();
 			DoHandshake(rakServer, systemAddress, data, "WRLD");
 		}
 			break;
@@ -1118,15 +1197,15 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				player->gmlevel = (unsigned char) cinfo.info.gmlevel;
 				player->world.zone = zid;
 
-				ControllablePhysicsComponent * c1 = player->getComponent1();
+				Component1 * c1 = player->getComponent1();
 				c1->setPosition(pos);
 
-				CharacterComponent * c4 = player->getComponent4();
-				c4->setLevel(6);
+				Component4 * c4 = player->getComponent4();
+				c4->setLevel(45);
 				PLAYER_INFO pi;
 				pi.accountID = s.accountid;
 				pi.isFreeToPlay = cinfo.info.isFreeToPlay;
-				pi.legoScore = 600;
+				pi.legoScore = 0;
 				c4->setInfo(pi);
 				PLAYER_STYLE ps;
 				ps.eyebrowsStyle = cinfo.style.eyebrows;
@@ -1138,14 +1217,14 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				ps.shirtColor = cinfo.style.shirtColor;
 				c4->setStyle(ps);
 
-				DestructibleComponent * c7 = player->getComponent7();
+				Component7 * c7 = player->getComponent7();
 				COMPONENT7_DATA4 d4 = c7->getData4();
 				d4.health = 5;
 				d4.maxHealthN = 5.0F;
 				d4.maxHealth = 5.0F;
 				c7->setData4(d4);
 
-				InventoryComponent * c17 = player->getComponent17();
+				Component17 * c17 = player->getComponent17();
 				std::vector<long long> equip = EquipmentTable::getItems(objid);
 				for (unsigned int k = 0; k < equip.size(); k++){
 					c17->equipItem(equip.at(k));
@@ -1166,7 +1245,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 				Session::enter(s.activeCharId, zid);
 				Logger::log("WRLD", "PARSER", "Client: Level loading complete " + zid);
-			}			
+			}		
 		}
 			break;
 		// 21
@@ -1186,7 +1265,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				PlayerObject * player = (PlayerObject *)ObjectsManager::getObjectByID(i.activeCharId);
 
 				if (player != NULL){
-					ControllablePhysicsComponent *c1 = player->getComponent1();
+					Component1 *c1 = player->getComponent1();
 
 					float x, y, z;
 					data->Read(x);
@@ -1388,6 +1467,20 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 		Logger::log("WLRD", "PACKETS", "Recieved unknown SERVER packet (" + std::to_string(packetId) + ")", LOG_DEBUG);
 		printData = true;
 		break;
+	case RemoteConnection::SERVER_INSTANCE_COMMUNICATION:
+		switch (packetId){
+		case ServerInstanceCommunicationID::AUTH_TICKET_VALIDATION_REQUEST:
+		{
+			longlong ticketID;
+			data->Read(ticketID);
+			AuthTicketsTable::validateTicket(ticketID);
+		}
+			break;
+		default:
+			Logger::log("WLRD", "PACKETS", "Recieved unknown SERVER_INSTANCE_COMMUNICATION packet (" + std::to_string(packetId) + ")", LOG_DEBUG);
+			printData = true;
+			break;
+		}
 	}
 
 	if (printData){

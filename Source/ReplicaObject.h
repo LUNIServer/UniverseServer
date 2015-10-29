@@ -14,6 +14,26 @@ public:
 	unsigned char gmlevel = 0;
 	World world;
 
+	// Other Data
+	bool trigger_id = false;
+	bool spawnerObjIDFlag = false;
+	long long spawnerObjID;
+	bool spawnerNodeIDFlag = false;
+	uint spawnerNodeID;
+	bool floatFlag = false;
+	float floatData;
+	bool objectWorldStateFlag = false;
+	uchar objectWorldState;
+	bool gmLevelFlag = false;
+	uchar gmLevel;
+
+	// Top Serialization Data
+	bool serFlag1 = false;
+	bool serFlag1_1 = false;
+	long long linkedObjectID;
+	bool flag1_1_1 = false;
+	bool serFlag1_2 = false;
+
 	~ReplicaObject();
 
 	// -- Specific Values -- 

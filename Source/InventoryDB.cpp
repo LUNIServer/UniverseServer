@@ -1,6 +1,7 @@
 #include "InventoryDB.h"
 #include "Database.h"
 #include "Logger.h"
+#include "UtfConverter.h"
 
 #include <sstream>
 

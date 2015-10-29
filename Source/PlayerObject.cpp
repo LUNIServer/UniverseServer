@@ -20,20 +20,20 @@ PlayerObject::PlayerObject(long long objid, std::wstring name){
 	this->LOT = 1UL;
 
 	//The order is VERY IMPORTANT for the packet: 1,7,4,17,9,2,107
-	this->addComponent(new ControllablePhysicsComponent());
-	this->addComponent(new DestructibleComponent());
-	this->addComponent(new CharacterComponent());
-	this->addComponent(new InventoryComponent());
-	this->addComponent(new SkillComponent());
-	this->addComponent(new RenderComponent());
-	this->addComponent(new Index36Component());
+	this->addComponent(new Component1());
+	this->addComponent(new Component7());
+	this->addComponent(new Component4());
+	this->addComponent(new Component17());
+	this->addComponent(new Component9());
+	this->addComponent(new Component2());
+	this->addComponent(new Component107());
 	ObjectsManager::registerObject(this);
 }
 
-ControllablePhysicsComponent *PlayerObject::getComponent1(){ return (ControllablePhysicsComponent *) this->getComponent(1); }
-DestructibleComponent *PlayerObject::getComponent7(){ return (DestructibleComponent *) this->getComponent(7); }
-CharacterComponent *PlayerObject::getComponent4(){ return (CharacterComponent *) this->getComponent(4); }
-InventoryComponent *PlayerObject::getComponent17(){ return (InventoryComponent *) this->getComponent(17); }
-SkillComponent *PlayerObject::getComponent9(){ return (SkillComponent *) this->getComponent(9); }
-RenderComponent *PlayerObject::getComponent2(){ return (RenderComponent *) this->getComponent(2); }
-Index36Component *PlayerObject::getComponent107(){ return (Index36Component *) this->getComponent(107); }
+Component1 *PlayerObject::getComponent1(){ return (Component1 *) this->getComponent(1); }
+Component7 *PlayerObject::getComponent7(){ return (Component7 *) this->getComponent(7); }
+Component4 *PlayerObject::getComponent4(){ return (Component4 *) this->getComponent(4); }
+Component17 *PlayerObject::getComponent17(){ return (Component17 *) this->getComponent(17); }
+Component9 *PlayerObject::getComponent9(){ return (Component9 *) this->getComponent(9); }
+Component2 *PlayerObject::getComponent2(){ return (Component2 *) this->getComponent(2); }
+Component107 *PlayerObject::getComponent107(){ return (Component107 *) this->getComponent(107); }

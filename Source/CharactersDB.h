@@ -99,7 +99,8 @@ struct MISSION_DATA{
 class MissionsTable : public MySQLTable{
 public:
 	static std::vector<MISSION_DATA> getMissions(long long charid);
-
+	static void addMission(long long charid, int missionid);
+	static void deleteMissions(long long charid);
 	std::string getName();
 	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
