@@ -1,6 +1,6 @@
 ﻿# LUNI 
 
-## Setup Instructions for 0.8 Alpha2 
+## Setup Instructions 
 You should be familiar with the setup of LUNI before working with this repository.
 
 1. Setup XAMPP with mysql (to get XAMPP go here: https://www.apachefriends.org/download.html) and import luni.sql
