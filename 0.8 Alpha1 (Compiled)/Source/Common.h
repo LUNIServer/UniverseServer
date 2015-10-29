@@ -10,6 +10,10 @@
 #include <iostream>
 #include <fstream>
 
+#include "SUtil\Common.h"
+#include "SUtil\Ref.h"
+#include "SUtil\CrossThreadQueue.h"
+
 #include "RakNet\BitStream.h"
 
 struct CONNECT_INFO {
@@ -21,11 +25,11 @@ struct CONNECT_INFO {
 	bool logFile; // Should the server log a file with its information
 
 	// CONNECT_INFO initialization - sets the redirectIp to all 0s.
-	CONNECT_INFO() { for (unsigned int i = 0; i < 16; i++) redirectIp[i] = 0; }
+	CONNECT_INFO() { for (uint i = 0; i < 16; i++) redirectIp[i] = 0; }
 };
 
 // Convert raw hex data to string
-std::string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw = false, unsigned long start = 0);
+std::string RawDataToString(uchar* data, uint size, bool onlyraw = false, ulong start = 0);
 
 // Error message
 void QuitError(const std::string& msg = "");

@@ -2,7 +2,6 @@
 #include "serverLoop.h"
 #include "Packet.h"
 #include "md5.h"
-#include "UtfConverter.h"
 
 #include "RakNet\BitStream.h"
 
@@ -55,21 +54,21 @@ void SendStatusPacket(RakPeerInterface *rakServer, const SystemAddress& systemAd
 	bitStream.Write(loginStatusPacket.firstLoginSubscription);
 	bitStream.Write(loginStatusPacket.subscribed);
 	bitStream.Write(loginStatusPacket.zeroLongLong);
-	bitStream.Write((unsigned short) loginStatusPacket.errorMsg.length());
+	bitStream.Write(loginStatusPacket.errorMsgLength);
 	
 	// Write the error msg string to the bitStream
-	writeWString(UtfConverter::FromUtf8(loginStatusPacket.errorMsg), &bitStream, false);
+	WriteStringToBitStream(loginStatusPacket.errorMsg.c_str(), loginStatusPacket.errorMsgLength, 0, &bitStream);
 	
 	// Create extra packet data (even if not success, creates stamps in the client)
 	CreateAllExtraPacketData(&bitStream);
 
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-	//SavePacketOverwrite("test_login.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+	SavePacketOverwrite("test_login.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
 // Function to easily create extra packet data and write it to bitStream
-void CreateExtraPacketData(unsigned long stampId, signed long bracketNum, unsigned long afterNum, RakNet::BitStream *bitStream) {
-	unsigned long zeroPacket = 0;
+void CreateExtraPacketData(ulong stampId, signed long bracketNum, ulong afterNum, RakNet::BitStream *bitStream) {
+	ulong zeroPacket = 0;
 
 	bitStream->Write(stampId);
 	bitStream->Write(bracketNum);

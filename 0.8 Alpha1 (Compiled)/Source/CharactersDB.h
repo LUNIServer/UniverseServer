@@ -2,11 +2,8 @@
 #include <my_global.h>
 #include <mysql.h>
 
-#include "Database.h"
-
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 struct WorldPlace{
 	unsigned short zoneID = 0; //default to NO_ZONE 
@@ -31,9 +28,7 @@ struct CharacterStyle{
 };
 
 struct CharacterInfo{
-	unsigned int accountid = 0;
 	long long objid = 0;
-	unsigned short gmlevel = 0;
 	std::string name;
 	std::string unapprovedName;
 	bool nameRejected = false;
@@ -46,7 +41,7 @@ struct ListCharacterInfo{
 	CharacterInfo info;
 };
 
-class CharactersTable : public MySQLTable{
+class CharactersTable{
 private:
 	static ListCharacterInfo getCharacterInfo(MYSQL_RES *res);
 public:
@@ -61,13 +56,9 @@ public:
 	static std::vector<unsigned char> getCharacterIndices(unsigned int accountid);
 	static long long add(CharacterStyle style, unsigned int accountid, CharacterInfo names);
 	static bool unapprovedNameExists(std::string unapprovedname);
-	static void setGMlevel(long long objid, unsigned short newLevel);
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
-class FriendsTable : public MySQLTable{
+class FriendsTable{
 public:
 	static void requestFriend(long long sender, long long reciever);
 	static void requestBestFriend(long long sender, long long reciever);
@@ -85,9 +76,6 @@ public:
 
 	static void accept(long long requester, long long accepter);
 	static void decline(long long requester, long long accepter);
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 struct MISSION_DATA{
@@ -96,12 +84,9 @@ struct MISSION_DATA{
 	time_t timestamp;
 };
 
-class MissionsTable : public MySQLTable{
+class MissionsTable{
 public:
 	static std::vector<MISSION_DATA> getMissions(long long charid);
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 struct MailData{
@@ -116,13 +101,10 @@ struct MailData{
 	bool read;
 };
 
-class MailsTable : public MySQLTable{
+class MailsTable{
 public:
 	static void setIsRead(long long mailid);
 	static void deleteMail(long long mailid);
 	static void addMail(MailData data);
 	static std::vector<MailData> getMails(long long charid);
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };

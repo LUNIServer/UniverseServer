@@ -1,13 +1,11 @@
-#include "Logger.h"
-
 #include "Common.h"
-#include <conio.h>
+#include "SUtil\Kbhit.h"
 #include <iomanip>
 
 using namespace std;
 
 // This converts raw hex data to a readable ASCII string
-string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw, unsigned long start) {
+string RawDataToString(uchar* data, uint size, bool onlyraw, ulong start) {
 	// Initialize the ostringstream buffer
 	ostringstream buffer;
 
@@ -15,7 +13,7 @@ string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw, uns
 	if (!onlyraw ) buffer << "Data in bytes: ";
 
 	// Copy the data into the stringstream
-	for (unsigned int i = start; i < size; i++) {
+	for (uint i = start; i < size; i++) {
 		if (!onlyraw) if ((i-start) % 16 == 0) buffer << "\n\t\t";
 		else if (!onlyraw) buffer << " ";
 		buffer << setw(2) << hex << setfill('0') << (int)data[i];
@@ -29,8 +27,7 @@ string RawDataToString(unsigned char* data, unsigned int size, bool onlyraw, uns
 
 // Server QuitError
 void QuitError(const string& msg) {
-	Logger::log("ERROR", "TERMINATED", msg, LOG_ERROR);
-	Logger::log("ERROR", "TERMINATED", "PRESS ANY KEY TO QUIT", LOG_ERROR);
+	cout << "Terminated " << msg << endl << "PRESS ENTER TO QUIT" << endl;
 	while (!_kbhit());
 	exit(1);
 }
@@ -39,8 +36,8 @@ void writeWString(std::wstring str, RakNet::BitStream *stream, bool writeSize, b
 	if (nullChar){
 		str.append(L"\0");
 	}
-	if (writeSize) stream->Write((unsigned char) (str.size()*2));
-	for (unsigned int k = 0; k < str.size(); k++){
+	if (writeSize) stream->Write((uchar) (str.size()*2));
+	for (uint k = 0; k < str.size(); k++){
 		stream->Write(str.at(k));
 	}
 }

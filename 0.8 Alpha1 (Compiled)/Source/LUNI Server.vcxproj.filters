@@ -63,6 +63,15 @@
     <ClInclude Include="serverLoop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UsersPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="PlayerObject.h">
       <Filter>Header Files\Replica</Filter>
     </ClInclude>
@@ -91,6 +100,9 @@
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="Faction.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -159,24 +171,21 @@
     <ClInclude Include="ReplicaObject.h">
       <Filter>Header Files\Replica</Filter>
     </ClInclude>
-    <ClInclude Include="ChatCommands.h">
-      <Filter>Header Files\Mechanics</Filter>
-    </ClInclude>
-    <ClInclude Include="IniReader.h">
-      <Filter>Header Files\Common\Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\Utility\Config.h">
-      <Filter>Header Files\Common\Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="World.h">
-      <Filter>Header Files\Database</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="User.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Character.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="AuthLoop.cpp">
+      <Filter>Source Files\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="CharactersLoop.cpp">
       <Filter>Source Files\Service</Filter>
     </ClCompile>
     <ClCompile Include="WorldLoop.cpp">
@@ -262,15 +271,6 @@
     </ClCompile>
     <ClCompile Include="ReplicaObject.cpp">
       <Filter>Source Files\Replica</Filter>
-    </ClCompile>
-    <ClCompile Include="ChatCommands.cpp">
-      <Filter>Source Files\Mechanics</Filter>
-    </ClCompile>
-    <ClCompile Include="IniReader.cpp">
-      <Filter>Source Files\Common\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\Utility\Config.cpp">
-      <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -40,12 +40,3 @@ void InstancesTable::unregisterInstance(SystemAddress addr){
 		Logger::logError("SVDB", "MYSQL", "unregistering instance", mysql_error(Database::getConnection()));
 	}
 }
-
-std::string InstancesTable::getName(){
-	return "instances";
-}
-
-void InstancesTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "instanceid", new ColData("int(11)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "server_address", new ColData("varchar(22)", false, "", "NULL", ""));
-}

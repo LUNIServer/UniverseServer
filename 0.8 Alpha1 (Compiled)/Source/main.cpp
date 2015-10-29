@@ -13,20 +13,22 @@
 	The source is open and free under the GPL License, Version 3 for use on a non-commercial basis
 */
 
+#include "TimeUtil.h"
+
 #include "Common.h"
 #include "serverLoop.h"
 #include "Database.h"
 #include "AccountsDB.h"
-#include "IniReader.h"
-#include "Common\Utility\Config.h"
 
-#include <sys/stat.h>
-#include <conio.h>
+#ifdef DEBUG
+	#include "User.h"
+	#include "Character.h"
+#endif
+
+#include "SUtil\IniReader.h"
+#include "SUtil\Kbhit.h"
+#include <thread>
 #include "Logger.h"
-
-#include <sstream>
-#include <iostream>
-#include <windows.h>
 
 #ifdef _WIN32
 	// For mkdir command
@@ -35,23 +37,124 @@
 	#include <sys/stat.h>
 #endif
 
-enum ServerRole : unsigned char{
-	ROLE_CONSOLE = 0,
-	ROLE_AUTH,
-	ROLE_WORLD,
-};
+// Load the config file (config.ini)
+void LoadConfig(CONNECT_INFO& auth, CONNECT_INFO& character, CONNECT_INFO& world) {
+	CIniReader iniReader(".\\config.ini"); // Load config.ini
+	
+	strcpy(auth.redirectIp, iniReader.ReadString("Settings", "redirect_ip", "127.0.0.1")); // Copy the auth redirect IP from the file
+	strcpy(character.redirectIp, auth.redirectIp); // Copy the char redirect IP from the file
+	strcpy(world.redirectIp, auth.redirectIp); // Copy the world redirect IP
 
-void ConsoleLoop(){
+	Logger::log("MAIN", "CONFIG", "Server on IP " + std::string(auth.redirectIp));
+
+	// Get whether to use encryption
+	auth.useEncryption = character.useEncryption = world.useEncryption = iniReader.ReadBoolean("Settings", "use_encryption", false);
+
+	// Get whether to use log file
+	auth.logFile = character.logFile = world.logFile = iniReader.ReadBoolean("Settings", "log_file", true);
+
+	// NOTE: The default ports are the ports LU listens on / redirects on
+	// Changing these may result in the game not running properly!
+	auth.redirectPort = iniReader.ReadInteger("Auth", "redirect_port", 2002); // Get auth redirect port (default: 2002)
+	auth.listenPort = iniReader.ReadInteger("Auth", "listen_port", 1001); // Get auth listen port (default: 1001)
+
+	character.redirectPort = iniReader.ReadInteger("Char", "redirect_port", 2003); // Get char redirect port (default: 2003)
+	character.listenPort = iniReader.ReadInteger("Char", "listen_port", 2002); // Get char listen port (default: 2002)
+
+	world.redirectPort = iniReader.ReadInteger("World", "redirect_port", 2004); // Get world redirect port (default: 2004)
+	world.listenPort = iniReader.ReadInteger("World", "listen_port", 2003); // Get world listen port (default: 2003)
+
+	// Try to connect to the database...
+	try {
+		Database::Connect(iniReader.ReadString("MYSQL", "host", "localhost"), iniReader.ReadString("MYSQL", "database", "luni"), iniReader.ReadString("MYSQL", "username", "root"), iniReader.ReadString("MYSQL", "password", ""));
+	}
+	// Otherwise, exit the server
+	catch (MySqlException& ex) {
+		QuitError(ex.what());
+	}
+
+	// Print that the server loaded the config file!
+	Logger::log("MAIN", "CONFIG", "Loaded config!");
+	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
+}
+
+// This is the entry point into the server (the main() function)
+int main() {
+	// Print starting info to the console
+	std::cout << std::endl;
+	std::cout << "  LL       EE    EE   GG     GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GGG    GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GGGG   GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG GG  GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG  GG GG   OO" << std::endl;
+	std::cout << "  LL       EE    EE   GG   GGGG   OO" << std::endl;
+	std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO" << std::endl;
+	std::cout << std::endl;
+	std::cout << "  Custom  LEGO (c)  Universe  Server" << std::endl;
+	std::cout << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Original project: luniserver.sf.net" << std::endl;
+	std::cout << "Github (main LUNI repo):" << std::endl << "github.com/jaller200/LUNIServerProject" << std::endl;
+	std::cout << "Github (this version only):" << std::endl << "github.com/dsuser97/LUNI-Latest-Dev" << std::endl;
+	std::cout << std::endl;
+	std::cout << "This version is based on Jon002s code." << std::endl;
+	std::cout << "This version is still very unstable!" << std::endl;
+	std::cout << "Don't be surprised if the server crashes!" << std::endl;
+	std::cout << "Please report any unreported issues on Github" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Press enter type \"help\" and enter again for commands" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Server Log" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	Logger::log("MAIN", "", "Initializing LUNI test server...");
+
+	// Initialize the auth, character, and world CONNECT_INFO structs
+	CONNECT_INFO auth, character, world;
+
+	// Load the values for them and store them into their structs
+	LoadConfig(auth, character, world);
+
+	// Create the directory .//logs// if it does not exist
+	_mkdir("logs");
+
+	// If debug is on, print additional data to the console
+	#ifdef DEBUG
+	{
+		// Setting this to LOG_NORMAL is done on purpose to avoid confusion
+		// when activeLogLevel is below DEBUG but DEBUG is actually on
+		Logger::log("MAIN", "", "DEBUG is ON!", LOG_NORMAL);
+	}
+	#endif
+
+	// Create the UserPool to store all users by their systemAddress (shared by threads)
+	Ref< UsersPool > OnlineUsers = new UsersPool();
+
+	// Create a new CrossThreadQueue for writing output to the console from a thread
+	Ref< CrossThreadQueue< std::string > > OutputQueue = new CrossThreadQueue< std::string >();
+
+	//LUNI_AUTH = false;
+	//LUNI_CHAR = false;
+	//LUNI_WRLD = false;
+
+	// Start the three new threads (Auth, Char, and World servers)
+	std::thread thauth(AuthLoop, &auth, OnlineUsers, OutputQueue);
+	std::thread thchar(CharactersLoop, &character, OnlineUsers, OutputQueue);
+	std::thread thworld(WorldLoop, &world, OnlineUsers, OutputQueue);
+
 	// If quit is ever equal to true, quit the server
 	bool quit = false;
 
 	// Keep the server from quitting by using a infinite loop
 	while (!quit) {
+		if (OutputQueue->Count() > 0) { // Pop the thread messages
+			std::cout << OutputQueue->Pop();
+		}
+
 		if (_kbhit()) { // Parsing server commands. Press enter to start writing a command (may need to lock consoleoutmutex...)
 			std::string command; // Initialize command string...
-			
 			std::cout << "> "; // Print "> " to show user where to type
 			std::cin >> command; // Get the command
+
 
 			// Match command to a pre-specified command here...
 			if (command == "help") {
@@ -59,23 +162,29 @@ void ConsoleLoop(){
 				str << "Available commands:" << std::endl <<
 					"quit        = Quit the Server" << std::endl <<
 					"register    = Register New User" << std::endl <<
+					"user_online = Show Number of Online Users" << std::endl <<
 					"sessions    = Show Number of sessions" << std::endl;
 				std::cout << str.str();
 			}
 			else if (command == "quit") quit = LUNIterminate = true;
-			else if (command == "envcheck"){
-				Database::registerTables();
-				Database::checkEnv();
+			else if (command == "character_log_enable") character.logFile = true;
+			else if (command == "character_log_disable") character.logFile = false;
+			else if (command == "world_log_enable") world.logFile = true;
+			else if (command == "world_log_disable") world.logFile = false;
+			else if (command == "user_online") {
+				std::stringstream str;
+				str << "\n Online user: " << OnlineUsers->Count() << std::endl;
+				std::cout << str.str();
 			}
 			else if (command == "register") {
 				std::string username, password;
 				std::cout << "Username: ";
 				std::cin >> username; // Get the username
-				if (AccountsTable::getAccountID(username) == 0) { // Check to see if username already exists... If not, continue
+				if (AccountsTable::getAccountID( username ) == 0) { // Check to see if username already exists... If not, continue
 					std::cout << "Password: ";
 					std::cin >> password; // Get the password
 					// Create the new user into the database
-					unsigned long long acid = AccountsTable::addAccount(username, password);
+					ulonglong acid = AccountsTable::addAccount(username, password);
 					if (acid > 0){
 						std::stringstream str;
 						str << "Account for '" << username << "' has been created with id " << acid << std::endl;
@@ -90,158 +199,27 @@ void ConsoleLoop(){
 			else std::cout << "Invalid Command: " << command << "!" << std::endl;
 		}
 	}
-}
 
-void inset(unsigned char color){
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-	std::cout << "   ";
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-}
+	// No longer in use...
+	thauth.join();
+	std::cout << "[MAIN] AUTH ended" << std::endl;
+	thchar.join();
+	std::cout << "[MAIN] CHAR ended" << std::endl;
+	thworld.join();
+	std::cout << "[MAIN] WRLD ended" << std::endl;
 
-void color(unsigned char color){
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-}
+	// If the loop was terminated, quit the server
 
-// This is the entry point into the server (the main() function)
-int main(int argc, char* argv[]) {
-	// Print starting info to the console
-	std::cout << std::endl << std::endl;
-	inset(207);  std::cout << "                                      " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GG     GG   OO  " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GGG    GG   OO  " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GGGG   GG   OO  " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GG GG  GG   OO  " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GG  GG GG   OO  " << std::endl;
-	inset(207);  std::cout << "  LL       EE    EE   GG   GGGG   OO  " << std::endl;
-	inset(207);  std::cout << "  LLLLLLL   EEEEEE    GG    GGG   OO  " << std::endl;
-	inset(207);  std::cout << "                                      " << std::endl;
-	inset(207);  std::cout << "  Custom   LEGO    Universe   Server  " << std::endl;
-	inset(207);  std::cout << "                                      " << std::endl;
-	std::cout << std::endl << std::endl;
-	inset(15);  std::cout << "--------------------------------------" << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "Original project by ";
-	color(13); std::cout << "raffa505";
-	color(15); std::cout << ": " << std::endl;
-	inset(11); std::cout << "luniserver.sf.net" << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "LUNIServer Github:" << std::endl;
-	inset(11); std::cout << "github.com/LUNIServer/UniverseServer" << std::endl;
-	inset(15); std::cout << std::endl;
-	inset(15); std::cout << "This software  is still  very unstable" << std::endl;
-	inset(15); std::cout << "and  may  crash  at  any  time. Please" << std::endl;
-	inset(15); std::cout << "report any unreported issues on Github" << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "--------------------------------------" << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "LUNI is licensed under the AGPLv3:" << std::endl;
-	inset(11); std::cout << "www.gnu.org/licenses/agpl-3.0.html  " << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "The  LEGO Group  has  not  endorsed or" << std::endl;
-	inset(15); std::cout << "authorized the  operation of this game" << std::endl;
-	inset(15); std::cout << "and  is  not  liable  for  any  safety" << std::endl;
-	inset(15); std::cout << "issues in relation to the operation of" << std::endl;
-	inset(15); std::cout << "game." << std::endl;
-	std::cout << std::endl;
-	inset(15); std::cout << "--------------------------------------" << std::endl;
-	color(7); std::cout << std::endl << std::endl;
-	
-	std::cout << " Server Log" << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
-	Logger::setLogFile("server.log");
-	Logger::log("MAIN", "", "Initializing LUNI test server...");
-	
-	// Args parser
-	int state = 0;
-	std::string configFile = "";
-	std::string setting = "";
-	ServerRole Role = ROLE_CONSOLE;
-
-	for (int argi = 0; argi < argc; argi++){
-		std::string arg = std::string(argv[argi]);
-		Logger::log("MAIN", "ARGS", arg, LOG_ALL);
-		switch (state){
-		case 2:
-			{
-				bool f = true;
-				if (arg.size() > 1){
-					if (arg.substr(0, 2) == "--"){
-						f = false;
-					}
-				}
-				if (f){
-					setting = arg;
-					break;
-				}
-			}
-		case 0:
-			if (arg == "--config"){
-				state = 1;
-				Logger::log("WRLD", "ARGS", "config", LOG_ALL);
-			}
-			if (arg == "--world"){
-				Role = ROLE_WORLD;
-				setting = "World";
-				state = 2;
-			}
-			if (arg == "--auth"){
-				Role = ROLE_AUTH;
-				setting = "Auth";
-				state = 2;
-			}
-			break;
-		case 1:
-			configFile = argv[argi];
-			state = 0;
-			break;
+	/*LUNIterminate = true;
+	std::cout << "[MAIN] Waiting on Threads to exit" << std::endl;
+	int i = 0;
+	while (LUNI_AUTH || LUNI_CHAR || LUNI_WRLD){
+		i++;
+		//DO Nothing
+		if (_kbhit()) {
+			exit(0);
 		}
-	}
-
-	Configuration * config = new Configuration(configFile);
-
-	if (!config->isValid()){
-		Logger::log("MAIN", "CONFIG", "No config file has been loaded!", LOG_WARNING);
-		Logger::log("MAIN", "CONFIG", "Using default values.", LOG_WARNING);
-	}
-
-	Settings settings = config->getSettings();
-	MySQLSettings mysql = config->getMySQLSettings();
-
-	unsigned int db_connect_result = Database::Connect(mysql.host, mysql.database, mysql.username, mysql.password);
-	if (db_connect_result > 0){
-		QuitError("Could not connect to MYSQL database");
-	}
-	Logger::log("MAIN", "CONFIG", "Connected to mysql database!");
-
-	if (settings.redirect_ip == "127.0.0.1" || settings.redirect_ip == "localhost"){
-		Logger::log("MAIN", "WARNING", "AUTH will redirect to localhost, meaning MULTIPLAYER will NOT WORK", LOG_WARNING);
-		Logger::log("MAIN", "WARNING", "To fix this, set 'redirect_ip' to the public IP of this computer", LOG_WARNING);
-	}
-
-	// Create the directory .//logs// if it does not exist
-	_mkdir("logs");
-
-	// If debug is on, print additional data to the console
-	#ifdef DEBUG
-	{
-		// Setting this to LOG_NORMAL is done on purpose to avoid confusion
-		// when activeLogLevel is below DEBUG but DEBUG is actually on
-		Logger::log("MAIN", "DEBUG", "is ON!", LOG_NORMAL);
-	}
-	#endif
-
-	// Start the two new threads (Auth and World servers)
-	if (Role == ROLE_AUTH){
-		CONNECT_INFO auth;
-		config->setServerSettings(auth, settings, setting);
-		AuthLoop(&auth);
-	}
-	if (Role == ROLE_WORLD){
-		CONNECT_INFO world;
-		config->setServerSettings(world, settings, setting);
-		WorldLoop(&world);
-	}
-	if (Role == ROLE_CONSOLE) ConsoleLoop();
+	}*/
 
 	exit(0);
 }

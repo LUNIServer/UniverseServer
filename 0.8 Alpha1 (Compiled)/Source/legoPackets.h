@@ -33,7 +33,7 @@ enum {
 // ----- NOTE: IF YOU ADD TO THIS, USE NAMES FROM packet_structs BY HUMANOID AND LCDR ----- //
 
 // RemoteConnection IDs
-enum RemoteConnection : unsigned char {
+enum RemoteConnection : uchar {
 	GENERAL = 0,
 	AUTH,
 	CHAT,
@@ -42,14 +42,14 @@ enum RemoteConnection : unsigned char {
 	CLIENT
 };
 // IDs for all servers
-enum ServerPacketID : unsigned char {
+enum ServerPacketID : uchar {
 	VERSION_CONFIRM = 0,
 	DISCONNECT_NOTIFY,
 	GENERAL_NOTIFY
 };
 
 // IDs for Chat Server
-enum ChatPacketID : unsigned char {
+enum ChatPacketID : uchar {
 	// IDs for Chat
 	LOGIN_SESSION_NOTIFY = 0,
 	GENERAL_CHAT_MESSAGE,
@@ -122,7 +122,7 @@ enum ChatPacketID : unsigned char {
 };
 
 // IDs for Auth Server
-enum AuthPacketID : unsigned char {
+enum AuthPacketID : uchar {
 	LOGIN_REQUEST = 0,
 	LOGOUT_REQUEST,
 	CREATE_NEW_ACCOUNT_REQUEST,
@@ -132,7 +132,7 @@ enum AuthPacketID : unsigned char {
 };
 
 // IDs for World Server
-enum WorldPacketID : unsigned char {
+enum WorldPacketID : uchar {
 	CLIENT_VALIDATION = 1,
 	CLIENT_CHARACTER_LIST_REQUEST,
 	CLIENT_CHARACTER_CREATE_REQUEST,

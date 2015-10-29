@@ -93,15 +93,15 @@ static void getTime(){
 	}
 	std::string nstr2 = writeTime(ntm, format);
 	
-	//std::cout << "NORMAL: " << nstr << std::endl;
-	//std::cout << "NONDST: " << nstr2 << std::endl;
+	std::cout << "NORMAL: " << nstr << std::endl;
+	std::cout << "NONDST: " << nstr2 << std::endl;
 
 	//std::string timeS = "2015-08-07 14:01:30";
 	//
 	tm* t = getTime(nstr, format);
 	tm* t2 = getTime(nstr2, format);
 	//t->tm_isdst = true;
-	//std::cout << "NORMAL: " << std::to_string(mktime(t)) << std::endl;
-	//std::cout << "NONDST: " << std::to_string(mktime(t2)) << std::endl;
+	std::cout << "NORMAL: " << std::to_string(mktime(t)) << std::endl;
+	std::cout << "NONDST: " << std::to_string(mktime(t2)) << std::endl;
 	//std::cout << std::to_string(time(NULL)) << std::endl;
 }

@@ -2,21 +2,9 @@
 #include <stdio.h>
 
 RakPeerInterface * WorldServer::rakServer = NULL;
-ReplicaManager * WorldServer::replicaManager = NULL;
-SystemAddress WorldServer::addr = UNASSIGNED_SYSTEM_ADDRESS;
 
-void WorldServer::publishWorldServer(RakPeerInterface* peer, ReplicaManager * rm, SystemAddress addr){
-	WorldServer::rakServer = peer;
-	WorldServer::replicaManager = rm;
-	WorldServer::addr = addr;
-}
-
-ReplicaManager * WorldServer::getRM(){
-	return WorldServer::replicaManager;
-}
-
-SystemAddress WorldServer::getServerAddress(){
-	return WorldServer::addr;
+void WorldServer::publishWorldServer(RakPeerInterface* peer){
+	rakServer = peer;
 }
 
 RakNet::BitStream *WorldServer::initPacket(RemoteConnection conntype, unsigned long packetid){
@@ -28,14 +16,8 @@ RakNet::BitStream *WorldServer::initPacket(RemoteConnection conntype, unsigned l
 	return bs;
 }
 
-void WorldServer::sendPacket(RakNet::BitStream * packet, const SystemAddress& address){
+void WorldServer::sendPacket(RakNet::BitStream * packet, SystemAddress address){
 	rakServer->Send(packet, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, address, false);
-}
-
-void WorldServer::sendPacket(const std::vector<unsigned char>& msg, const SystemAddress& address) {
-	unsigned int len = msg.size();
-	if (len > 0)
-		rakServer->Send((char*)msg.data(), len, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, address, false);
 }
 
 void WorldServer::savePacket(RakNet::BitStream * packet, std::string filename){

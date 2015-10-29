@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Auth|Win32">
-      <Configuration>Auth</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -25,12 +21,6 @@
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Auth|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -44,30 +34,12 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Auth|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>MySql\include;ZLIB\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;libmysql.lib;zdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>MySql\lib;ZLIB\lib;Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <ResourceCompile />
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Auth|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
@@ -102,19 +74,17 @@
   <ItemGroup>
     <ClInclude Include="Account.h" />
     <ClInclude Include="AccountsDB.h" />
+    <ClInclude Include="Character.h" />
     <ClInclude Include="Characters.h" />
     <ClInclude Include="CharactersDB.h" />
-    <ClInclude Include="ChatCommands.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Common\Utility\Config.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Faction.h" />
     <ClInclude Include="AuthPackets.h" />
     <ClInclude Include="CharPackets.h" />
     <ClInclude Include="GameMessages.h" />
-    <ClInclude Include="IniReader.h" />
     <ClInclude Include="InventoryDB.h" />
     <ClInclude Include="LDF.h" />
     <ClInclude Include="Logger.h" />
@@ -132,6 +102,8 @@
     <ClInclude Include="serverLoop.h" />
     <ClInclude Include="Social.h" />
     <ClInclude Include="TimeUtil.h" />
+    <ClInclude Include="User.h" />
+    <ClInclude Include="UsersPool.h" />
     <ClInclude Include="UtfConverter.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="WorldConnection.h" />
@@ -142,15 +114,14 @@
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="AccountsDB.cpp" />
     <ClCompile Include="AuthLoop.cpp" />
+    <ClCompile Include="Character.cpp" />
     <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
-    <ClCompile Include="ChatCommands.cpp" />
+    <ClCompile Include="CharactersLoop.cpp" />
     <ClCompile Include="Common.cpp" />
-    <ClCompile Include="Common\Utility\Config.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="GameMessages.cpp" />
-    <ClCompile Include="IniReader.cpp" />
     <ClCompile Include="InventoryDB.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
@@ -166,6 +137,7 @@
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="CharPackets.cpp" />
     <ClCompile Include="Social.cpp" />
+    <ClCompile Include="User.cpp" />
     <ClCompile Include="UtfConverter.cpp" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldConnection.cpp" />
@@ -182,6 +154,9 @@
   <ItemGroup>
     <ProjectReference Include="RakNet\RakNet.vcxproj">
       <Project>{767ceb9f-4c3d-46fc-a225-e0f3800dc29c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="SUtil\SUtil.vcxproj">
+      <Project>{c434487d-648f-4f94-9d66-6a9577b6c1cc}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

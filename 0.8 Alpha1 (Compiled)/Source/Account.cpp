@@ -2,8 +2,6 @@
 #include "World.h"
 #include "Social.h"
 #include "Logger.h"
-#include "WorldServer.h"
-#include "ServerDB.h"
 
 void Session::connect(SystemAddress address){
 	//Logic for connection
@@ -20,18 +18,6 @@ void Session::disconnect(SystemAddress address, SessionPhase source){
 	//ensures a safe and error free disconnection without leaving any data behind
 
 	SessionInfo info = SessionsTable::getClientSession(address);
-	
-	SystemAddress server = WorldServer::getServerAddress();
-	if (server != UNASSIGNED_SYSTEM_ADDRESS){
-		int instanceid = InstancesTable::getInstanceId(server);
-		if (instanceid > -1){
-			if (instanceid != info.instanceid){
-				return;
-			}
-		}
-	}
-
-	
 	if (info.phase > source){ //Source is the phase of the server disconnected from, if it is to low, the disconnect should not happen
 		return;
 	}
@@ -89,10 +75,10 @@ void Session::disconnect(SystemAddress address, SessionPhase source){
 	}
 }
 
-void Session::login(SystemAddress address, unsigned int accountid, std::string key, int instanceid){
+void Session::login(SystemAddress address, unsigned int accountid, std::string key){
 	Logger::log("GAME", "SESSION", std::string(address.ToString()) + " logging in with account id " + std::to_string(accountid));
 	SessionsTable::connect(address);
-	SessionsTable::login(address, accountid, key, instanceid);
+	SessionsTable::login(address, accountid, key);
 }
 
 void Session::play(unsigned int accountid, long long charid){
@@ -122,15 +108,4 @@ void Session::clearForInstance(int instanceid){
 	for (unsigned int i = 0; i < sess.size(); i++){
 		SessionsTable::disconnect(sess.at(i).addr);
 	}
-}
-
-bool Session::sendToInstance(SystemAddress client, SystemAddress addr){
-	SessionInfo s = SessionsTable::getClientSession(client);
-	int newinstanceid = InstancesTable::getInstanceId(addr);
-	if (newinstanceid > -1){
-		Logger::log("WRLD", "ACCT", "Sending char to new instance", LOG_DEBUG);
-		SessionsTable::setInstanceId(s.accountid, newinstanceid);
-		return true;
-	}
-	return false;
 }

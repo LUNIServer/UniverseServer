@@ -10,11 +10,11 @@
 #include <intrin.h>
 
 struct InitPacket {
-	unsigned long versionId; // The game version
-	unsigned long unknown1; // Dunno what this is...
-	unsigned long remoteConnectionType; // This the remote connection type (1 = auth, 4 = other)
-	unsigned long processId; // The process ID of the server
-	unsigned short unknown2; // Dunno what this is either... it is "FF FF" in hex
+	ulong versionId; // The game version
+	ulong unknown1; // Dunno what this is...
+	ulong remoteConnectionType; // This the remote connection type (1 = auth, 4 = other)
+	ulong processId; // The process ID of the server
+	ushort unknown2; // Dunno what this is either... it is "FF FF" in hex
 	std::string ipString; // The IP string of the server (will be changed programmatically)
 
 	InitPacket() {}
@@ -52,13 +52,13 @@ namespace PacketTools {
 }
 
 // Create a packet header that is used for almost all server packets
-void CreatePacketHeader(MessageID messageId, unsigned short connectionType, unsigned long internalPacketId, RakNet::BitStream *output);
+void CreatePacketHeader(MessageID messageId, ushort connectionType, ulong internalPacketId, RakNet::BitStream *output);
 
 // Create the init packet known as init_aw2.bin
 void SendInitPacket(RakPeerInterface *rakServer, const SystemAddress& systemAddress, bool isAuth);
 void DoHandshake(RakPeerInterface *rakServer, const SystemAddress& systemAddress, RakNet::BitStream * data, std::string SERVER);
 
-// This will convert unsigned short, unsigned long, and unsigned long long to little endian (or back to big endian... does byte swap)
-unsigned short SwapUShort(unsigned short number);
-unsigned long SwapULong(unsigned long number);
-unsigned long long SwapULongLong(unsigned long long number);
+// This will convert ushort, ulong, and ulonglong to little endian (or back to big endian... does byte swap)
+ushort SwapUShort(ushort number);
+ulong SwapULong(ulong number);
+ulonglong SwapULongLong(ulonglong number);

@@ -1,12 +1,12 @@
 #pragma once
 
-//#include "Common.h"
+#include "Common.h"
 
 #include <iostream>
 
 // This is the FactionID enum that contains faction
 // names and values
-enum FactionId : unsigned short {
+enum FactionId : ushort {
 	SENTINAL = 0,
 	ASSEMBLY,
 	PARADOX,

@@ -40,7 +40,7 @@ documentation and/or software.
 // a small class for calculating MD5 hashes of strings or byte arrays
 // it is not meant to be fast or secure
 //
-// usage: 1) feed it blocks of unsigned chars with update()
+// usage: 1) feed it blocks of uchars with update()
 //      2) finalize()
 //      3) get hexdigest() string
 //      or

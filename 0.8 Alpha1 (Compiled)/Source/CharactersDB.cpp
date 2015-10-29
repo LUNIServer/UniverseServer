@@ -42,7 +42,7 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 		std::stringstream s(row[1]);
 		long long cid;
 		s >> cid;
-		unsigned short id = std::stoi(row[0]);
+		ushort id = std::stoi(row[0]);
 		chars.push_back(cid);
 	}
 	return chars;
@@ -63,23 +63,19 @@ std::vector<long long> CharactersTable::getCharacters(unsigned int accountid){
 ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
+	qrs << "`objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `objectID` = '" << std::to_string(objid) << "';";
 	std::string qrss = qrs.str();
 	auto qr = Database::Query(qrss);
-	if (qr == NULL){
-		Logger::logError("CHDB", "MYSQL", "getting charinfo by objid", mysql_error(Database::getConnection()));
-		return ListCharacterInfo();
-	}
 	return CharactersTable::getCharacterInfo(qr);
 }
 
 ListCharacterInfo CharactersTable::getCharacterInfo(std::string name){
 	std::stringstream qrs;
 	qrs << "SELECT ";
-	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
+	qrs << "`objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
 	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
 	qrs << "FROM `characters` WHERE `name` = '" << name << "';";
@@ -97,31 +93,29 @@ ListCharacterInfo CharactersTable::getCharacterInfo(MYSQL_RES *res){
 	else {
 		//Info
 		auto r = mysql_fetch_row(res);
-		i.info.accountid = std::stoul(r[0]);
-		i.info.objid = std::stoll(r[1]);
-		i.info.name = r[2];
-		i.info.unapprovedName = r[3];
-		if (std::stoi(r[4]) == 1) i.info.nameRejected = true;
-		if (std::stoi(r[5]) == 1) i.info.isFreeToPlay = true;
-		i.info.gmlevel = std::stoi(r[6]);
+		i.info.objid = std::stoll(r[0]);
+		i.info.name = r[1];
+		i.info.unapprovedName = r[2];
+		if (std::stoi(r[3]) == 1) i.info.nameRejected = true;
+		if (std::stoi(r[4]) == 1) i.info.isFreeToPlay = true;
 		//Style
-		i.style.shirtColor = std::stoul(r[7]);
-		i.style.shirtStyle = std::stoul(r[8]);
-		i.style.pantsColor = std::stoul(r[9]);
-		i.style.hairStyle = std::stoul(r[10]);
-		i.style.hairColor = std::stoul(r[11]);
-		i.style.lh = std::stoul(r[12]);
-		i.style.rh = std::stoul(r[13]);
-		i.style.eyebrows = std::stoul(r[14]);
-		i.style.eyes = std::stoul(r[15]);
-		i.style.mouth = std::stoul(r[16]);
+		i.style.shirtColor = std::stoul(r[5]);
+		i.style.shirtStyle = std::stoul(r[6]);
+		i.style.pantsColor = std::stoul(r[7]);
+		i.style.hairStyle = std::stoul(r[8]);
+		i.style.hairColor = std::stoul(r[9]);
+		i.style.lh = std::stoul(r[10]);
+		i.style.rh = std::stoul(r[11]);
+		i.style.eyebrows = std::stoul(r[12]);
+		i.style.eyes = std::stoul(r[13]);
+		i.style.mouth = std::stoul(r[14]);
 		//Place
-		i.lastPlace.zoneID = std::stoi(r[17]);
-		i.lastPlace.mapInstance = std::stoi(r[18]);
-		i.lastPlace.mapClone = std::stoul(r[19]);
-		i.lastPlace.x = std::stof(r[20]);
-		i.lastPlace.y = std::stof(r[21]);
-		i.lastPlace.z = std::stof(r[22]);
+		i.lastPlace.zoneID = std::stoi(r[15]);
+		i.lastPlace.mapInstance = std::stoi(r[16]);
+		i.lastPlace.mapClone = std::stoul(r[17]);
+		i.lastPlace.x = std::stof(r[18]);
+		i.lastPlace.y = std::stof(r[19]);
+		i.lastPlace.z = std::stof(r[20]);
 	}
 	return i;
 }
@@ -155,7 +149,7 @@ std::vector<unsigned char> CharactersTable::getCharacterIndices(unsigned int acc
 	auto qr = Database::Query("SELECT `id`, `objectID` FROM `characters` WHERE `accountID` = " + std::to_string(accountid) + " LIMIT 4"); // Load chars from MySQL DB
 	MYSQL_ROW row;
 	while (row = mysql_fetch_row(qr)) {
-		unsigned char id = std::stoi(row[0]);
+		uchar id = std::stoi(row[0]);
 		chars.push_back(id);
 	}
 	return chars;
@@ -180,42 +174,6 @@ bool CharactersTable::unapprovedNameExists(std::string unapprovedname){
 		return false;
 	else
 		return true;
-}
-
-void CharactersTable::setGMlevel(long long objid, unsigned short newLevel){
-	std::stringstream str;
-	str << "UPDATE `characters` SET `gmlevel` = '" << std::to_string(newLevel) << "' WHERE `objectID` = '" << std::to_string(objid) << "'";
-	Database::Query(str.str());
-}
-
-std::string CharactersTable::getName(){
-	return "characters";
-}
-
-void CharactersTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("bigint(20) unsigned", false, "", "0", ""));
-	Database::addColToMap(data, "accountID", new ColData("int(10) unsigned", false, "", "NULL", ""));
-	Database::addColToMap(data, "objectID", new ColData("bigint(20)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "name", new ColData("varchar(25)", false, "", "NULL", ""));
-	Database::addColToMap(data, "unapprovedName", new ColData("varchar(66)", false, "", "NULL", ""));
-	Database::addColToMap(data, "nameRejected", new ColData("tinyint(4)", false, "", "0", ""));
-	Database::addColToMap(data, "freeToPlay", new ColData("tinyint(4)", false, "", "0", ""));
-	Database::addColToMap(data, "gmlevel", new ColData("mediumint(9)", false, "", "0", ""));
-	Database::addColToMap(data, "shirtColor", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "shirtStyle", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "pantsColor", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "hairStyle", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "hairColor", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "lh", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "rh", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "eyebrows", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "eyes", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "mouth", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "lastZoneId", new ColData("int(11)", false, "", "NULL", ""));
-	Database::addColToMap(data, "mapInstance", new ColData("int(11)", false, "", "NULL", ""));
-	Database::addColToMap(data, "mapClone", new ColData("int(11)", false, "", "NULL", ""));
-	Database::addColToMap(data, "level", new ColData("int(3)", false, "", "1", ""));
-	Database::addColToMap(data, "uScore", new ColData("int(32)", false, "", "0", ""));
 }
 
 void FriendsTable::requestFriend(long long sender, long long reciever){
@@ -264,7 +222,7 @@ std::string FriendsTable::getFriendsStatus(long long charidx, long long charidy)
 std::vector<long long> FriendsTable::getFriends(long long charobjid){
 	std::string qr = "SELECT `charida`, `charidb` FROM `friends` WHERE (`charida` = '" + std::to_string(charobjid) + "' OR `charidb` = '" + std::to_string(charobjid) + "') AND `status` IN ('FRIENDS', 'BEST_FRIEND_REQUEST', 'ACCEPTED');";
 	auto qr2 = Database::Query(qr);
-	std::vector<long long> friends;
+	std::vector<long long> friends;	
 	if (mysql_num_rows(qr2) == 0 || mysql_num_rows(qr2) == NULL)
 		return friends;
 	else{
@@ -384,23 +342,12 @@ void FriendsTable::decline(long long requester, long long accepter){
 	FriendsTable::setRequestStatus(requester, accepter, "DECLINED");
 }
 
-std::string FriendsTable::getName(){
-	return "friends";
-}
-
-void FriendsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("int(11)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "charida", new ColData("bigint(20)", false, "", "NULL", ""));
-	Database::addColToMap(data, "charidb", new ColData("bigint(20)", false, "", "NULL", ""));
-	Database::addColToMap(data, "status", new ColData("enum('REQUEST','ACCEPTED','DECLINED','FRIENDS','BEST_FRIEND_REQUEST','BEST_FRIENDS')", false, "", "REQUEST", ""));
-}
-
 std::vector<MISSION_DATA> MissionsTable::getMissions(long long charid){
 	std::string qr = "SELECT `missionid`, `count`, UNIX_TIMESTAMP(`time`) FROM `missions` WHERE `character` = '" + std::to_string(charid) + "';";
 	auto qr2 = Database::Query(qr);
 	std::vector<MISSION_DATA> missions;
 	if (qr2 == NULL){
-		Logger::logError("CHDB", "MYSQL", "getting mission", mysql_error(Database::getConnection()));
+		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
 	}
 	if (qr2 == NULL || mysql_num_rows(qr2) == 0)
 		return missions;
@@ -419,18 +366,6 @@ std::vector<MISSION_DATA> MissionsTable::getMissions(long long charid){
 	}
 }
 
-std::string MissionsTable::getName(){
-	return "missions";
-}
-
-void MissionsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("bigint(20)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "character", new ColData("bigint(20)", false, "", "NULL", ""));
-	Database::addColToMap(data, "missionid", new ColData("int(11)", false, "", "NULL", ""));
-	Database::addColToMap(data, "time", new ColData("timestamp", false, "", "CURRENT_TIMESTAMP", "on update CURRENT_TIMESTAMP"));
-	Database::addColToMap(data, "count", new ColData("smallint(6)", false, "", "1", ""));
-}
-
 void MailsTable::addMail(MailData data){
 	std::stringstream query2;
 	query2 << "INSERT INTO `mails` (`sender`, `recipient_id`, `subject`, `text`, `attachment`, `attachment_count`) ";
@@ -438,7 +373,7 @@ void MailsTable::addMail(MailData data){
 	query2 << data.subject << "', '" << data.text << "', '" << std::to_string(data.attachment) << "', '" << std::to_string(data.attachment_count) << "'); ";
 	auto a = Database::Query(query2.str());
 	if (a == NULL){
-		Logger::logError("CHDB", "MYSQL", "adding mail", mysql_error(Database::getConnection()));
+		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
 	}
 }
 
@@ -454,7 +389,7 @@ std::vector<MailData> MailsTable::getMails(long long charid){
 	auto qr2 = Database::Query(qr);
 	std::vector<MailData> mails;
 	if (qr2 == NULL){
-		Logger::logError("CHDB", "MYSQL", "getting mails", mysql_error(Database::getConnection()));
+		std::cout << "[CHDB] [MYSQL] " << mysql_error(Database::getConnection()) << std::endl;
 		return mails;
 	}
 	if (mysql_num_rows(qr2) == 0 || mysql_num_rows(qr2) == NULL)
@@ -484,20 +419,4 @@ void MailsTable::deleteMail(long long mailid){
 	std::stringstream str;
 	str << "DELETE FROM `mails` WHERE `id` = '" << std::to_string(mailid) << "';";
 	Database::Query(str.str());
-}
-
-std::string MailsTable::getName(){
-	return "mails";
-}
-
-void MailsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("bigint(20)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "subject", new ColData("text", false, "", "NULL", ""));
-	Database::addColToMap(data, "text", new ColData("text", false, "", "NULL", ""));
-	Database::addColToMap(data, "sender", new ColData("text", false, "", "NULL", ""));
-	Database::addColToMap(data, "recipient_id", new ColData("bigint(20)", false, "", "NULL", ""));
-	Database::addColToMap(data, "attachment", new ColData("bigint(20)", false, "", "0", ""));
-	Database::addColToMap(data, "attachment_count", new ColData("int(11)", false, "", "0", ""));
-	Database::addColToMap(data, "sent_time", new ColData("datetime", false, "", "CURRENT_TIMESTAMP", ""));
-	Database::addColToMap(data, "is_read", new ColData("tinyint(1)", false, "", "0", ""));
 }

@@ -5,9 +5,12 @@
 #include "InventoryDB.h"
 #include "CharactersDB.h"
 #include "AccountsDB.h"
+#include "User.h"
 
 #include "UtfConverter.h"
 #include "Logger.h"
+
+#include "SUtil\Ref.h"
 
 #include "RakNet\BitStream.h"
 
@@ -41,13 +44,13 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	Logger::log("CHAR", "PACKETS", "1characters: " + std::to_string(frontChar), LOG_ALL);
 
 	// This loop used to go through 4 chars but doesn't anymore
-	for (unsigned int i = 0; i < charactersLength; i++) {
+	for (uint i = 0; i < charactersLength; i++) {
 		CharactersPacket charData = CharactersPacket();
 		ListCharacterInfo ci = CharactersTable::getCharacterInfo(chars.at(i));
 
 		if (ci.info.objid == 0){
 			//Should never happen, old message, means nothing basically
-			Logger::log("CHAR", "PACKETS", "Char " + std::to_string(i) + " doesn't exist yet." , LOG_DEBUG);
+			std::cout << "[CHAR] Char " << std::to_string(i) << " doesn't exist yet." << std::endl;
 		}else{
 			Logger::log("CHAR", "PACKETS", "Fetching character '" + ci.info.name + "'", LOG_DEBUG);
 			Logger::log("CHAR", "PACKETS", "Unapproved Name is: " + ci.info.unapprovedName, LOG_ALL);
@@ -84,11 +87,11 @@ void SendCharPacket(RakPeerInterface *rakServer, SystemAddress& systemAddress, u
 	}
 
 	rakServer->Send(&bitStream, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, systemAddress, false);
-	//SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+	SavePacket("char_creation.bin", (char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
 }
 
-unsigned long FindCharShirtID(unsigned long shirtColor, unsigned long shirtStyle) {
-	unsigned long shirtID = 0;
+ulong FindCharShirtID(ulong shirtColor, ulong shirtStyle) {
+	ulong shirtID = 0;
 
 	// This is a switch case to determine the base shirt color (IDs from CDClient.xml)
 	switch (shirtColor) {
@@ -191,10 +194,10 @@ unsigned long FindCharShirtID(unsigned long shirtColor, unsigned long shirtStyle
 	}
 
 	// Initialize another variable for the shirt color
-	unsigned long editedShirtColor = shirtID;
+	ulong editedShirtColor = shirtID;
 	
 	// This will be the final shirt ID
-	unsigned long shirtIDFinal;
+	ulong shirtIDFinal;
 
 	// For some reason, if the shirt color is 35 - 40,
 	// The ID is different than the original... Was this because
@@ -213,8 +216,8 @@ unsigned long FindCharShirtID(unsigned long shirtColor, unsigned long shirtStyle
 	return shirtIDFinal;
 }
 
-unsigned long FindCharPantsID(unsigned long pantsColor) {
-	unsigned long pantsID = 2508;
+ulong FindCharPantsID(ulong pantsColor) {
+	ulong pantsID = 2508;
 
 	// This is a switch case to determine 
 	// the pants color (IDs from CDClient.xml)
@@ -324,9 +327,9 @@ unsigned long FindCharPantsID(unsigned long pantsColor) {
 
 void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 	std::vector<long long> items = EquipmentTable::getItems(objectID);
-	unsigned short numrows = items.size();
+	ushort numrows = items.size();
 	bitStream->Write(numrows);
-	for (unsigned short k = 0; k < numrows; k++){
+	for (ushort k = 0; k < numrows; k++){
 		long lot = ObjectsTable::getTemplateOfItem(items.at(k));
 		if (lot == -1) lot = 0;
 		bitStream->Write(lot);
@@ -335,7 +338,7 @@ void GetCharSpecialItems(long long objectID, RakNet::BitStream *bitStream) {
 	Logger::log("CHAR", "PACKETS", "Character has " + std::to_string(numrows) + " items equipped", LOG_ALL);
 }
 
-string GetUnapprovedUsername(unsigned long firstLine, unsigned long middleLine, unsigned long lastLine) {
+string GetUnapprovedUsername(ulong firstLine, ulong middleLine, ulong lastLine) {
 	// First name
 	fstream firstNameFile(".//names//minifigname_first.txt");
 	GoToLine(firstNameFile, firstLine + 1);
@@ -377,9 +380,9 @@ string GetUnapprovedUsername(unsigned long firstLine, unsigned long middleLine, 
 #define _restore_max_
 #endif
 
-fstream& GoToLine(fstream& file, unsigned long num) {
+fstream& GoToLine(fstream& file, ulong num) {
 	file.seekg(std::ios::beg);
-	for (unsigned int i = 0; i < num - 1; ++i) {
+	for (uint i = 0; i < num - 1; ++i) {
 		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
 	return file;

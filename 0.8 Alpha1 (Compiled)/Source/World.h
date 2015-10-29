@@ -1,11 +1,11 @@
 #pragma once
 
-//#include "Common.h"
+#include "Common.h"
 
 #include <iostream>
 
 // This is the ZoneID enum containing the World IDs
-enum ZoneId : unsigned short { 
+enum ZoneId : ushort { 
 	NO_ZONE = 0,
 	VENTURE_EXPLORER = 1000, VENTURE_EXPLORER_RETURN = 1001,
 	AVANT_GARDENS = 1100, AVANT_GARDENS_SURVIVAL = 1101, SPIDER_QUEEN_BATTLE = 1102, BLOCK_YARD = 1150, AVANT_GROVE = 1151,
@@ -23,19 +23,7 @@ enum ZoneId : unsigned short {
 std::ostream& operator<<(std::ostream& out, const ZoneId value);
 std::string& operator+(std::string& str, const ZoneId value);
 
-// This is the World struct
+// This is the World struct which stores a ZoneId
 struct World {
-	unsigned short zone = 0;
-	unsigned short instance = 0;
-	unsigned long clone = 0;
-
-	World(unsigned short zoneid, unsigned short instanceid, unsigned long cloneid){
-		this->zone = zoneid;
-		this->instance = instanceid;
-		this->clone = cloneid;
-	}
-
-	World(){}
+	ZoneId zone;
 };
-
-bool operator==(const World& left, const World& right);

@@ -79,7 +79,7 @@ void InitSecurity(RakPeerInterface* rakServer, bool useEncryption) {
 
 // Strip a packet of the first 8 bytes that include RakNet ID,
 // RemoteConnection, etc.
-unsigned char* CleanPacket(unsigned char* packetdata, unsigned int len) {
+uchar* CleanPacket(uchar* packetdata, uint len) {
 	if (len < 8) return NULL;
 	return packetdata + 8;
 }
@@ -129,9 +129,9 @@ void PrintPacketInfo(Packet* packet, PacketFileLogger* msgFileHandler) {
 				(packet->data[1] == 4 &&
 				(packet->data[3] == 1 || packet->data[3] == 2 || packet->data[3] == 3 || packet->data[3] == 4 || packet->data[3] == 19)))
 				)
-				buffer << "received \"known\" packet, header: " << (unsigned short)packet->data[1] << ", subHeader: " << (unsigned short)packet->data[3] << "length : " << (unsigned short)packet->length << + "\n";
+				buffer << "received \"known\" packet, header: " << (ushort)packet->data[1] << ", subHeader: " << (ushort)packet->data[3] << "length : " << (ushort)packet->length << + "\n";
 			else	// note: if the packet ever contains a big readable string this could lead to a potentional buffer overflow (but that case is unlikely)
-				buffer << "Unknown ID: " << (unsigned short)packet->data[0] << " header: " << (unsigned short)packet->data[1] << ", subHeader : " << (unsigned short)packet->data[3] << ", length : " << packet->length << ", bitlength : " << packet->bitSize << ", data : " << string(packet->data) << "\n";
+				buffer << "Unknown ID: " << (ushort)packet->data[0] << " header: " << (ushort)packet->data[1] << ", subHeader : " << (ushort)packet->data[3] << ", length : " << packet->length << ", bitlength : " << packet->bitSize << ", data : " << string(packet->data) << "\n";
 	}*/
 
 	// Convert data to string (so we can write the data to a file)
@@ -144,18 +144,18 @@ void PrintPacketInfo(Packet* packet, PacketFileLogger* msgFileHandler) {
 }
 
 // Send a packet to the server
-void ServerSendPacket( RakPeerInterface* rakServer, const vector<unsigned char>& msg, const SystemAddress& addres ) {
+void ServerSendPacket( RakPeerInterface* rakServer, const vector<uchar>& msg, const SystemAddress& addres ) {
 	ServerSendPacket(rakServer, (char*)msg.data(), msg.size(), addres);
 }
 
 // Send a packet to the server
-void ServerSendPacket(RakPeerInterface* rakServer, char* data, unsigned int len, const SystemAddress& addres) {
+void ServerSendPacket(RakPeerInterface* rakServer, char* data, uint len, const SystemAddress& addres) {
 	if (len > 0)
 		rakServer->Send(data, len, SYSTEM_PRIORITY, RELIABLE_ORDERED, 0, addres, false);
 }
 
 // Save a packet to the disk (filename basically is the relative path including <filename>.bin)
-void SavePacket(const std::string& filename, char* data, unsigned int size) {
+void SavePacket(const std::string& filename, char* data, uint size) {
 	ofstream file(filename, ios::app);
 	if (!file.is_open()) return;
 
@@ -164,7 +164,7 @@ void SavePacket(const std::string& filename, char* data, unsigned int size) {
 }
 
 //Save packet without appending
-void SavePacketOverwrite(const std::string& filename, char* data, unsigned int size) {
+void SavePacketOverwrite(const std::string& filename, char* data, uint size) {
 	ofstream file(filename, ios::out);
 	if (!file.is_open()) return;
 
@@ -173,17 +173,17 @@ void SavePacketOverwrite(const std::string& filename, char* data, unsigned int s
 }
 
 // Save a packet to the disk (filename basically is the relative path including <filename>.bin)
-void SavePacket(const string& filename, const vector<unsigned char>& v) {
+void SavePacket(const string& filename, const vector<uchar>& v) {
 	SavePacket(filename, (char*)v.data(), v.size());
 }
 
 //Same without append
-void SavePacketOverwrite(const string& filename, const vector<unsigned char>& v) {
+void SavePacketOverwrite(const string& filename, const vector<uchar>& v) {
 	SavePacketOverwrite(filename, (char*)v.data(), v.size());
 }
 
-// Open a packet from a .bin file and store it in an std::vector<unsigned char>
-std::vector<unsigned char> OpenPacket(const string& filename) {
+// Open a packet from a .bin file and store it in an std::vector<uchar>
+vector<uchar> OpenPacket(const string& filename) {
 	// Initialize file
 	ifstream file(filename, ios::in | ios::binary | ios::ate); // ios::ate sets inital position at end of file
 	
@@ -192,8 +192,8 @@ std::vector<unsigned char> OpenPacket(const string& filename) {
 		// Get the current position of the current character in the input stream
 		streamoff fsz = file.tellg();
 
-		// Initialize a std::vector<unsigned char> to store packet data (allocating the size of the file)
-		vector<unsigned char> r( (unsigned int)fsz );
+		// Initialize a std::vector<uchar> to store packet data (allocating the size of the file)
+		vector<uchar> r( (uint)fsz );
 		
 		// Go to the beginning of the file
 		file.seekg(0, ios::beg);
@@ -204,10 +204,10 @@ std::vector<unsigned char> OpenPacket(const string& filename) {
 		// Close the connection to the file
 		file.close();
 
-		// Return the std::vector<unsigned char> with the packet data
+		// Return the std::vector<uchar> with the packet data
 		return r;
 	}
-	return vector<unsigned char>(0);
+	return vector<uchar>(0);
 }
 
 // ----- THE BELOW METHOD WAS ACTUALLY THE ORIGINAL SERVER, HOWEVER, IT IS NOT IN USE ANYMORE ----- //
@@ -268,7 +268,7 @@ void listenForPackets(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, const str
 						
 						auto usr = OnlineUsers->Find(packet->systemAddress);
 						
-						vector< unsigned char > v;
+						vector< uchar > v;
 						if (usr != NULL && usr->nextcid == 2444680020) { //monkeybrown
 							v = OpenPacket(".\\" + servernam + "\\monkeybrown\\char_aw2.bin");
 						} else {
@@ -293,7 +293,7 @@ void listenForPackets(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, const str
 						cout << "re-Serialization: " << RawDataToString(cc.Serialize(), cc.GetGeneratedPacketSize()) << endl;
 						// response: 05, 06
 						// since we can't build our own packets yet we can't send a response here (because it is dependent on the user input)
-						vector< unsigned char > reply(2);
+						vector< uchar > reply(2);
 						reply.push_back(5);
 						reply.push_back(6);
 						ServerSendPacket(rakServer, reply, packet->systemAddress);
@@ -303,9 +303,9 @@ void listenForPackets(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, const str
 						if (usr != NULL) {
 							usr->numredir++;
 							//character id is received
-							vector< unsigned char > t;
+							vector< uchar > t;
 							for (int i = 8; i <= 11; i++) t.push_back(packet->data[i]);
-							usr->nextcid = *(unsigned long*)t.data();
+							usr->nextcid = *(ulong*)t.data();
 							
 						#ifdef DEBUG
 							consoleoutmutex.lock();
@@ -396,17 +396,17 @@ void listenForPackets(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, const str
 						#endif
 
 						// dummy try
-						vector< unsigned char > v(packet->length);
-						for (unsigned int i = 0; i < packet->length; i++) v.push_back(packet->data[i]);
+						vector< uchar > v(packet->length);
+						for (uint i = 0; i < packet->length; i++) v.push_back(packet->data[i]);
 						ServerSendPacket(rakServer, v, packet->systemAddress);
 					}
 					else if (packet->data[3] == 5) { // (0x05) some occurrences at the beginning (and the end?) of the short traffic
 						
 						//character id is received
 					#ifdef DEBUG
-						vector< unsigned char > t;
+						vector< uchar > t;
 						for (int i = 8; i <= 11; i++) t.push_back(packet->data[i]);
-						unsigned long cid = *(unsigned long*)t.data();
+						ulong cid = *(ulong*)t.data();
 						//cout << "\nCharacter id is doing something?: " << cid;
 					#endif
 					}
@@ -435,13 +435,13 @@ void listenForPackets(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, const str
 					// packet->data[3]  == 30 (0x1E)// shortly after 49, one occurrence in that traffic
 					// packet->data[3]  == 34 (0x22)// directly after 30, one occurrence in that traffic
 					consoleoutmutex.lock();
-					cout << endl << servernam << " case 5: " << (unsigned short)packet->data[3] << endl;
+					cout << endl << servernam << " case 5: " << (ushort)packet->data[3] << endl;
 					consoleoutmutex.unlock();
 					break;
 
 				default:
 					consoleoutmutex.lock();
-					cout << "\nUnknow id: " << (unsigned short)packet->data[1] << endl;
+					cout << "\nUnknow id: " << (ushort)packet->data[1] << endl;
 					consoleoutmutex.unlock();
 			}
 

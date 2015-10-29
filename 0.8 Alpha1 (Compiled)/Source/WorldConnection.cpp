@@ -54,7 +54,7 @@ ZoneAddress ClientWorldPackets::HandleLevelLoadComplete(RakNet::BitStream * data
 }
 
 void writeRaw(RakNet::BitStream *data, std::string str){
-	for (unsigned long i = 0; i < str.size(); i++){
+	for (ulong i = 0; i < str.size(); i++){
 		data->Write(str.at(i));
 	}
 }
@@ -74,14 +74,9 @@ void WorldServerPackets::CreateCharacter(SystemAddress address, long long charob
 	ldf->writeBOOL(L"editor_enabled", false);
 	ldf->writeS32(L"editor_level", 0);
 	ldf->writeBOOL(L"freetrial", false);
-	ldf->writeS32(L"gmlevel", cinfo.info.gmlevel); //0 - Normal, 1 - Mythran
+	ldf->writeS32(L"gmlevel", 0); //0 - Normal, 1 - Mythran
 	ldf->writeBOOL(L"legoclub", true);
-
-	unsigned long long levelid = cinfo.lastPlace.zoneID + (((unsigned long long) cinfo.lastPlace.mapInstance) << 16) + (((unsigned long long) cinfo.lastPlace.mapClone) << 32);
-	ldf->writeS64(L"levelid", levelid);
-
-	//Try  e3  04    f4    74     95 51 08 20   if this breaks
-	//    ( ZONE ) ( INSTANCE ) (    CLONE    ) ?
+	ldf->writeS64(L"levelid", 0); //Try e3 04 f4 74 95 51 08 20 if this breaks
 
 	std::wstring name = UtfConverter::FromUtf8(cinfo.info.name);
 
@@ -111,7 +106,7 @@ void WorldServerPackets::CreateCharacter(SystemAddress address, long long charob
 	//b: present and set to "1" if object is linked to the player
 	//c: amout of this item
 	std::vector<InventoryItem> items = InventoryTable::getItems(charobjid);
-	for (unsigned int k = 0; k < items.size(); k++){
+	for (uint k = 0; k < items.size(); k++){
 		//long lot = ObjectsTable::getTemplateOfItem(items.at(k).objid);
 		ObjectInfo oinfo = ObjectsTable::getItemInfo(items.at(k).objid);
 		Logger::log("USER", "CHARDATA", "Adding item " + std::to_string(oinfo.lot) + "[" + std::to_string(oinfo.objid) + "] " + std::to_string(oinfo.spawnerid), LOG_ALL);
@@ -192,8 +187,8 @@ void WorldServerPackets::CreateCharacter(SystemAddress address, long long charob
 
 	ldf->writeBYTES(L"xmlData", xml);
 
-	packet->Write((unsigned long)(ldf->getSize() + 1));
-	packet->Write((unsigned char)0);
+	packet->Write((ulong)(ldf->getSize() + 1));
+	packet->Write((uchar)0);
 	ldf->writeToPacket(packet);
 	WorldServer::sendPacket(packet, address);
 }

@@ -1,11 +1,11 @@
 #include "serverLoop.h"
 
 #include "Database.h"
+#include "User.h"
 #include "legoPackets.h"
 #include "AuthPackets.h"
 
 #include "Account.h"
-#include "ServerDB.h"
 
 #include "RakNet\RakSleep.h"
 #include "RakNet\RakPeerInterface.h"
@@ -26,7 +26,7 @@ using namespace RakNet;
 		- Sending the response to the client
 		- Register the client in SessionsTable and UsersPool
 */
-void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* cfg) {
+void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers) {
 	//Make the packet data accessible via a bit stream
 	RakNet::BitStream *data = new RakNet::BitStream(packet->data, packet->length, false);
 	unsigned char packetID;
@@ -94,7 +94,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		//Validating the input
 		//Set default values
 		UserSuccess currentLoginStatus = UserSuccess::SUCCESS;
-		//Ref<User> user = NULL;
+		Ref<User> user = NULL;
 		
 		//query the account id of the associated with the username from the database
 		unsigned int accountid = AccountsTable::getAccountID(usernameA);
@@ -197,33 +197,21 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		loginStatusPacket.errorMsg = "";
 		loginStatusPacket.errorMsgLength = loginStatusPacket.errorMsg.length();
 
-		std::string world_server_address;
-		
-		SystemAddress serverAddr;
-		serverAddr.SetBinaryAddress(cfg->redirectIp);
-		serverAddr.port = cfg->redirectPort;
-
-		int instanceid = InstancesTable::getInstanceId(serverAddr);
-		if (instanceid == -1){
-			loginStatusPacket.loginStatus = UserSuccess::UNKNOWN2;
-			loginStatusPacket.errorMsg = "Universe not available";
-			currentLoginStatus = UserSuccess::UNKNOWN2;
-			Logger::log("AUTH", "LOGIN", "INSTANCE UNAVAILABLE", LOG_ERROR);
-		}
-		
+		SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
 		if (currentLoginStatus == UserSuccess::SUCCESS){
 			// Login the user to the server
-			Session::login(packet->systemAddress, accountid, keyhash, instanceid);
-			Logger::log("AUTH", "LOGIN", usernameA + " Logged-in");
-			SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
+			// TODO: Here is the last place in AuthLoop wher the User class is necessary
+			auto usr = Ref<User>(new User(accountid, usernameA, packet->systemAddress));
+			OnlineUsers->Insert(usr, packet->systemAddress);
+			Session::login(packet->systemAddress, accountid, keyhash);
+			Logger::log("AUTH", "LOGIN", usr->GetUsername() + " Logged-in");
 			return;
 		}
-		SendStatusPacket(rakServer, packet->systemAddress, loginStatusPacket);
 	}
 	Logger::log("AUTH", "LOGIN", "Login failed", LOG_WARNING);
 }
 
-void AuthLoop(CONNECT_INFO* cfg) {
+void AuthLoop(CONNECT_INFO* cfg, Ref< UsersPool > OnlineUsers, Ref< CrossThreadQueue< std::string > > OutputQueue) {
 	// Initialize the RakPeerInterface used throughout the entire server
 	RakPeerInterface* rakServer = RakNetworkFactory::GetRakPeerInterface();
 
@@ -233,10 +221,6 @@ void AuthLoop(CONNECT_INFO* cfg) {
 		msgFileHandler = new PacketFileLogger();
 		rakServer->AttachPlugin(msgFileHandler);
 	}
-
-	//for (int k = 0; k < 10; k++){
-	//	Logger::log("AUTH", "IP", std::string(rakServer->GetLocalIP(k)), LOG_DEBUG);
-	//}
 
 	// Initialize security IF user has enabled it in config.ini
 	InitSecurity(rakServer, cfg->useEncryption);
@@ -259,11 +243,11 @@ void AuthLoop(CONNECT_INFO* cfg) {
 	// Initialize the Packet class
 	Packet* packet;
 
-	bool LUNI_AUTH = true;
+	//LUNI_AUTH = true;
 
 	// LUNIterminate is the bool used to terminate threads.
 	// While it is false, the thread runs, but if it is true, the thread exits
-	while (LUNI_AUTH) {
+	while (!getTerminate()) {
 		RakSleep(30);	// This sleep keeps RakNet responsive
 		packet = rakServer->Receive(); // Get the packets from the client
 		if (packet == NULL) continue; // If the packet is null, just continue without processing anything
@@ -295,7 +279,7 @@ void AuthLoop(CONNECT_INFO* cfg) {
 					case AUTH: //user logging into server
 						{
 							// Handle the user login using the above method
-							HandleUserLogin(rakServer, packet, cfg);
+							HandleUserLogin(rakServer, packet, cfg, OnlineUsers);
 						}
 						break;
 

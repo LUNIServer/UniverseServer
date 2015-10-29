@@ -1,9 +1,8 @@
 #include "GameMessages.h"
 
 #include <map>
-#include <sstream>
 
-std::map<unsigned short, std::string> SpeedchatOptions;
+std::map<ushort, std::string> SpeedchatOptions;
 bool isSpeedchatInitialized = false;
 
 std::map<long long, ObjectInformation> Objects;
@@ -84,7 +83,7 @@ void initializeSpeedchatOptions(){
 }
 
 
-std::string getSpeedchatMessage(unsigned short speedchatid){
+std::string getSpeedchatMessage(ushort speedchatid){
 	if (!isSpeedchatInitialized) initializeSpeedchatOptions();
 	std::string name;
 	name = SpeedchatOptions[speedchatid];

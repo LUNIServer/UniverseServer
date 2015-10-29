@@ -2,7 +2,6 @@
 #include <string>
 #include <unordered_map>
 #include "CharactersDB.h"
-#include "Database.h"
 #include "RakNet\RakNetTypes.h"
 
 struct AccountAccessInfo{
@@ -33,7 +32,6 @@ struct SessionInfo{
 	long long activeCharId = -1;
 	unsigned int worldJoin = 0;
 	unsigned short zone = 0;
-	int instanceid = -1;
 	
 	SessionInfo(){}
 	SessionInfo(SystemAddress addr){
@@ -44,17 +42,16 @@ struct SessionInfo{
 		this->worldJoin = 0;
 		this->zone = 0;
 		this->sessionkey = "";
-		this->instanceid = -1;
 	}
 };
 
-//struct SystemAddressHasher {
-//	size_t operator()(const SystemAddress& t) const {
-//		return t.binaryAddress;
-//	}
-//};
+struct SystemAddressHasher {
+	size_t operator()(const SystemAddress& t) const {
+		return t.binaryAddress;
+	}
+};
 
-class AccountsTable : public MySQLTable{
+class AccountsTable{
 public:
 	//Returns the id of an Account, and 0 if nothing is found
 	static unsigned int getAccountID(std::string username);
@@ -71,12 +68,6 @@ public:
 	static bool setFrontChar(long long charid);
 	static void unsetFrontChar(unsigned int accountid);
 	static long long getFrontChar(unsigned int accountid);
-	static std::string getAccountName(unsigned int accountid);
-
-	static unsigned char getRank(unsigned int accountid);
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };
 
 /*
@@ -85,7 +76,7 @@ public:
 	but is instead done via an internal std::unordered_map
 */
 
-class SessionsTable : public MySQLTable{
+class SessionsTable{
 private:
 	//static std::unordered_map<SystemAddress, SessionInfo, SystemAddressHasher> sessions;
 public:
@@ -96,7 +87,7 @@ public:
 	static SessionInfo getClientSession(SystemAddress address);
 
 	//Authentification
-	static SessionInfo login(SystemAddress address, unsigned int accountid, std::string key, int instanceid);
+	static SessionInfo login(SystemAddress address, unsigned int accountid, std::string key);
 	static SessionInfo logout(unsigned int accountid);
 
 	static SystemAddress findAccount(unsigned int accountid);
@@ -108,14 +99,10 @@ public:
 	static SystemAddress findCharacter(long long charid);
 	static std::vector<SessionInfo> getClientsInWorld(unsigned short zoneid);
 	static std::vector<SessionInfo> getClientsInInstance(int instanceid);
-	static void setInstanceId(unsigned int accountid, int instanceid);
 
 	//Worlds
 	static SessionInfo enter(long long charid, unsigned short zoneId);
 	static SessionInfo leave(long long charid);
 
 	static unsigned int count();
-
-	std::string getName();
-	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);
 };

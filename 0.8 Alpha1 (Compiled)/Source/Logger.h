@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 enum LogLevels : unsigned char{
 	LOG_CRITICAL = 0,
@@ -19,15 +18,8 @@ const LogLevels activeLogLevel = LogLevels::LOG_NORMAL;
 #endif
 
 class Logger{
-	static std::string logfile;
-	static bool tofile;
-	static bool muted;
-	static std::vector<std::string> logBuffer;
 public:
 	static void log(const std::string& source, const std::string& role, const std::string& message, LogLevels logLevel = LogLevels::LOG_NORMAL);
 	//Log if an error message is present
 	static void logError(const std::string& source, const std::string&role, const std::string& action, const std::string& error);
-	static void mute();
-	static void unmute(bool printBuffer = true);
-	static bool setLogFile(std::string logFile);
 };

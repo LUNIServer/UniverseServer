@@ -58,14 +58,10 @@ void InventoryTable::deleteInventory(long long charid){
 
 void InventoryTable::insertItem(long long charid, long long objid, unsigned long qnt, unsigned long slot, bool linked){
 	std::stringstream str;
-	str << "INSERT INTO `inventory` (`owner`, `object`, `qnt`, `slot`, `linked`) VALUES('" << charid << "', '" << objid << "', '" << std::to_string(qnt) << "', '" << std::to_string(slot) << "', '";
+	str << "INSERT INTO `luni`.`inventory` (`owner`, `object`, `qnt`, `slot`, `linked`) VALUES('" << charid << "', '" << objid << "', '" << std::to_string(qnt) << "', '" << std::to_string(slot) << "', '";
 	if (linked) str << "1"; else str << "0";
 	str << "');";
 	Database::Query(str.str());
-}
-
-void InventoryTable::deleteItem(long long charid, long long objid){
-	Database::Query("DELETE FROM `inventory` WHERE `owner` = '" + std::to_string(charid) + "' AND `object` = '" + std::to_string(objid) + "';");
 }
 
 std::vector<InventoryItem> InventoryTable::getItems(long long charid){
@@ -84,19 +80,6 @@ std::vector<InventoryItem> InventoryTable::getItems(long long charid){
 		items.push_back(i);
 	}
 	return items;
-}
-
-std::string InventoryTable::getName(){
-	return "inventory";
-}
-
-void InventoryTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("int(11)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "owner", new ColData("bigint(64)", false, "", "NULL", ""));
-	Database::addColToMap(data, "object", new ColData("bigint(64)", false, "", "NULL", ""));
-	Database::addColToMap(data, "qnt", new ColData("smallint(1) unsigned", false, "", "0", ""));
-	Database::addColToMap(data, "slot", new ColData("smallint(3) unsigned", false, "", "NULL", ""));
-	Database::addColToMap(data, "linked", new ColData("tinyint(1)", false, "", "0", ""));
 }
 
 long ObjectsTable::getTemplateOfItem(long long objid){
@@ -143,10 +126,6 @@ long long ObjectsTable::createObject(long lot){
 	return objid;
 }
 
-void ObjectsTable::deleteObject(long long objid){
-	Database::Query("DELETE FROM `objects` WHERE `objectid` = '" + std::to_string(objid) + "';");
-}
-
 RocketInfo ObjectsTable::getRocketInfo(long long objid){
 	std::stringstream str;
 	str << "SELECT `nose_cone_template`, `cockpit_template`, `engine_template` FROM `objects` WHERE `objectid` = '" << objid << "';";
@@ -161,26 +140,13 @@ RocketInfo ObjectsTable::getRocketInfo(long long objid){
 	return RocketInfo(0,0,0);
 }
 
-std::string ObjectsTable::getName(){
-	return "objects";
-}
-
-void ObjectsTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "objectid", new ColData("bigint(64)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "template", new ColData("int(32) unsigned", false, "", "NULL", ""));
-	Database::addColToMap(data, "spawnid", new ColData("bigint(20)", true, "", "NULL", ""));
-	Database::addColToMap(data, "nose_cone_template", new ColData("int(11)", true, "", "NULL", ""));
-	Database::addColToMap(data, "cockpit_template", new ColData("int(11)", true, "", "NULL", ""));
-	Database::addColToMap(data, "engine_template", new ColData("int(11)", true, "", "NULL", ""));
-}
-
 std::vector<long long> EquipmentTable::getItems(long long charid){
 	auto qr = Database::Query("SELECT `object` FROM `equipment` WHERE `owner` = '" + std::to_string(charid) + "';");
 	
-	unsigned int numrows = (uint)mysql_num_rows(qr);
+	uint numrows = (uint)mysql_num_rows(qr);
 	std::vector<long long> items;
 	items.reserve(numrows);
-	for (unsigned int k = 0; k < numrows; k++){
+	for (uint k = 0; k < numrows; k++){
 		auto ftc = mysql_fetch_row(qr);
 		long long itemid = std::stoll(ftc[0]);
 		items.push_back(itemid);
@@ -204,14 +170,4 @@ void EquipmentTable::deleteEquipment(long long charid){
 	std::stringstream eqqr;
 	eqqr << "DELETE FROM `equipment` WHERE `owner`='" << charid << "';";
 	Database::Query(eqqr.str());
-}
-
-std::string EquipmentTable::getName(){
-	return "equipment";
-}
-
-void EquipmentTable::mapTable(std::unordered_map<std::string, compare<ColData *> *> * data){
-	Database::addColToMap(data, "id", new ColData("int(11)", false, "PRI", "NULL", "auto_increment"));
-	Database::addColToMap(data, "owner", new ColData("bigint(20)", false, "", "NULL", ""));
-	Database::addColToMap(data, "object", new ColData("bigint(20)", false, "", "NULL", ""));
 }
