@@ -67,10 +67,18 @@ MySQLSettings Configuration::getMySQLSettings(){
 
 void Configuration::setServerSettings(CONNECT_INFO& connection, Settings& settings, std::string& name){
 	IniSection * AuthConfig = this->ini->getSection(name);
-
+	IniSection * WorldConfig = this-> ini->getSection(name);
+	int listen_port;
+	int redirect_port;
 	//This config option is actually useless, since the client ALWAYS connects to port 1001 initially
-	int listen_port = AuthConfig->getIntValue("listen_port", 1001);
-	int redirect_port = AuthConfig->getIntValue("redirect_port", 2002);
+	if (name == "World"){
+		listen_port = WorldConfig->getIntValue("listen_port", 2002);
+		redirect_port = WorldConfig->getIntValue("redirect_port", 2004);
+	}
+	else{
+		listen_port = AuthConfig->getIntValue("listen_port", 1001);
+		redirect_port = AuthConfig->getIntValue("redirect_port", 2002);
+	}
 
 	connection.listenPort = listen_port;
 	connection.redirectPort = redirect_port;

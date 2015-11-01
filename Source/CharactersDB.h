@@ -38,6 +38,10 @@ struct CharacterInfo{
 	std::string unapprovedName;
 	bool nameRejected = false;
 	bool isFreeToPlay = false;
+	unsigned int level = 1;
+	long long uScore = 0;
+	unsigned int health = 5;
+	float maxHealth = 5.0F;
 };
 
 struct ListCharacterInfo{
@@ -62,6 +66,7 @@ public:
 	static long long add(CharacterStyle style, unsigned int accountid, CharacterInfo names);
 	static bool unapprovedNameExists(std::string unapprovedname);
 	static void setGMlevel(long long objid, unsigned short newLevel);
+	static void levelUp(long long objectId);
 
 	std::string getName();
 	void mapTable(std::unordered_map<std::string, compare<ColData *> *> * data);

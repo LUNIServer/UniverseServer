@@ -1,4 +1,4 @@
-# LUNI 
+﻿# LUNI 
 
 ## Setup Instructions
 You should be familiar with the setup of LUNI before working with this repository.
@@ -17,7 +17,11 @@ You should be familiar with the setup of LUNI before working with this repositor
 5. When Login, Character Creation and World loading succeded, wou will notice to be in Venture Explorer without being able to move or see your character. This is actually the correct behaviour.
 	- The game has a mission at the beginning to press shift to "wake up", which is not implemented yet.
 	- So for the time being please use /tp <zoneid> to get to another world or try adding mission 1727 to the missions table to have that mission already done
-	
+## To Open The Server
+1. Rename "LUNI Server.exe" to "LUNIServer.exe"
+2. Copy "start.bat" and "start1.bat" to Debug Folder
+3. Execute "start.bat"
+4. Execute "start1.bat"
 ## Reporting Bugs
 
 Please report any bugs that you may encounter here in the issues tracker. Please check any existing issues first if it has already been reported.
