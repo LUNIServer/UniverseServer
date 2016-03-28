@@ -14,7 +14,7 @@
 
 #include "Logger.h"
 #include "UtfConverter.h"
-#include "md5.h"
+#include "sha512.hh"
 
 using namespace RakNet;
 
@@ -162,7 +162,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		time_t t = time(NULL);
 		unsigned int addr = packet->systemAddress.binaryAddress;
 		long long a = (long long)t * (long long)addr;
-		std::string keyhash = md5(std::to_string(a));
+		std::string keyhash = sw::sha512::calculate(std::to_string(a));
 		std::wstring key = StringToWString(keyhash, 33);
 
 		// Get the user key

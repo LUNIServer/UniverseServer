@@ -120,9 +120,6 @@
     <ClInclude Include="UtfConverter.h">
       <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="md5.h">
-      <Filter>Header Files\Common\Utility</Filter>
-    </ClInclude>
     <ClInclude Include="Encryption.h">
       <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
@@ -170,6 +167,12 @@
     </ClInclude>
     <ClInclude Include="World.h">
       <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="sha512.hh">
+      <Filter>Header Files\Common\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseEncode.h">
+      <Filter>Header Files\Common\Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -221,9 +224,6 @@
     <ClCompile Include="InventoryDB.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
-    <ClCompile Include="md5.cpp">
-      <Filter>Source Files\Common\Utility</Filter>
-    </ClCompile>
     <ClCompile Include="UtfConverter.cpp">
       <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
@@ -270,6 +270,9 @@
       <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
     <ClCompile Include="Common\Utility\Config.cpp">
+      <Filter>Source Files\Common\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseEncode.cpp">
       <Filter>Source Files\Common\Utility</Filter>
     </ClCompile>
   </ItemGroup>
