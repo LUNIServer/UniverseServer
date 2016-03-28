@@ -11,6 +11,7 @@
 
 unsigned int AccountsTable::getAccountID(std::string username){
 	auto qr = Database::Query("SELECT `id` FROM `accounts` WHERE `name` = '" + username + "' LIMIT 1;");
+	if (qr == NULL) return -1;
 	if (mysql_num_rows(qr) == 0) return 0;
 	auto ftc = mysql_fetch_row(qr);
 	std::istringstream o(ftc[0]);
@@ -21,7 +22,7 @@ unsigned int AccountsTable::getAccountID(std::string username){
 
 unsigned long long AccountsTable::addAccount(std::string name, std::string password){
 	unsigned int id = AccountsTable::getAccountID(name);
-	if (id > 0) return 0; //Account name already exists
+	if (id != 0) return 0; //Account name already exists
 	std::string hpw = hashPassword(password); //Hash password
 	Database::Query("INSERT INTO `accounts` (`id`, `name`, `password`, `email`, `ip`, `rank`, `numChars`, `frontChar`, `lastLog`, `activeSub`, `subTime`, `legoClub`, `locked`, `banned`, `loginTries`) VALUES (NULL, '" + name + "', '" + hpw + "', '', '127.0.0.1', '0', '0', '0', CURRENT_TIMESTAMP, '0', '', '', '0', '0', '0');");
 	unsigned long long accountid = mysql_insert_id(Database::getConnection());
@@ -30,6 +31,7 @@ unsigned long long AccountsTable::addAccount(std::string name, std::string passw
 
 bool AccountsTable::checkPassword(std::string password, unsigned int accountid){
 	auto qr = Database::Query("SELECT `password` FROM `accounts` WHERE `id` = '" + std::to_string(accountid) + "' LIMIT 1;");
+	if (qr == NULL) return false;
 	if (mysql_num_rows(qr) == 0) return false; //Actually this should NEVER happen
 	auto r = mysql_fetch_row(qr);
 	std::string pwhash = r[0];
@@ -41,6 +43,13 @@ bool AccountsTable::checkPassword(std::string password, unsigned int accountid){
 AccountAccessInfo AccountsTable::getAccessInfo(unsigned int accountid){
 	AccountAccessInfo accinf;
 	auto qr = Database::Query("SELECT `locked`, `banned`, `loginTries` FROM `accounts` WHERE `id` = '" + std::to_string(accountid) + "' LIMIT 1;");
+	// The option below is not likely to occur, but qr can be NULL if the query parsing fails!!
+	if (qr == NULL)
+	{
+		accinf.loginTries = -1;
+		return accinf;
+	}
+
 	if (mysql_num_rows(qr) == 0) { //Actually this should NEVER happen
 		accinf.loginTries = -1; //If it does set login tries to an impossible value
 		return accinf;
