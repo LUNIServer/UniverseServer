@@ -11,7 +11,7 @@
 
 unsigned int AccountsTable::getAccountID(std::string username){
 	auto qr = Database::Query("SELECT `id` FROM `accounts` WHERE `name` = '" + username + "' LIMIT 1;");
-	if (qr == NULL) return -1;
+	if (qr == NULL) return 0;
 	if (mysql_num_rows(qr) == 0) return 0;
 	auto ftc = mysql_fetch_row(qr);
 	std::istringstream o(ftc[0]);
@@ -32,7 +32,7 @@ unsigned long long AccountsTable::addAccount(std::string name, std::string passw
 bool AccountsTable::checkPassword(std::string password, unsigned int accountid){
 	auto qr = Database::Query("SELECT `password` FROM `accounts` WHERE `id` = '" + std::to_string(accountid) + "' LIMIT 1;");
 	if (qr == NULL) return false;
-	if (mysql_num_rows(qr) == 0) return false; //Actually this should NEVER happen
+	if (mysql_num_rows(qr) == 0) return false;
 	auto r = mysql_fetch_row(qr);
 	std::string pwhash = r[0];
 	std::string testhash = hashPassword(password);
