@@ -14,7 +14,7 @@
 
 #include "Logger.h"
 #include "UtfConverter.h"
-#include "md5.h"
+#include "sha512.hh"
 
 using namespace RakNet;
 
@@ -98,8 +98,8 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		
 		//query the account id of the associated with the username from the database
 		unsigned int accountid = AccountsTable::getAccountID(usernameA);
-		if (accountid == 0){
-			//If the query return 0, no user was found
+		if (accountid <= 0){
+			//If the query returns 0 or -1 the query failed, no user was found or SQL injection attempt?
 			currentLoginStatus = UserSuccess::INVALID_USER;
 		}else{
 			//check if the password is correct
@@ -162,7 +162,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		time_t t = time(NULL);
 		unsigned int addr = packet->systemAddress.binaryAddress;
 		long long a = (long long)t * (long long)addr;
-		std::string keyhash = md5(std::to_string(a));
+		std::string keyhash = sw::sha512::calculate(std::to_string(a));
 		std::wstring key = StringToWString(keyhash, 33);
 
 		// Get the user key

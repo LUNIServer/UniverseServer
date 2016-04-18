@@ -102,6 +102,7 @@
   <ItemGroup>
     <ClInclude Include="Account.h" />
     <ClInclude Include="AccountsDB.h" />
+    <ClInclude Include="BaseEncode.h" />
     <ClInclude Include="Characters.h" />
     <ClInclude Include="CharactersDB.h" />
     <ClInclude Include="ChatCommands.h" />
@@ -118,7 +119,6 @@
     <ClInclude Include="InventoryDB.h" />
     <ClInclude Include="LDF.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="md5.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="legoPackets.h" />
     <ClInclude Include="PlayerObject.h" />
@@ -130,6 +130,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="ServerDB.h" />
     <ClInclude Include="serverLoop.h" />
+    <ClInclude Include="sha512.hh" />
     <ClInclude Include="Social.h" />
     <ClInclude Include="TimeUtil.h" />
     <ClInclude Include="UtfConverter.h" />
@@ -142,6 +143,7 @@
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="AccountsDB.cpp" />
     <ClCompile Include="AuthLoop.cpp" />
+    <ClCompile Include="BaseEncode.cpp" />
     <ClCompile Include="Characters.cpp" />
     <ClCompile Include="CharactersDB.cpp" />
     <ClCompile Include="ChatCommands.cpp" />
@@ -154,7 +156,6 @@
     <ClCompile Include="InventoryDB.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="md5.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="Replica.cpp" />
     <ClCompile Include="ReplicaComponents.cpp" />
