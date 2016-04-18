@@ -11,7 +11,7 @@
 
 unsigned int AccountsTable::getAccountID(std::string username){
 	auto qr = Database::Query("SELECT `id` FROM `accounts` WHERE `name` = '" + username + "' LIMIT 1;");
-	if (qr == NULL) return -1;
+	if (qr == NULL) return 0;
 	if (mysql_num_rows(qr) == 0) return 0;
 	auto ftc = mysql_fetch_row(qr);
 	std::istringstream o(ftc[0]);

@@ -98,7 +98,7 @@ void HandleUserLogin(RakPeerInterface* rakServer, Packet* packet, CONNECT_INFO* 
 		
 		//query the account id of the associated with the username from the database
 		unsigned int accountid = AccountsTable::getAccountID(usernameA);
-		if (accountid <= 0){
+		if (accountid = 0){
 			//If the query returns 0 or -1 the query failed, no user was found or SQL injection attempt?
 			currentLoginStatus = UserSuccess::INVALID_USER;
 		}else{
