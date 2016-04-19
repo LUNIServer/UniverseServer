@@ -58,6 +58,7 @@ void ConsoleLoop(){
 				std::stringstream str;
 				str << "Available commands:" << std::endl <<
 					"quit        = Quit the Server" << std::endl <<
+					"envcheck        = Check the environment" << std::endl << // I think that will do it. Please correct for incorrect thinks.
 					"register    = Register New User" << std::endl <<
 					"sessions    = Show Number of sessions" << std::endl;
 				std::cout << str.str();
