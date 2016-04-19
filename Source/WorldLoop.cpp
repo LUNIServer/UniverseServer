@@ -1043,7 +1043,7 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 			}
 			case 1734:
 				//Level UP
-
+				CharactersTable::levelUp(objid);
 				break;
 			default:
 				Logger::log("WRLD", "GAMEMESSAGE", "Unknown Game Message: " + std::to_string(msgid));
@@ -1122,11 +1122,11 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 				c1->setPosition(pos);
 
 				CharacterComponent * c4 = player->getComponent4();
-				c4->setLevel(6);
+				c4->setLevel(cinfo.info.level);
 				PLAYER_INFO pi;
 				pi.accountID = s.accountid;
 				pi.isFreeToPlay = cinfo.info.isFreeToPlay;
-				pi.legoScore = 600;
+				pi.legoScore = cinfo.info.uScore;
 				c4->setInfo(pi);
 				PLAYER_STYLE ps;
 				ps.eyebrowsStyle = cinfo.style.eyebrows;
@@ -1140,9 +1140,9 @@ void parsePacket(RakPeerInterface* rakServer, SystemAddress &systemAddress, RakN
 
 				DestructibleComponent * c7 = player->getComponent7();
 				COMPONENT7_DATA4 d4 = c7->getData4();
-				d4.health = 5;
-				d4.maxHealthN = 5.0F;
-				d4.maxHealth = 5.0F;
+				d4.health = cinfo.info.health;
+				d4.maxHealthN = cinfo.info.maxHealth;
+				d4.maxHealth = cinfo.info.maxHealth;
 				c7->setData4(d4);
 
 				InventoryComponent * c17 = player->getComponent17();

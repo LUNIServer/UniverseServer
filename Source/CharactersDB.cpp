@@ -65,7 +65,7 @@ ListCharacterInfo CharactersTable::getCharacterInfo(long long objid){
 	qrs << "SELECT ";
 	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
-	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
+	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z`, `level`, `uScore`, `health`, `maxHealth` ";
 	qrs << "FROM `characters` WHERE `objectID` = '" << std::to_string(objid) << "';";
 	std::string qrss = qrs.str();
 	auto qr = Database::Query(qrss);
@@ -81,7 +81,7 @@ ListCharacterInfo CharactersTable::getCharacterInfo(std::string name){
 	qrs << "SELECT ";
 	qrs << "`accountID`, `objectID`, `name`, `unapprovedName`, `nameRejected`, `freeToPlay`, `gmlevel`, ";
 	qrs << "`shirtColor`, `shirtStyle`, `pantsColor`, `hairStyle`, `hairColor`, `lh`, `rh`, `eyebrows`, `eyes`, `mouth`, ";
-	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z` ";
+	qrs << "`lastZoneId`, `mapInstance`, `mapClone`, `x`, `y`, `z`, `level`, `uScore`, `health`, `maxHealth` ";
 	qrs << "FROM `characters` WHERE `name` = '" << name << "';";
 	std::string qrss = qrs.str();
 	auto qr = Database::Query(qrss);
@@ -104,6 +104,10 @@ ListCharacterInfo CharactersTable::getCharacterInfo(MYSQL_RES *res){
 		if (std::stoi(r[4]) == 1) i.info.nameRejected = true;
 		if (std::stoi(r[5]) == 1) i.info.isFreeToPlay = true;
 		i.info.gmlevel = std::stoi(r[6]);
+		i.info.level = std::stoul(r[23]);
+		i.info.uScore = std::stoll(r[24]);
+		i.info.health = std::stoul(r[25]);
+		i.info.maxHealth = std::stof(r[26]);
 		//Style
 		i.style.shirtColor = std::stoul(r[7]);
 		i.style.shirtStyle = std::stoul(r[8]);
@@ -216,6 +220,20 @@ void CharactersTable::mapTable(std::unordered_map<std::string, compare<ColData *
 	Database::addColToMap(data, "mapClone", new ColData("int(11)", false, "", "NULL", ""));
 	Database::addColToMap(data, "level", new ColData("int(3)", false, "", "1", ""));
 	Database::addColToMap(data, "uScore", new ColData("int(32)", false, "", "0", ""));
+	Database::addColToMap(data, "health", new ColData("int(10)", false, "", "5", ""));
+	Database::addColToMap(data, "maxHealth", new ColData("float", false, "", "5.0", ""));
+}
+
+void CharactersTable::levelUp(long long objectId){
+	auto qr1 = Database::Query("SELECT `level` FROM `characters` WHERE `objectId` = '" + std::to_string(objectId) + "';");
+	if (mysql_num_rows(qr1) > 0){
+		auto r = mysql_fetch_row(qr1);
+		auto level = std::stoi(r[0]) + 1;
+		Database::Query("UPDATE `characters` SET `level` = '" + std::to_string(level) + "' WHERE `objectId` = '" + std::to_string(objectId) + "';");
+	}
+	else{
+		Logger::log("DBT", "CHAR", "Unable to Level Up Char: " + std::to_string(objectId), LOG_ERROR);
+	}
 }
 
 void FriendsTable::requestFriend(long long sender, long long reciever){
