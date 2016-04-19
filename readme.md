@@ -3,7 +3,7 @@
 ## Setup Instructions
 You should be familiar with the setup of LUNI before working with this repository.
 
-1. Setup xampp with mysql and import luni.sql
+1. Setup xampp with mysql and import SQL/luni-2015-09-14.sql
 2. To configure the server to run correctly on your machine, you need to adjust the redirect_ip in the config.ini file.
 	- The redirect IP there is used to tell the client where to find the char/world server i.e. it is the IP the server sends whenever it informs the client about a necessary redirect.
 	- If you care about multiplayer, this IP needs to be one that is accessible for all PCs that want to connect, so for a LAN server this would be your local address (e.g. 192.168.0.9 for me)
