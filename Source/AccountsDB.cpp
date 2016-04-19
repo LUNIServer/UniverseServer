@@ -24,7 +24,7 @@ unsigned long long AccountsTable::addAccount(std::string name, std::string passw
 	unsigned int id = AccountsTable::getAccountID(name);
 	if (id != 0) return 0; //Account name already exists
 	std::string hpw = hashPassword(password); //Hash password
-	Database::Query("INSERT INTO `accounts` (`id`, `name`, `password`, `email`, `ip`, `rank`, `numChars`, `frontChar`, `lastLog`, `activeSub`, `subTime`, `legoClub`, `locked`, `banned`, `loginTries`) VALUES (NULL, '" + name + "', '" + hpw + "', '', '127.0.0.1', '0', '0', '0', CURRENT_TIMESTAMP, '0', '', '', '0', '0', '0');");
+	Database::Query("INSERT INTO `accounts` (`id`, `name`, `password`, `email`, `ip`, `rank`, `numChars`, `frontChar`, `lastLog`, `activeSub`, `subTime`, `legoClub`, `locked`, `banned`, `loginTries`) VALUES (NULL, '" + name + "', '" + hpw + "', '', '127.0.0.1', '0', '0', '0', CURRENT_TIMESTAMP, '0', '0', '0', '0', '0', '0');");
 	unsigned long long accountid = mysql_insert_id(Database::getConnection());
 	return accountid;
 }

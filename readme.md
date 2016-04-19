@@ -3,11 +3,11 @@
 ## Setup Instructions
 You should be familiar with the setup of LUNI before working with this repository.
 
-1. Setup xampp with mysql and import luni.sql
+1. Setup xampp with mysql and import SQL/luni-2015-09-14.sql
 2. To configure the server to run correctly on your machine, you need to adjust the redirect_ip in the config.ini file.
 	- The redirect IP there is used to tell the client where to find the char/world server i.e. it is the IP the server sends whenever it informs the client about a necessary redirect.
 	- If you care about multiplayer, this IP needs to be one that is accessible for all PCs that want to connect, so for a LAN server this would be your local address (e.g. 192.168.0.9 for me)
-	- You could set it up to use your global IP but then you have to deal with port forwarding and the like.
+	- You could set it up to use your global IP but then you have to deal with port forwarding and the like. Ports 1001, 2002, 2003, and 2004 would be forwarded.
 	- Finally if you only want to test it locally, you can simply put in 127.0.0.1
 3. Open the project in Visual Studio
 	- Please use the Debug mode for now to see where crashes come from
@@ -43,4 +43,4 @@ There are different kinds of "crashes" that can happen, so please pay attention 
 - The server displays an error in the log
 - The server does not recieve anything/shows nothing in the log
 
-> The LEGO® Group has not endorsed or authorized the operation of this game and is not liable for any safety issues in relation to the operation of this game. All files are under the General Public License, version 3, and are only for use on a non-commercial basis.
+> The LEGO® Group has not endorsed or authorized the operation of this game and is not liable for any safety issues in relation to the operation of this game.
